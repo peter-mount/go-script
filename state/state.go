@@ -12,7 +12,10 @@ import (
 
 // State holds the current processing state of the Script
 type State interface {
+	Variables
+	// GetFunction by name
 	GetFunction(n string) (*script.FuncDec, bool)
+	// GetFunctions returns a list of declared functions
 	GetFunctions() []string
 }
 
@@ -20,12 +23,14 @@ type state struct {
 	mutex     sync.Mutex
 	script    *script.Script
 	functions map[string]*script.FuncDec
+	variables Variables
 }
 
 func New(s *script.Script) (State, error) {
 	state := &state{
 		script:    s,
 		functions: make(map[string]*script.FuncDec),
+		variables: NewVariables(),
 	}
 
 	err := visitor.New().
@@ -75,3 +80,18 @@ func (s *state) GetFunctions() []string {
 	})
 	return r
 }
+
+func (s *state) NewScope() Variables {
+	s.variables = s.variables.NewScope()
+	return s
+}
+func (s *state) EndScope() Variables {
+	s.variables = s.variables.EndScope()
+	return s
+}
+
+func (s *state) Declare(n string) { s.variables.Declare(n) }
+
+func (s *state) Set(n string, v interface{}) bool { return s.variables.Set(n, v) }
+
+func (s *state) Get(n string) (interface{}, bool) { return s.variables.Get(n) }
