@@ -5,28 +5,36 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
-type FunDec struct {
+type FuncDec struct {
 	Pos lexer.Position
 
 	ReturnType string       `parser:"@(Type | \"void\")?"`
 	Name       string       `parser:"@Ident"`
 	Parameters []*Parameter `parser:"\"(\" ((@@ (\",\" @@)*) | \"void\" )? \")\""`
-	FunBody    *FunBody     `parser:"(\";\" | \"{\" @@ \"}\")"`
+	FunBody    *FuncBody    `parser:"(\";\" | \"{\" @@ \"}\")"`
 }
 
-func (s *FunDec) WithContext(ctx context.Context) context.Context {
+func (s *FuncDec) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, funcDecKey, s)
 }
 
-func FuncDecFromContext(ctx context.Context) *FunDec {
-	return ctx.Value(funcDecKey).(*FunDec)
+func FuncDecFromContext(ctx context.Context) *FuncDec {
+	return ctx.Value(funcDecKey).(*FuncDec)
 }
 
-type FunBody struct {
+type FuncBody struct {
 	Pos lexer.Position
 
 	Locals     []*VarDec   `parser:"(@@ \";\")*"`
 	Statements *Statements `parser:"@@"`
+}
+
+func (s *FuncBody) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, funcBodyKey, s)
+}
+
+func FuncBodyFromContext(ctx context.Context) *FuncBody {
+	return ctx.Value(funcBodyKey).(*FuncBody)
 }
 
 type Parameter struct {

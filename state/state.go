@@ -12,20 +12,20 @@ import (
 
 // State holds the current processing state of the Script
 type State interface {
-	GetFunction(n string) (*script.FunDec, bool)
+	GetFunction(n string) (*script.FuncDec, bool)
 	GetFunctions() []string
 }
 
 type state struct {
 	mutex     sync.Mutex
 	script    *script.Script
-	functions map[string]*script.FunDec
+	functions map[string]*script.FuncDec
 }
 
 func New(s *script.Script) (State, error) {
 	state := &state{
 		script:    s,
-		functions: make(map[string]*script.FunDec),
+		functions: make(map[string]*script.FuncDec),
 	}
 
 	err := visitor.New().
@@ -49,7 +49,7 @@ func (s *state) declareFunction(ctx context.Context) error {
 	return nil
 }
 
-func (s *state) GetFunction(n string) (*script.FunDec, bool) {
+func (s *state) GetFunction(n string) (*script.FuncDec, bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

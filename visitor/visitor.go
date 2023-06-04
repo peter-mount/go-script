@@ -8,7 +8,8 @@ import (
 
 type Visitor interface {
 	VisitScript(script *script.Script) error
-	VisitFuncDec(s *script.FunDec) error
+	VisitFuncDec(s *script.FuncDec) error
+	VisitFuncBody(body *script.FuncBody) error
 	VisitParameter(p *script.Parameter) error
 }
 
@@ -20,6 +21,7 @@ type visitor struct {
 	ctx            context.Context
 	script         task.Task
 	funcDec        task.Task
+	funcBody       task.Task
 	arrayParamDec  task.Task
 	scalarParamDec task.Task
 	arrayDec       task.Task
@@ -76,7 +78,7 @@ func (v *visitor) visitTopDec(topDec *script.TopDec) error {
 	return nil
 }
 
-func (v *visitor) VisitFuncDec(s *script.FunDec) error {
+func (v *visitor) VisitFuncDec(s *script.FuncDec) error {
 	return v.visit(s.WithContext, func() error {
 		if err := v.funcDec.Do(v.ctx); err != nil {
 			return err
@@ -90,6 +92,10 @@ func (v *visitor) VisitFuncDec(s *script.FunDec) error {
 
 		return nil
 	})
+}
+
+func (v *visitor) VisitFuncBody(s *script.FuncBody) error {
+	return v.visitTask(s.WithContext, v.funcBody)
 }
 
 func (v *visitor) VisitParameter(p *script.Parameter) error {

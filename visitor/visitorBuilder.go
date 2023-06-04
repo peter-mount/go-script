@@ -13,6 +13,7 @@ type Builder interface {
 	WithContext(context.Context) Visitor
 	Script(t task.Task) Builder
 	FuncDec(t task.Task) Builder
+	FuncBody(t task.Task) Builder
 	ArrayParamDec(t task.Task) Builder
 	ScalarParamDec(t task.Task) Builder
 	ArrayDec(t task.Task) Builder
@@ -22,6 +23,7 @@ type Builder interface {
 type builder struct {
 	script         task.Task
 	funcDec        task.Task
+	funcBody       task.Task
 	arrayParamDec  task.Task
 	scalarParamDec task.Task
 	arrayDec       task.Task
@@ -36,6 +38,7 @@ func (b *builder) WithContext(ctx context.Context) Visitor {
 	v := &visitor{
 		script:         b.script,
 		funcDec:        b.funcDec,
+		funcBody:       b.funcBody,
 		arrayParamDec:  b.arrayParamDec,
 		scalarParamDec: b.scalarParamDec,
 		arrayDec:       b.arrayDec,
@@ -52,6 +55,11 @@ func (b *builder) Script(t task.Task) Builder {
 
 func (b *builder) FuncDec(t task.Task) Builder {
 	b.funcDec = b.funcDec.Then(t)
+	return b
+}
+
+func (b *builder) FuncBody(t task.Task) Builder {
+	b.funcBody = b.funcBody.Then(t)
 	return b
 }
 
