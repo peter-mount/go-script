@@ -11,8 +11,6 @@ type Script struct {
 	TopDec []*TopDec `parser:"@@*"`
 }
 
-func (s *Script) Accept(v Visitor) error { return v.VisitScript(s) }
-
 func (s *Script) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, scriptKey, s)
 }

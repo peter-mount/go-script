@@ -2,9 +2,11 @@ package basic
 
 import (
 	"flag"
-	"github.com/peter-mount/go-kernel/v2/log"
-	common "github.com/peter-mount/go-script"
+	"fmt"
+	"github.com/peter-mount/go-script/debug"
 	"github.com/peter-mount/go-script/parser"
+	"github.com/peter-mount/go-script/state"
+	"strings"
 )
 
 type Basic struct {
@@ -17,9 +19,12 @@ func (b *Basic) Run() error {
 			return err
 		}
 
-		log.Println("Read", s)
+		st, err := state.New(s)
+		if err == nil {
+			fmt.Println(strings.Join(debug.ListFunctions(st), "\n"))
+			err = debug.DebugScript(s)
+		}
 
-		err = common.DebugScript(s)
 		if err != nil {
 			return err
 		}

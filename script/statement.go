@@ -21,7 +21,7 @@ type Statement struct {
 	Empty      bool        `parser:"| @\";\""`
 }
 
-func (s *Statement) Accept(v Visitor) error { return v.VisitStatement(s) }
+//func (s *Statement) Accept(v Visitor) error { return v.VisitStatement(s) }
 
 func (s *Statement) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, statementKey, s)

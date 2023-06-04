@@ -1,6 +1,9 @@
 package script
 
-import "github.com/alecthomas/participle/v2/lexer"
+import (
+	"context"
+	"github.com/alecthomas/participle/v2/lexer"
+)
 
 type FunDec struct {
 	Pos lexer.Position
@@ -9,6 +12,14 @@ type FunDec struct {
 	Name       string       `parser:"@Ident"`
 	Parameters []*Parameter `parser:"\"(\" ((@@ (\",\" @@)*) | \"void\" )? \")\""`
 	FunBody    *FunBody     `parser:"(\";\" | \"{\" @@ \"}\")"`
+}
+
+func (s *FunDec) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, funcDecKey, s)
+}
+
+func FuncDecFromContext(ctx context.Context) *FunDec {
+	return ctx.Value(funcDecKey).(*FunDec)
 }
 
 type FunBody struct {
@@ -30,6 +41,14 @@ type ArrayParameter struct {
 
 	Type  string `parser:"@Type"`
 	Ident string `parser:"@Ident \"[\" \"]\""`
+}
+
+func (s *ArrayParameter) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, arrayParameterKey, s)
+}
+
+func ArrayParameterFromContext(ctx context.Context) *ArrayParameter {
+	return ctx.Value(arrayParameterKey).(*ArrayParameter)
 }
 
 type ReturnStmt struct {
