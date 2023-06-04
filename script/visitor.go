@@ -6,9 +6,9 @@ import (
 )
 
 type Visitor interface {
+	VisitBlock(block *Block) error
 	VisitCall(call *Call) error
 	VisitPrint(print *Print) error
-	VisitRemark(remark *Remark) error
 	VisitScript(script *Script) error
 	VisitStatement(statement *Statement) error
 }
@@ -19,9 +19,9 @@ type Visitable interface {
 
 type visitor struct {
 	ctx       context.Context
+	block     task.Task
 	call      task.Task
 	print     task.Task
-	remark    task.Task
 	script    task.Task
 	statement task.Task
 }
@@ -46,16 +46,28 @@ func (v *visitor) visitTask(p func(context.Context) context.Context, t task.Task
 	})
 }
 
+func (v *visitor) VisitBlock(block *Block) error {
+	return v.visit(block.WithContext, func() error {
+		if err := v.script.Do(v.ctx); err != nil {
+			return err
+		}
+
+		// FIXME use PC not sequential!
+		for _, statement := range block.Statements {
+			if err := statement.Accept(v); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func (v *visitor) VisitCall(call *Call) error {
 	return v.visitTask(call.WithContext, v.call)
 }
 
 func (v *visitor) VisitPrint(print *Print) error {
 	return v.visitTask(print.WithContext, v.print)
-}
-
-func (v *visitor) VisitRemark(remark *Remark) error {
-	return v.visitTask(remark.WithContext, v.remark)
 }
 
 func (v *visitor) VisitScript(s *Script) error {
@@ -65,11 +77,11 @@ func (v *visitor) VisitScript(s *Script) error {
 		}
 
 		// FIXME use PC not sequential!
-		for _, statement := range s.Statements {
-			if err := statement.Accept(v); err != nil {
+		/*for _, block := range s.Blocks {
+			if err := block.Accept(v); err != nil {
 				return err
 			}
-		}
+		}*/
 		return nil
 	})
 }
@@ -81,12 +93,11 @@ func (v *visitor) VisitStatement(s *Statement) error {
 		}
 
 		switch {
-		case s.Call != nil:
-			return s.Call.Accept(v)
-		case s.Print != nil:
-			return s.Print.Accept(v)
-		case s.Remark != nil:
-			return s.Remark.Accept(v)
+		/*		case s.Call != nil:
+					return s.Call.Accept(v)
+				case s.Print != nil:
+					return s.Print.Accept(v)
+		*/
 		}
 
 		// TODO raise error here?
@@ -95,18 +106,18 @@ func (v *visitor) VisitStatement(s *Statement) error {
 }
 
 type VisitorBuilder interface {
-	Call(task2 task.Task) VisitorBuilder
+	Block(t task.Task) VisitorBuilder
+	Call(t task.Task) VisitorBuilder
 	Print(t task.Task) VisitorBuilder
-	Remark(t task.Task) VisitorBuilder
 	Script(t task.Task) VisitorBuilder
 	Statement(t task.Task) VisitorBuilder
 	WithContext(context.Context) Visitor
 }
 
 type visitorBuilder struct {
+	block     task.Task
 	call      task.Task
 	print     task.Task
-	remark    task.Task
 	script    task.Task
 	statement task.Task
 }
@@ -121,9 +132,9 @@ const (
 
 func (b *visitorBuilder) WithContext(ctx context.Context) Visitor {
 	v := &visitor{
+		block:     b.block,
 		call:      b.call,
 		print:     b.print,
-		remark:    b.remark,
 		script:    b.script,
 		statement: b.statement,
 	}
@@ -135,27 +146,27 @@ func FromContext(ctx context.Context) Visitor {
 	return ctx.Value(contextKey).(Visitor)
 }
 
+func (b *visitorBuilder) Block(t task.Task) VisitorBuilder {
+	b.block = b.block.Then(t)
+	return b
+}
+
 func (b *visitorBuilder) Call(t task.Task) VisitorBuilder {
-	b.call = t
+	b.call = b.call.Then(t)
 	return b
 }
 
 func (b *visitorBuilder) Print(t task.Task) VisitorBuilder {
-	b.print = t
-	return b
-}
-
-func (b *visitorBuilder) Remark(t task.Task) VisitorBuilder {
-	b.remark = t
+	b.print = b.print.Then(t)
 	return b
 }
 
 func (b *visitorBuilder) Script(t task.Task) VisitorBuilder {
-	b.script = t
+	b.script = b.script.Then(t)
 	return b
 }
 
 func (b *visitorBuilder) Statement(t task.Task) VisitorBuilder {
-	b.statement = t
+	b.statement = b.statement.Then(t)
 	return b
 }

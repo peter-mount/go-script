@@ -15,9 +15,9 @@ type Call struct {
 func (s *Call) Accept(v Visitor) error { return nil } //v.VisitPrint(s) }
 
 func (s *Call) WithContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, callkey, s)
+	return context.WithValue(ctx, callKey, s)
 }
 
 func CallFromContext(ctx context.Context) *Call {
-	return ctx.Value(callkey).(*Call)
+	return ctx.Value(callKey).(*Call)
 }

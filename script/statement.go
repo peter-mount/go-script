@@ -5,12 +5,20 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
+type Statements struct {
+	Pos        lexer.Position
+	Statements []*Statement `parser:"@@*"`
+}
+
 type Statement struct {
-	Pos    lexer.Position
-	Index  int     `parser:"@Number"`
-	Remark *Remark `parser:"(   @@"`
-	Print  *Print  `parser:"  | @@"`
-	Call   *Call   `parser:"  | @@ ) EOL"`
+	Pos lexer.Position
+
+	IfStmt     *IfStmt     `parser:"  @@"`
+	ReturnStmt *ReturnStmt `parser:"| @@"`
+	WhileStmt  *WhileStmt  `parser:"| @@"`
+	Block      *Statements `parser:"| \"{\" @@ \"}\""`
+	Expression *Expression `parser:"| @@"`
+	Empty      bool        `parser:"| @\";\""`
 }
 
 func (s *Statement) Accept(v Visitor) error { return v.VisitStatement(s) }

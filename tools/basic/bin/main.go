@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/peter-mount/go-basic/tools/basic"
 	"github.com/peter-mount/go-kernel/v2"
-	"log"
+	"os"
 )
 
 func main() {
@@ -11,6 +12,7 @@ func main() {
 		&basic.Basic{},
 	)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }

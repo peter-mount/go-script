@@ -2,71 +2,77 @@ package script
 
 import (
 	"github.com/alecthomas/participle/v2/lexer"
-	"strings"
 )
 
 type Expression struct {
 	Pos lexer.Position
 
-	Left  *Cmp     `@@`
-	Right []*OpCmp `@@*`
+	Assignment *Assignment `parser:"@@"`
 }
 
-type Value struct {
+type Assignment struct {
 	Pos lexer.Position
 
-	Number        *float64    `  @Number`
-	Variable      *string     `| @Ident`
-	String        *string     `| @String`
-	Call          *Call       `| @@`
-	Subexpression *Expression `| "(" @@ ")"`
+	Equality *Equality `parser:"@@"`
+	Op       string    `parser:"( @\"=\""`
+	Next     *Equality `parser:"  @@ )?"`
 }
 
-type Operator string
-
-func (o *Operator) Capture(s []string) error {
-	*o = Operator(strings.Join(s, ""))
-	return nil
-}
-
-type Factor struct {
+type Equality struct {
 	Pos lexer.Position
 
-	Base     *Value `@@`
-	Exponent *Value `( "^" @@ )?`
+	Comparison *Comparison `parser:"@@"`
+	Op         string      `parser:"[ @( \"!\" \"=\" | \"=\" \"=\" )"`
+	Next       *Equality   `parser:"  @@ ]"`
 }
 
-type OpFactor struct {
+type Comparison struct {
 	Pos lexer.Position
 
-	Operator Operator `@("*" | "/")`
-	Factor   *Factor  `@@`
+	Addition *Addition   `parser:"@@"`
+	Op       string      `parser:"[ @( \">\" \"=\" | \">\" | \"<\" \"=\" | \"<\" )"`
+	Next     *Comparison `parser:"  @@ ]"`
 }
 
-type Term struct {
+type Addition struct {
 	Pos lexer.Position
 
-	Left  *Factor     `@@`
-	Right []*OpFactor `@@*`
+	Multiplication *Multiplication `parser:"@@"`
+	Op             string          `parser:"[ @( \"-\" | \"+\" )"`
+	Next           *Addition       `parser:"  @@ ]"`
 }
 
-type OpTerm struct {
+type Multiplication struct {
 	Pos lexer.Position
 
-	Operator Operator `@("+" | "-")`
-	Term     *Term    `@@`
+	Unary *Unary          `parser:"@@"`
+	Op    string          `parser:"[ @( \"/\" | \"*\" )"`
+	Next  *Multiplication `parser:"  @@ ]"`
 }
 
-type Cmp struct {
+type Unary struct {
 	Pos lexer.Position
 
-	Left  *Term     `@@`
-	Right []*OpTerm `@@*`
+	Op      string   `parser:"  ( @( \"!\" | \"-\" )"`
+	Unary   *Unary   `parser:"    @@ )"`
+	Primary *Primary `parser:"| @@"`
 }
 
-type OpCmp struct {
+type Primary struct {
 	Pos lexer.Position
 
-	Operator Operator `@("=" | "<" "=" | ">" "=" | "<" | ">" | "!" "=")`
-	Cmp      *Cmp     `@@`
+	Float         *float64    `parser:"  @Number"`
+	Integer       *int        `parser:"| @Int"`
+	String        *string     `parser:"| @String"`
+	ArrayIndex    *ArrayIndex `parser:"| @@"`
+	CallFunc      *CallFunc   `parser:"| @@"`
+	Ident         string      `parser:"| @Ident"`
+	SubExpression *Expression `parser:"| \"(\" @@ \")\" "`
+}
+
+type ArrayIndex struct {
+	Pos lexer.Position
+
+	Ident string        `parser:"@Ident"`
+	Index []*Expression `parser:"(\"[\" @@ \"]\")+"`
 }

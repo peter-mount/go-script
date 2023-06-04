@@ -7,7 +7,7 @@ import (
 
 type Print struct {
 	Pos        lexer.Position
-	Expression *Expression `parser:"\"PRINT\" @@"`
+	Expression *Expression `parser:"\"print\" \"(\" @@ \")\""`
 }
 
 func (s *Print) Accept(v Visitor) error { return v.VisitPrint(s) }

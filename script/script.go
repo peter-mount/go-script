@@ -6,9 +6,9 @@ import (
 )
 
 type Script struct {
-	Pos        lexer.Position
-	Statements []*Statement `parser:"@@*"`
-	Table      map[int]*Statement
+	Pos lexer.Position
+
+	TopDec []*TopDec `parser:"@@*"`
 }
 
 func (s *Script) Accept(v Visitor) error { return v.VisitScript(s) }
@@ -19,4 +19,11 @@ func (s *Script) WithContext(ctx context.Context) context.Context {
 
 func ScriptFromContext(ctx context.Context) *Script {
 	return ctx.Value(scriptKey).(*Script)
+}
+
+type TopDec struct {
+	Pos lexer.Position
+
+	FunDec *FunDec `parser:"  @@"`
+	VarDec *VarDec `parser:"| @@ \";\""`
 }

@@ -8,19 +8,24 @@ import (
 
 var (
 	scriptLexer = lexer.MustSimple([]lexer.SimpleRule{
-		{"Comment", `(?i)rem[^\n]*`},
+		{"comment", `//.*|/\*.*?\*/`},
+		{"whitespace", `\s+`},
+
+		{"Type", `\b(int|char)\b`},
+		{"Ident", `\b([a-zA-Z_][a-zA-Z0-9_]*)\b`},
+		{"Punct", `[-,()*/+%{};&!=:<>]|\[|\]`},
+		{"Number", `[-+]?((\d*)?\.\d+|\d+\.(\d*)?)`},
+		{"Int", `[-+]?\d+`},
 		{"String", `"(\\"|[^"])*"`},
-		{"Number", `[-+]?(\d*\.)?\d+`},
-		{"Ident", `[a-zA-Z_]\w*`},
-		{"Punct", `[-[!@#$%^&*()+_={}\|:;"'<,>.?/]|]`},
-		{"EOL", `[\n\r]+`},
-		{"whitespace", `[ \t]+`},
+		//{"EOS", `[;\n\r]+`},
+		//{"EOL", `[\n\r]+`},
 	})
 
 	parser = participle.MustBuild[script.Script](
 		participle.Lexer(scriptLexer),
-		participle.CaseInsensitive("Ident"),
-		participle.Unquote("String"),
 		participle.UseLookahead(2),
+		//participle.CaseInsensitive("Ident"),
+		//participle.Unquote("String"),
+		//participle.Elide("whitespace"),
 	)
 )

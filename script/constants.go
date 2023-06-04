@@ -1,7 +1,8 @@
 package script
 
 const (
-	callkey      = "go-basic/call"
+	blockKey     = "go-basic/block"
+	callKey      = "go-basic/call"
 	printKey     = "go-basic/print"
 	remarkKey    = "go-basic/remark"
 	scriptKey    = "go-basic/script"
