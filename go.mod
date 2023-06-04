@@ -1,4 +1,4 @@
-module github.com/peter-mount/go-basic
+module github.com/peter-mount/go-script
 
 go 1.19
 

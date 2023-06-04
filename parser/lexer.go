@@ -3,7 +3,7 @@ package parser
 import (
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
-	"github.com/peter-mount/go-basic/script"
+	"github.com/peter-mount/go-script/script"
 )
 
 var (

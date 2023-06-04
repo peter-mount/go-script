@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/peter-mount/go-basic/tools/basic"
 	"github.com/peter-mount/go-kernel/v2"
+	"github.com/peter-mount/go-script/tools/basic"
 	"os"
 )
 

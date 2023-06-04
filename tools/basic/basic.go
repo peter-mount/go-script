@@ -2,9 +2,9 @@ package basic
 
 import (
 	"flag"
-	common "github.com/peter-mount/go-basic"
-	"github.com/peter-mount/go-basic/parser"
 	"github.com/peter-mount/go-kernel/v2/log"
+	common "github.com/peter-mount/go-script"
+	"github.com/peter-mount/go-script/parser"
 )
 
 type Basic struct {
