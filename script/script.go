@@ -23,5 +23,5 @@ type TopDec struct {
 	Pos lexer.Position
 
 	FunDec *FuncDec `parser:"  @@"`
-	VarDec *VarDec  `parser:"| @@ \";\""`
+	VarDec *VarDec  `parser:"| @@ ';'"`
 }

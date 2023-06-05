@@ -31,9 +31,9 @@ type Statement struct {
 	IfStmt     *IfStmt     `parser:"  @@"`
 	ReturnStmt *ReturnStmt `parser:"| @@"`
 	WhileStmt  *WhileStmt  `parser:"| @@"`
-	Block      *Statements `parser:"| \"{\" @@ \"}\""`
+	Block      *Statements `parser:"| '{' @@ '}'"`
 	Expression *Expression `parser:"| @@"`
-	Empty      bool        `parser:"| @\";\""`
+	Empty      bool        `parser:"| @';'"`
 }
 
 func (s *Statement) WithContext(ctx context.Context) context.Context {

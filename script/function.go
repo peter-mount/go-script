@@ -8,10 +8,10 @@ import (
 type FuncDec struct {
 	Pos lexer.Position
 
-	ReturnType string       `parser:"@(Type | \"void\")?"`
+	ReturnType string       `parser:"@(Type | 'void')?"`
 	Name       string       `parser:"@Ident"`
-	Parameters []*Parameter `parser:"\"(\" ((@@ (\",\" @@)*) | \"void\" )? \")\""`
-	FunBody    *FuncBody    `parser:"(\";\" | \"{\" @@ \"}\")"`
+	Parameters []*Parameter `parser:"'(' ((@@ (',' @@)*) | 'void' )? ')'"`
+	FunBody    *FuncBody    `parser:"(';' | '{' @@ '}')"`
 }
 
 func (s *FuncDec) WithContext(ctx context.Context) context.Context {
@@ -25,7 +25,7 @@ func FuncDecFromContext(ctx context.Context) *FuncDec {
 type FuncBody struct {
 	Pos lexer.Position
 
-	Locals     []*VarDec   `parser:"(@@ \";\")*"`
+	Locals     []*VarDec   `parser:"(@@ ';')*"`
 	Statements *Statements `parser:"@@"`
 }
 
@@ -48,7 +48,7 @@ type ArrayParameter struct {
 	Pos lexer.Position
 
 	Type  string `parser:"@Type"`
-	Ident string `parser:"@Ident \"[\" \"]\""`
+	Ident string `parser:"@Ident '[' ']'"`
 }
 
 func (s *ArrayParameter) WithContext(ctx context.Context) context.Context {
@@ -62,12 +62,12 @@ func ArrayParameterFromContext(ctx context.Context) *ArrayParameter {
 type ReturnStmt struct {
 	Pos lexer.Position
 
-	Result *Expression `parser:"\"return\" @@?"`
+	Result *Expression `parser:"'return' @@?"`
 }
 
 type CallFunc struct {
 	Pos lexer.Position
 
 	Ident string        `parser:"@Ident"`
-	Index []*Expression `parser:"\"(\" (@@ (\",\" @@)*)? \")\""`
+	Index []*Expression `parser:"'(' (@@ (',' @@)*)? ')'"`
 }

@@ -31,7 +31,7 @@ type ArrayDec struct {
 	Pos  lexer.Position
 	Type string `parser:"@Type"`
 	Name string `parser:"@Ident"`
-	Size int    `parser:"\"[\" @Int \"]\""`
+	Size int    `parser:"'[' @Int ']'"`
 }
 
 func (s *ArrayDec) WithContext(ctx context.Context) context.Context {
