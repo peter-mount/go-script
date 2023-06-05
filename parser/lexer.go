@@ -25,7 +25,7 @@ var (
 		participle.Lexer(scriptLexer),
 		participle.UseLookahead(2),
 		//participle.CaseInsensitive("Ident"),
-		//participle.Unquote("String"),
+		participle.Unquote("String"),
 		//participle.Elide("whitespace"),
 	)
 )

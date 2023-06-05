@@ -2,7 +2,6 @@ package executor
 
 import (
 	"context"
-	"fmt"
 	"github.com/peter-mount/go-script/script"
 )
 
@@ -10,7 +9,6 @@ import (
 // Within this it runs with its own variable scope which is automatically closed when it completes
 func (e *executor) statements(ctx context.Context) error {
 	statements := script.StatementsFromContext(ctx)
-	fmt.Printf("%s %T\n", statements.Pos, statements)
 
 	if statements == nil {
 		panic("no statements?")
@@ -31,7 +29,6 @@ func (e *executor) statements(ctx context.Context) error {
 
 func (e *executor) statement(ctx context.Context) error {
 	statement := script.StatementFromContext(ctx)
-	fmt.Printf("%s %T\n", statement.Pos, statement)
 
 	switch {
 	case statement.Expression != nil:

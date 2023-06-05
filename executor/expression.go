@@ -8,7 +8,6 @@ import (
 
 func (e *executor) expression(ctx context.Context) error {
 	op := script.ExpressionFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	if op.Assignment != nil {
 		v, exists, err := e.calculator.Calculate(e.assignment, op.Assignment.WithContext(ctx))
@@ -25,7 +24,6 @@ func (e *executor) expression(ctx context.Context) error {
 
 func (e *executor) assignment(ctx context.Context) error {
 	op := script.AssignmentFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	if op.Right != nil {
 		// Assignment
@@ -36,7 +34,6 @@ func (e *executor) assignment(ctx context.Context) error {
 
 func (e *executor) equality(ctx context.Context) error {
 	op := script.EqualityFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	if err := e.visitor.VisitComparison(op.Left); err != nil {
 		return err
@@ -54,7 +51,6 @@ func (e *executor) equality(ctx context.Context) error {
 
 func (e *executor) comparison(ctx context.Context) error {
 	op := script.ComparisonFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	if err := e.visitor.VisitAddition(op.Left); err != nil {
 		return err
@@ -72,7 +68,6 @@ func (e *executor) comparison(ctx context.Context) error {
 
 func (e *executor) addition(ctx context.Context) error {
 	op := script.AdditionFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	if err := e.visitor.VisitMultiplication(op.Left); err != nil {
 		return err
@@ -90,7 +85,6 @@ func (e *executor) addition(ctx context.Context) error {
 
 func (e *executor) multiplication(ctx context.Context) error {
 	op := script.MultiplicationFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	if err := e.visitor.VisitUnary(op.Left); err != nil {
 		return err
@@ -108,7 +102,6 @@ func (e *executor) multiplication(ctx context.Context) error {
 
 func (e *executor) unary(ctx context.Context) error {
 	op := script.UnaryFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	if op.Unary != nil {
 		// TODO implement
@@ -124,7 +117,6 @@ func (e *executor) unary(ctx context.Context) error {
 
 func (e *executor) primary(ctx context.Context) error {
 	op := script.PrimaryFromContext(ctx)
-	fmt.Printf("%s %T\n", op.Pos, op)
 
 	switch {
 	case op.Float != nil:

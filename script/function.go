@@ -68,8 +68,8 @@ type ReturnStmt struct {
 type CallFunc struct {
 	Pos lexer.Position
 
-	Name  string        `parser:"@Ident"`
-	Index []*Expression `parser:"'(' (@@ (',' @@)*)? ')'"`
+	Name string        `parser:"@Ident"`
+	Args []*Expression `parser:"'(' (@@ (',' @@)*)? ')'"`
 }
 
 func (s *CallFunc) WithContext(ctx context.Context) context.Context {
