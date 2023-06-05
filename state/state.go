@@ -10,6 +10,10 @@ import (
 	"sync"
 )
 
+const (
+	stateKey = "go-script/state"
+)
+
 // State holds the current processing state of the Script
 type State interface {
 	Variables
@@ -17,6 +21,7 @@ type State interface {
 	GetFunction(n string) (*script.FuncDec, bool)
 	// GetFunctions returns a list of declared functions
 	GetFunctions() []string
+	WithContext(context.Context) context.Context
 }
 
 type state struct {
@@ -39,6 +44,14 @@ func New(s *script.Script) (State, error) {
 		VisitScript(s)
 
 	return state, err
+}
+
+func FromContext(ctx context.Context) State {
+	return ctx.Value(stateKey).(*state)
+}
+
+func (s *state) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, stateKey, s)
 }
 
 func (s *state) declareFunction(ctx context.Context) error {

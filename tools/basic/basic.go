@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/peter-mount/go-script/debug"
+	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
 	"github.com/peter-mount/go-script/state"
 	"strings"
@@ -27,6 +28,16 @@ func (b *Basic) Run() error {
 			err = debug.DebugScript(s)
 		}
 
+		if err != nil {
+			return err
+		}
+
+		exec, err := executor.New(s)
+		if err != nil {
+			return err
+		}
+
+		err = exec.Run()
 		if err != nil {
 			return err
 		}
