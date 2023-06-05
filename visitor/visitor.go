@@ -11,6 +11,8 @@ type Visitor interface {
 	VisitFuncDec(s *script.FuncDec) error
 	VisitFuncBody(body *script.FuncBody) error
 	VisitParameter(p *script.Parameter) error
+	VisitStatements(s *script.Statements) error
+	VisitStatement(s *script.Statement) error
 }
 
 func FromContext(ctx context.Context) Visitor {
@@ -26,6 +28,8 @@ type visitor struct {
 	scalarParamDec task.Task
 	arrayDec       task.Task
 	scalarDec      task.Task
+	statements     task.Task
+	statement      task.Task
 }
 
 func (v *visitor) visit(p func(context.Context) context.Context, f func() error) error {
@@ -90,6 +94,13 @@ func (v *visitor) VisitFuncDec(s *script.FuncDec) error {
 			}
 		}
 
+		if s.FunBody != nil {
+			// TODO visit VarDec here
+			if err := v.VisitStatements(s.FunBody.Statements); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }
@@ -107,4 +118,34 @@ func (v *visitor) VisitParameter(p *script.Parameter) error {
 	default:
 		return nil
 	}
+}
+func (v *visitor) VisitStatements(s *script.Statements) error {
+	return v.visit(s.WithContext, func() error {
+		if err := v.statements.Do(v.ctx); err != nil {
+			return err
+		}
+
+		for _, e := range s.Statements {
+			if err := v.VisitStatement(e); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (v *visitor) VisitStatement(s *script.Statement) error {
+	return v.visit(s.WithContext, func() error {
+		if err := v.statement.Do(v.ctx); err != nil {
+			return err
+		}
+
+		switch {
+		case s.Block != nil:
+			return v.VisitStatements(s.Block)
+
+		default:
+			return nil
+		}
+	})
 }

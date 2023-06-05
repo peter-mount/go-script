@@ -7,6 +7,6 @@ const (
 	funcBodyKey       = "go-script/funcBody"
 	arrayDecKey       = "go-script/arrayDec"
 	scalarDecKey      = "go-script/scalarDec"
-
-	statementKey = "go-script/statement"
+	statementsKey     = "go-script/statements"
+	statementKey      = "go-script/statement"
 )

@@ -6,12 +6,27 @@ import (
 )
 
 type Statements struct {
-	Pos        lexer.Position
+	Pos    lexer.Position
+	Parent *Statements // Parent when nested
+
 	Statements []*Statement `parser:"@@*"`
 }
 
+func (s *Statements) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, statementsKey, s)
+}
+
+func StatementsFromContext(ctx context.Context) *Statements {
+	v := ctx.Value(statementsKey)
+	if v != nil {
+		return v.(*Statements)
+	}
+	return nil
+}
+
 type Statement struct {
-	Pos lexer.Position
+	Pos    lexer.Position
+	Parent *Statements // Parent when nested
 
 	IfStmt     *IfStmt     `parser:"  @@"`
 	ReturnStmt *ReturnStmt `parser:"| @@"`
@@ -21,12 +36,14 @@ type Statement struct {
 	Empty      bool        `parser:"| @\";\""`
 }
 
-//func (s *Statement) Accept(v Visitor) error { return v.VisitStatement(s) }
-
 func (s *Statement) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, statementKey, s)
 }
 
 func StatementFromContext(ctx context.Context) *Statement {
-	return ctx.Value(statementKey).(*Statement)
+	v := ctx.Value(statementKey)
+	if v != nil {
+		return v.(*Statement)
+	}
+	return nil
 }

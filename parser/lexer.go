@@ -21,7 +21,7 @@ var (
 		//{"EOL", `[\n\r]+`},
 	})
 
-	parser = participle.MustBuild[script.Script](
+	scriptParser = participle.MustBuild[script.Script](
 		participle.Lexer(scriptLexer),
 		participle.UseLookahead(2),
 		//participle.CaseInsensitive("Ident"),

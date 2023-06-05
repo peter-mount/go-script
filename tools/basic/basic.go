@@ -13,8 +13,10 @@ type Basic struct {
 }
 
 func (b *Basic) Run() error {
+	p := parser.New()
+
 	for _, fileName := range flag.Args() {
-		s, err := parser.ParseFile(fileName)
+		s, err := p.ParseFile(fileName)
 		if err != nil {
 			return err
 		}

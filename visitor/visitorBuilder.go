@@ -18,6 +18,8 @@ type Builder interface {
 	ScalarParamDec(t task.Task) Builder
 	ArrayDec(t task.Task) Builder
 	ScalarDec(t task.Task) Builder
+	Statements(t task.Task) Builder
+	Statement(t task.Task) Builder
 }
 
 type builder struct {
@@ -28,6 +30,8 @@ type builder struct {
 	scalarParamDec task.Task
 	arrayDec       task.Task
 	scalarDec      task.Task
+	statements     task.Task
+	statement      task.Task
 }
 
 func New() Builder {
@@ -43,6 +47,8 @@ func (b *builder) WithContext(ctx context.Context) Visitor {
 		scalarParamDec: b.scalarParamDec,
 		arrayDec:       b.arrayDec,
 		scalarDec:      b.scalarDec,
+		statements:     b.statements,
+		statement:      b.statement,
 	}
 	v.ctx = context.WithValue(ctx, contextKey, v)
 	return v
@@ -80,5 +86,15 @@ func (b *builder) ArrayDec(t task.Task) Builder {
 
 func (b *builder) ScalarDec(t task.Task) Builder {
 	b.scalarDec = b.scalarDec.Then(t)
+	return b
+}
+
+func (b *builder) Statements(t task.Task) Builder {
+	b.statements = b.statements.Then(t)
+	return b
+}
+
+func (b *builder) Statement(t task.Task) Builder {
+	b.statement = b.statement.Then(t)
 	return b
 }
