@@ -3,6 +3,7 @@ package calculator
 import (
 	"context"
 	"fmt"
+	"github.com/peter-mount/go-kernel/v2/util/task"
 )
 
 const (
@@ -33,7 +34,7 @@ type Calculator interface {
 	//
 	// Returns an error if the stack doesn't have two entries or the calculation fails
 	Op2(op string) error
-	// Exec executes a Calculation against this calculator.
+	// Calculate executes a Calculation against this calculator.
 	//
 	// It ensures that the stack is valid for just this calculation, preserving
 	// any existing stack for the calculation that is executing this one.
@@ -41,7 +42,8 @@ type Calculator interface {
 	//
 	// Returns the top value of the stack at the end of the calculation,
 	// or nil if the stack was empty.
-	Exec(calc Calculation, ctx context.Context) (interface{}, error)
+	Calculate(t task.Task, ctx context.Context) (interface{}, bool, error)
+	Exec(t task.Task, ctx context.Context) error
 }
 
 // FromContext returns the Calculator associated with a Context
@@ -145,9 +147,9 @@ func (c *calculator) Op2(op string) error {
 	return nil
 }
 
-func (c *calculator) Exec(calc Calculation, ctx context.Context) (interface{}, error) {
+func (c *calculator) Calculate(t task.Task, ctx context.Context) (interface{}, bool, error) {
 	if c == nil {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	old := c.stack
@@ -156,12 +158,26 @@ func (c *calculator) Exec(calc Calculation, ctx context.Context) (interface{}, e
 		c.stack = old
 	}()
 
-	err := DoCalculation(calc, ctx)
+	err := t(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	// Ignore the error as a value is optional
-	v, _ := c.Pop()
-	return v, nil
+	// Ignore the error as a value is optional but use it for the return bool
+	v, err := c.Pop()
+	return v, err == nil, nil
+}
+
+func (c *calculator) Exec(t task.Task, ctx context.Context) error {
+	if c == nil {
+		return nil
+	}
+
+	old := c.stack
+	c.stack = nil
+	defer func() {
+		c.stack = old
+	}()
+
+	return t.Do(ctx)
 }

@@ -3,6 +3,7 @@ package calculator
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // Float is an instance that can return its value as a float64
@@ -175,4 +176,25 @@ func Convert(a, b interface{}) (interface{}, error) {
 	}
 
 	return nil, fmt.Errorf("unable to convert %T to %T", b, a)
+}
+
+func GetValue(t string, v interface{}) (interface{}, error) {
+	switch strings.ToLower(t) {
+	case "", "void":
+		return nil, nil
+	case "int":
+		return GetInt(v)
+
+	case "float":
+		return GetFloat(v)
+
+	case "string":
+		return GetString(v)
+
+	case "bool":
+		return GetBool(v)
+
+	default:
+		return nil, fmt.Errorf("type %q is unsupported", t)
+	}
 }

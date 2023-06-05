@@ -25,7 +25,7 @@ func ListFunctions(s state.State) []string {
 		}).
 		ArrayParamDec(func(ctx context.Context) error {
 			p := script.ArrayParameterFromContext(ctx)
-			b = append(b, fmt.Sprintf("%s %s[]", p.Ident, p.Type))
+			b = append(b, fmt.Sprintf("%s %s[]", p.Name, p.Type))
 			return nil
 		}).
 		WithContext(context.Background())

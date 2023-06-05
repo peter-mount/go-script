@@ -2,9 +2,7 @@ package script
 
 import (
 	"context"
-	"fmt"
 	"github.com/alecthomas/participle/v2/lexer"
-	"github.com/peter-mount/go-script/calculator"
 )
 
 type Expression struct {
@@ -13,19 +11,12 @@ type Expression struct {
 	Assignment *Assignment `parser:"@@"`
 }
 
-func (op *Expression) Calculate(ctx context.Context) error {
-	calc := calculator.FromContext(ctx)
-	if calc != nil && op.Assignment != nil {
-		// This ensures the Calculator has a fresh stack for each Expression
-		v, err := calc.Exec(op.Assignment, ctx)
-		if err != nil {
-			return err
-		}
-		if v != nil {
-			calc.Push(v)
-		}
-	}
-	return nil
+func (op *Expression) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, expressionKey, op)
+}
+
+func ExpressionFromContext(ctx context.Context) *Expression {
+	return ctx.Value(expressionKey).(*Expression)
 }
 
 type Assignment struct {
@@ -36,12 +27,12 @@ type Assignment struct {
 	Right *Equality `parser:"  @@ )?"`
 }
 
-func (op *Assignment) Calculate(ctx context.Context) error {
-	if op.Op == "=" {
-		return fmt.Errorf("assignment not implemented")
-	}
+func (op *Assignment) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, assignmentKey, op)
+}
 
-	return calculator.DoCalculation(op.Left, ctx)
+func AssignmentFromContext(ctx context.Context) *Assignment {
+	return ctx.Value(assignmentKey).(*Assignment)
 }
 
 type Equality struct {
@@ -52,8 +43,12 @@ type Equality struct {
 	Right *Equality   `parser:"  @@ ]"`
 }
 
-func (op *Equality) Calculate(ctx context.Context) error {
-	return calculator.CalculateOp2(ctx, op.Op, op.Left, op.Right)
+func (op *Equality) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, equalityKey, op)
+}
+
+func EqualityFromContext(ctx context.Context) *Equality {
+	return ctx.Value(equalityKey).(*Equality)
 }
 
 type Comparison struct {
@@ -64,8 +59,12 @@ type Comparison struct {
 	Right *Comparison `parser:"  @@ ]"`
 }
 
-func (op *Comparison) Calculate(ctx context.Context) error {
-	return calculator.CalculateOp2(ctx, op.Op, op.Left, op.Right)
+func (op *Comparison) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, comparisonKey, op)
+}
+
+func ComparisonFromContext(ctx context.Context) *Comparison {
+	return ctx.Value(comparisonKey).(*Comparison)
 }
 
 type Addition struct {
@@ -76,8 +75,12 @@ type Addition struct {
 	Right *Addition       `parser:"  @@ ]"`
 }
 
-func (op *Addition) Calculate(ctx context.Context) error {
-	return calculator.CalculateOp2(ctx, op.Op, op.Left, op.Right)
+func (op *Addition) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, additionKey, op)
+}
+
+func AdditionFromContext(ctx context.Context) *Addition {
+	return ctx.Value(additionKey).(*Addition)
 }
 
 type Multiplication struct {
@@ -88,8 +91,12 @@ type Multiplication struct {
 	Right *Multiplication `parser:"  @@ ]"`
 }
 
-func (op *Multiplication) Calculate(ctx context.Context) error {
-	return calculator.CalculateOp2(ctx, op.Op, op.Left, op.Right)
+func (op *Multiplication) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, multiplicationKey, op)
+}
+
+func MultiplicationFromContext(ctx context.Context) *Multiplication {
+	return ctx.Value(multiplicationKey).(*Multiplication)
 }
 
 type Unary struct {
@@ -100,20 +107,12 @@ type Unary struct {
 	Primary *Primary `parser:"| @@"`
 }
 
-func (op *Unary) Calculate(ctx context.Context) error {
-	// TODO how to handle? not a CalculateOp
-	switch {
-	case op.Op == "!":
-		// Negate
-		return fmt.Errorf("not '!' not implemented")
-	case op.Op == "-":
-		// negate
-		return fmt.Errorf("negate '-' not implemented")
-	case op.Primary != nil:
-		return calculator.DoCalculation(op.Primary, ctx)
-	default:
-		return nil
-	}
+func (op *Unary) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, unaryKey, op)
+}
+
+func UnaryFromContext(ctx context.Context) *Unary {
+	return ctx.Value(unaryKey).(*Unary)
 }
 
 type Primary struct {
@@ -128,23 +127,12 @@ type Primary struct {
 	SubExpression *Expression `parser:"| '(' @@ ')' "`
 }
 
-func (op *Primary) Calculate(ctx context.Context) error {
-	calc := calculator.FromContext(ctx)
-	if calc != nil {
-		switch {
-		case op.Float != nil:
-			calc.Push(*op.Float)
-		case op.Integer != nil:
-			calc.Push(*op.Integer)
-		case op.String != nil:
-			calc.Push(*op.String)
-		case op.Ident != "":
-		//return *op.Float, nil
-		case op.SubExpression != nil:
-			return calculator.DoCalculation(op.SubExpression, ctx)
-		}
-	}
-	return nil
+func (op *Primary) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, primaryKey, op)
+}
+
+func PrimaryFromContext(ctx context.Context) *Primary {
+	return ctx.Value(primaryKey).(*Primary)
 }
 
 type ArrayIndex struct {

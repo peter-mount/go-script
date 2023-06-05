@@ -8,9 +8,11 @@ func (v *visitor) VisitStatements(s *script.Statements) error {
 			return err
 		}
 
-		for _, e := range s.Statements {
-			if err := v.VisitStatement(e); err != nil {
-				return err
+		if !v.statementsNoNest {
+			for _, e := range s.Statements {
+				if err := v.VisitStatement(e); err != nil {
+					return err
+				}
 			}
 		}
 		return nil

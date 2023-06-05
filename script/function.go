@@ -47,8 +47,8 @@ type Parameter struct {
 type ArrayParameter struct {
 	Pos lexer.Position
 
-	Type  string `parser:"@Type"`
-	Ident string `parser:"@Ident '[' ']'"`
+	Type string `parser:"@Type"`
+	Name string `parser:"@Ident '[' ']'"`
 }
 
 func (s *ArrayParameter) WithContext(ctx context.Context) context.Context {
@@ -68,6 +68,14 @@ type ReturnStmt struct {
 type CallFunc struct {
 	Pos lexer.Position
 
-	Ident string        `parser:"@Ident"`
+	Name  string        `parser:"@Ident"`
 	Index []*Expression `parser:"'(' (@@ (',' @@)*)? ')'"`
+}
+
+func (s *CallFunc) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, callFuncKey, s)
+}
+
+func CallFuncFromContext(ctx context.Context) *CallFunc {
+	return ctx.Value(callFuncKey).(*CallFunc)
 }

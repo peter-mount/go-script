@@ -55,3 +55,7 @@ func (v *visitor) VisitParameter(p *script.Parameter) error {
 		return nil
 	}
 }
+
+func (v *visitor) VisitCallFunc(s *script.CallFunc) error {
+	return v.visitTask(s.WithContext, v.callFunc)
+}

@@ -95,6 +95,13 @@ func (p *defaultParser) initStatements(ctx context.Context) error {
 		if parent != nil {
 			statements.Parent = parent.Parent
 		}
+
+		// Ensure Statement.Next is setup
+		for i, s := range statements.Statements {
+			if i > 0 {
+				statements.Statements[i-1].Next = s
+			}
+		}
 	}
 	return nil
 }
