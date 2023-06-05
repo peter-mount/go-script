@@ -27,6 +27,7 @@ func StatementsFromContext(ctx context.Context) *Statements {
 type Statement struct {
 	Pos    lexer.Position
 	Parent *Statements // Parent when nested
+	Next   *Statement  // Next statement within Statements
 
 	IfStmt     *IfStmt     `parser:"  @@"`
 	ReturnStmt *ReturnStmt `parser:"| @@"`

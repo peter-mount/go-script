@@ -2,9 +2,7 @@ package state
 
 import (
 	"context"
-	"fmt"
 	"github.com/peter-mount/go-script/script"
-	"github.com/peter-mount/go-script/visitor"
 	"sort"
 	"strings"
 	"sync"
@@ -37,13 +35,7 @@ func New(s *script.Script) (State, error) {
 		functions: make(map[string]*script.FuncDec),
 		variables: NewVariables(),
 	}
-
-	err := visitor.New().
-		FuncDec(state.declareFunction).
-		WithContext(context.Background()).
-		VisitScript(s)
-
-	return state, err
+	return state, state.setup()
 }
 
 func FromContext(ctx context.Context) State {
@@ -52,19 +44,6 @@ func FromContext(ctx context.Context) State {
 
 func (s *state) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, stateKey, s)
-}
-
-func (s *state) declareFunction(ctx context.Context) error {
-	f := script.FuncDecFromContext(ctx)
-
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	if e, exists := s.functions[f.Name]; exists {
-		return fmt.Errorf("%s function %q already defined at %s", f.Pos.String(), f.Name, e.Pos.String())
-	}
-	s.functions[f.Name] = f
-	return nil
 }
 
 func (s *state) GetFunction(n string) (*script.FuncDec, bool) {
