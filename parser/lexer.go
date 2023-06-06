@@ -8,6 +8,7 @@ import (
 
 var (
 	scriptLexer = lexer.MustSimple([]lexer.SimpleRule{
+		{"hashComment", `#.*`},
 		{"comment", `//.*|/\*.*?\*/`},
 		{"whitespace", `\s+`},
 
