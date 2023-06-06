@@ -29,6 +29,7 @@ type Builder interface {
 	If(t task.Task) Builder
 	Multiplication(t task.Task) Builder
 	Primary(t task.Task) Builder
+	Return(t task.Task) Builder
 	// ScalarDec adds a task to invoke for each ScalarDec object
 	ScalarDec(t task.Task) Builder
 	// ScalarParamDec adds a task to invoke for each ScalarParamDec object
@@ -125,6 +126,11 @@ func (b *builder) Multiplication(t task.Task) Builder {
 
 func (b *builder) Primary(t task.Task) Builder {
 	b.primary = b.primary.Then(t)
+	return b
+}
+
+func (b *builder) Return(t task.Task) Builder {
+	b.returnStatement = b.returnStatement.Then(t)
 	return b
 }
 

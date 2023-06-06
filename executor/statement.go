@@ -39,6 +39,9 @@ func (e *executor) statement(ctx context.Context) error {
 
 	case statement.WhileStmt != nil:
 		return Error(statement.Pos, e.visitor.VisitWhile(statement.WhileStmt))
+
+	case statement.ReturnStmt != nil:
+		return Error(statement.Pos, e.visitor.VisitReturn(statement.ReturnStmt))
 	}
 
 	return nil

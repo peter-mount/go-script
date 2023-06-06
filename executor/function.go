@@ -3,39 +3,52 @@ package executor
 import (
 	"context"
 	"fmt"
-	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
 )
+
+var ctr = 0
 
 func (e *executor) callFunc(ctx context.Context) error {
 	cf := script.CallFuncFromContext(ctx)
 
+	// Lookup builtin functions
 	libFunc, exists := Lookup(cf.Name)
 	if exists {
 		return libFunc(e, cf, ctx)
 	}
 
+	// Lookup local function
 	f, exists := e.state.GetFunction(cf.Name)
 	if !exists {
 		return fmt.Errorf("%s function %q not defined", cf.Pos, cf.Name)
 	}
 
-	// Todo parameters
-	return e.function(f)
+	ctr++
+	if ctr > 3 {
+		panic("boo")
+	}
+
+	// Process parameters
+	var a []interface{}
+	for _, p := range cf.Args {
+		v, ok, err := e.calculator.Calculate(e.assignment, p.Right.WithContext(ctx))
+		if err != nil {
+			return Error(p.Pos, err)
+		}
+		if !ok {
+			return Errorf(p.Pos, "No result from argument")
+		}
+		a = append(a, v)
+	}
+	return e.function(f, a...)
 }
 
 func (e *executor) function(f *script.FuncDec, args ...interface{}) error {
 	err := e.functionImpl(f, args)
 
 	// Handle return values
-	if ret, ok := err.(*returnError); ok {
-		if f.ReturnType != "" && f.ReturnType != "void" {
-			v, err := calculator.GetValue(f.ReturnType, ret.Value)
-			if err != nil {
-				return Error(f.Pos, err)
-			}
-			e.calculator.Push(v)
-		}
+	if ret, ok := err.(*ReturnError); ok {
+		e.calculator.Push(ret.Value())
 		return nil
 	}
 
@@ -52,7 +65,7 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	defer e.state.EndScope()
 
 	if len(args) != len(f.Parameters) {
-		return fmt.Errorf("%s parameter mismatch", f.Pos)
+		return fmt.Errorf("%s parameter mismatch, expected %d got %d", f.Pos, len(f.Parameters), len(args))
 	}
 
 	for i, p := range f.Parameters {
@@ -77,4 +90,22 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	}
 
 	return e.visitor.VisitStatements(body.Statements)
+}
+
+func (e *executor) returnStatement(ctx context.Context) error {
+	ret := script.ReturnFromContext(ctx)
+
+	if ret.Result == nil {
+		return NewReturn(nil)
+	}
+
+	v, ok, err := e.calculator.Calculate(e.expression, ret.Result.WithContext(ctx))
+	if err != nil {
+		return Error(ret.Pos, err)
+	}
+	if !ok {
+		return Errorf(ret.Pos, "No result from argument")
+	}
+
+	return NewReturn(v)
 }

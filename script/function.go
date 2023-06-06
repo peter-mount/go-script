@@ -65,6 +65,14 @@ type ReturnStmt struct {
 	Result *Expression `parser:"'return' @@?"`
 }
 
+func (s *ReturnStmt) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, returnKey, s)
+}
+
+func ReturnFromContext(ctx context.Context) *ReturnStmt {
+	return ctx.Value(returnKey).(*ReturnStmt)
+}
+
 type CallFunc struct {
 	Pos lexer.Position
 

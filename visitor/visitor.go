@@ -19,6 +19,7 @@ type Visitor interface {
 	VisitMultiplication(s *script.Multiplication) error
 	VisitParameter(p *script.Parameter) error
 	VisitPrimary(s *script.Primary) error
+	VisitReturn(s *script.ReturnStmt) error
 	VisitScript(script *script.Script) error
 	VisitStatement(s *script.Statement) error
 	VisitStatements(s *script.Statements) error

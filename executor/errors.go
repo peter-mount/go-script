@@ -33,7 +33,8 @@ func Errorf(pos lexer.Position, f string, a ...interface{}) error {
 func Error(pos lexer.Position, err error) error {
 	// If err is a PosError then return it as it has the position already.
 	// Also, if err is nil then return nil, so we can use it as a catch-all
-	if err == nil || IsError(err) {
+	// Break and return dummy errors also are unchanged
+	if err == nil || IsError(err) || IsBreak(err) || IsReturn(err) {
 		return err
 	}
 	return Errorf(pos, err.Error())
@@ -52,14 +53,22 @@ func IsError(err error) bool {
 func IsBreak(err error) bool { return err == breakError }
 
 func IsReturn(err error) bool {
-	_, ok := err.(*returnError)
+	_, ok := err.(*ReturnError)
 	return ok
 }
 
-type returnError struct {
-	Value interface{}
+type ReturnError struct {
+	value interface{}
 }
 
-func (r *returnError) Error() string {
+func (r *ReturnError) Error() string {
 	return "return"
+}
+
+func (r *ReturnError) Value() interface{} {
+	return r.value
+}
+
+func NewReturn(v interface{}) error {
+	return &ReturnError{value: v}
 }

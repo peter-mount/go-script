@@ -14,6 +14,7 @@ const (
 	ifKey             = "go-script/if"
 	multiplicationKey = "go-script/multiplication"
 	primaryKey        = "go-script/primary"
+	returnKey         = "go-script/return"
 	scriptKey         = "go-script/script"
 	scalarDecKey      = "go-script/scalarDec"
 	statementsKey     = "go-script/statements"
