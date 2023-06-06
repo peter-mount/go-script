@@ -61,7 +61,8 @@ func (e *executor) function(f *script.FuncDec, args ...interface{}) error {
 }
 
 func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
-	e.state.NewScope()
+	// Use NewRootScope so we cannot access variables outside the function
+	e.state.NewRootScope()
 	defer e.state.EndScope()
 
 	if len(args) != len(f.Parameters) {

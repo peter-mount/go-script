@@ -6,6 +6,10 @@ type Variables interface {
 	// EndScope closes this Variables scope and returns the previous one.
 	// If this is the Global scope this returns this instance.
 	EndScope() Variables
+	// NewRootScope is like NewScope except that variable lookups are not
+	// passed to the parent if missing from the current scope.
+	// This is used to isolate variables inside functions
+	NewRootScope() Variables
 	// Declare a variable.
 	Declare(n string)
 	// Set a variable. If the variable is declared in a parent scope this
@@ -17,30 +21,36 @@ type Variables interface {
 }
 
 type variables struct {
-	parent Variables // If not nil then parent scope
-	vars   map[string]interface{}
+	parent     Variables // If not nil then parent scope
+	trueParent Variables
+	vars       map[string]interface{}
 }
 
 func NewVariables() Variables {
-	return newVariables(nil)
+	return newVariables(nil, nil)
 }
 
-func newVariables(parent Variables) Variables {
+func newVariables(parent, trueParent Variables) Variables {
 	return &variables{
-		parent: parent,
-		vars:   make(map[string]interface{}),
+		parent:     parent,
+		trueParent: trueParent,
+		vars:       make(map[string]interface{}),
 	}
 }
 
 func (v *variables) NewScope() Variables {
-	return newVariables(v)
+	return newVariables(v, v)
+}
+
+func (v *variables) NewRootScope() Variables {
+	return newVariables(nil, v)
 }
 
 func (v *variables) EndScope() Variables {
-	if v.parent == nil {
+	if v.trueParent == nil {
 		return v
 	}
-	return v.parent
+	return v.trueParent
 }
 
 func (v *variables) Get(n string) (interface{}, bool) {

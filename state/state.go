@@ -77,6 +77,12 @@ func (s *state) NewScope() Variables {
 	s.variables = s.variables.NewScope()
 	return s
 }
+
+func (s *state) NewRootScope() Variables {
+	s.variables = s.variables.NewRootScope()
+	return s
+}
+
 func (s *state) EndScope() Variables {
 	s.variables = s.variables.EndScope()
 	return s
