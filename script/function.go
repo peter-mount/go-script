@@ -25,7 +25,6 @@ func FuncDecFromContext(ctx context.Context) *FuncDec {
 type FuncBody struct {
 	Pos lexer.Position
 
-	Locals     []*VarDec   `parser:"(@@ ';')*"`
 	Statements *Statements `parser:"@@"`
 }
 

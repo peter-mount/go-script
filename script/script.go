@@ -22,6 +22,5 @@ func ScriptFromContext(ctx context.Context) *Script {
 type TopDec struct {
 	Pos lexer.Position
 
-	FunDec *FuncDec `parser:"  @@"`
-	VarDec *VarDec  `parser:"| @@ ';'"`
+	FunDec *FuncDec `parser:"@@"`
 }

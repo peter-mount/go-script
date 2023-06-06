@@ -74,18 +74,7 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 		e.state.Set(p.Ident, args[i])
 	}
 
-	body := f.FunBody
-	if body.Locals != nil {
-		for _, l := range body.Locals {
-			if l.ScalarDec != nil {
-				e.state.Declare(l.ScalarDec.Name)
-			} else if l.ArrayDec != nil {
-				e.state.Declare(l.ArrayDec.Name)
-			}
-		}
-	}
-
-	return e.visitor.VisitStatements(body.Statements)
+	return e.visitor.VisitStatements(f.FunBody.Statements)
 }
 
 func (e *executor) returnStatement(ctx context.Context) error {

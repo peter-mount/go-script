@@ -25,9 +25,6 @@ type Assignment struct {
 	Left  *Equality `parser:"@@"`
 	Op    string    `parser:"( @'='"`
 	Right *Equality `parser:"  @@ )?"`
-	/*Ident string    `parser:"( @Ident"`
-	Op    string    `parser:"   @'=')?"`
-	Right *Equality `parser:"@@"`*/
 }
 
 func (op *Assignment) WithContext(ctx context.Context) context.Context {

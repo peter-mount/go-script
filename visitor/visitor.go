@@ -35,7 +35,6 @@ func FromContext(ctx context.Context) Visitor {
 // go handling the copying, so we never miss an entry
 type visitorCommon struct {
 	addition         task.Task
-	arrayDec         task.Task
 	assignment       task.Task
 	callFunc         task.Task
 	comparison       task.Task
@@ -48,7 +47,6 @@ type visitorCommon struct {
 	multiplication   task.Task
 	primary          task.Task
 	returnStatement  task.Task
-	scalarDec        task.Task
 	script           task.Task
 	statement        task.Task
 	statements       task.Task

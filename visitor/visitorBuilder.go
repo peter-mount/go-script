@@ -11,8 +11,6 @@ const (
 
 type Builder interface {
 	Addition(t task.Task) Builder
-	// ArrayDec adds a task to invoke for each ArrayDec object
-	ArrayDec(t task.Task) Builder
 	Assignment(t task.Task) Builder
 	// CallFunc adds a task to invoke for each CallFunc
 	CallFunc(t task.Task) Builder
@@ -28,8 +26,6 @@ type Builder interface {
 	Multiplication(t task.Task) Builder
 	Primary(t task.Task) Builder
 	Return(t task.Task) Builder
-	// ScalarDec adds a task to invoke for each ScalarDec object
-	ScalarDec(t task.Task) Builder
 	// Script adds a task to invoke for each Script object
 	Script(t task.Task) Builder
 	// Statement adds a task to invoke for each Statement object
@@ -57,11 +53,6 @@ func New() Builder {
 
 func (b *builder) Addition(t task.Task) Builder {
 	b.addition = b.addition.Then(t)
-	return b
-}
-
-func (b *builder) ArrayDec(t task.Task) Builder {
-	b.arrayDec = b.arrayDec.Then(t)
 	return b
 }
 
@@ -122,11 +113,6 @@ func (b *builder) Primary(t task.Task) Builder {
 
 func (b *builder) Return(t task.Task) Builder {
 	b.returnStatement = b.returnStatement.Then(t)
-	return b
-}
-
-func (b *builder) ScalarDec(t task.Task) Builder {
-	b.scalarDec = b.scalarDec.Then(t)
 	return b
 }
 
