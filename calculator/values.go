@@ -2,6 +2,7 @@ package calculator
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -41,6 +42,15 @@ func GetFloat(v interface{}) (float64, error) {
 		if s, ok := v.(string); ok {
 			return strconv.ParseFloat(s, 64)
 		}
+		if f, ok := v.(int); ok {
+			return float64(f), nil
+		}
+		if f, ok := v.(Int); ok {
+			return float64(f.Int()), nil
+		}
+		if f, ok := v.(int64); ok {
+			return float64(f), nil
+		}
 		if b, ok := v.(bool); ok {
 			if b {
 				return 1, nil
@@ -77,6 +87,15 @@ func GetInt(v interface{}) (int, error) {
 			}
 			return 0, nil
 		}
+		if f, ok := v.(float64); ok {
+			return int(f), nil
+		}
+		if f, ok := v.(Float); ok {
+			return int(f.Float()), nil
+		}
+		if f, ok := v.(float32); ok {
+			return int(f), nil
+		}
 	}
 	return 0, fmt.Errorf("not an int %q", v)
 }
@@ -96,12 +115,24 @@ func GetString(v interface{}) (string, error) {
 			return s.String(), nil
 		}
 
-		if f, err := GetFloat(v); err == nil {
-			return strconv.FormatFloat(f, 'f', 6, 64), nil
+		if f, ok := v.(int); ok {
+			return strconv.Itoa(f), nil
+		}
+		if f, ok := v.(Int); ok {
+			return strconv.Itoa(f.Int()), nil
+		}
+		if f, ok := v.(int64); ok {
+			return strconv.Itoa(int(f)), nil
 		}
 
-		if i, err := GetInt(v); err == nil {
-			return strconv.Itoa(i), nil
+		if f, ok := v.(float64); ok {
+			return strconv.FormatFloat(f, 'f', 6, 64), nil
+		}
+		if f, ok := v.(Float); ok {
+			return strconv.FormatFloat(f.Float(), 'f', 6, 64), nil
+		}
+		if f, ok := v.(float32); ok {
+			return strconv.FormatFloat(float64(f), 'f', 6, 32), nil
 		}
 
 		if b, ok := v.(bool); ok {
@@ -133,12 +164,24 @@ func GetBool(v interface{}) (bool, error) {
 			}
 		}
 
-		if f, err := GetFloat(v); err == nil {
-			return f != 0.0, nil
+		if f, ok := v.(int); ok {
+			return f != 0, nil
+		}
+		if f, ok := v.(Int); ok {
+			return f.Int() != 0, nil
+		}
+		if f, ok := v.(int64); ok {
+			return f != 0, nil
 		}
 
-		if i, err := GetInt(v); err == nil {
-			return i != 0, nil
+		if f, ok := v.(float64); ok {
+			return math.Abs(f) < 1e-9, nil
+		}
+		if f, ok := v.(Float); ok {
+			return math.Abs(f.Float()) < 1e-9, nil
+		}
+		if f, ok := v.(float32); ok {
+			return math.Abs(float64(f)) < 1e-9, nil
 		}
 
 	}

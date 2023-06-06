@@ -24,27 +24,72 @@ func (e *executor) expression(ctx context.Context) error {
 func (e *executor) assignment(ctx context.Context) error {
 	op := script.AssignmentFromContext(ctx)
 
-	// Visit right hand side
-	if err := e.visitor.VisitEquality(op.Right); err != nil {
-		return Error(op.Pos, err)
-	}
+	if op.Op == "=" {
+		// left hand side must resolve to Ident
+		var name string
+		// This is messy TODO clean up this mess
+		if eq := op.Left; eq != nil {
+			if comp := eq.Left; comp != nil {
+				if add := comp.Left; add != nil {
+					if mul := add.Left; mul != nil {
+						if unary := mul.Left; unary != nil {
+							if unary.Right != nil {
+								name = unary.Right.Ident
+							}
+						}
+					}
+				}
+			}
+		}
+		if name == "" {
+			return Errorf(op.Pos, "Assignment without target")
+		}
 
-	// If Ident is set then set that variable to the result of the right hand side.
-	// Peek the value, so it remains on the stack as we can use that to support multiple assignments
-	// or assignments within an expression (not C but it should in theory work)
-	if op.Ident != "" {
+		// Process RHS to get value
+		err := e.visitor.VisitEquality(op.Right)
+		if err != nil {
+			return Error(op.Pos, err)
+		}
+
 		v, err := e.calculator.Peek()
 		if err != nil {
 			return Error(op.Pos, err)
 		}
+
 		// Set the variable
-		set := e.state.Set(op.Ident, v)
+		set := e.state.Set(name, v)
 		if !set {
 			// Not set then declare it in this scope
-			e.state.Declare(op.Ident)
-			_ = e.state.Set(op.Ident, v)
+			e.state.Declare(name)
+			_ = e.state.Set(name, v)
 		}
+
+		return nil
+	} else {
+		return Error(op.Pos, e.visitor.VisitEquality(op.Left))
 	}
+	/*
+		// Visit right hand side
+		if err := e.visitor.VisitEquality(op.Left); err != nil {
+			return Error(op.Pos, err)
+		}
+
+		// If Ident is set then set that variable to the result of the right hand side.
+		// Peek the value, so it remains on the stack as we can use that to support multiple assignments
+		// or assignments within an expression (not C but it should in theory work)
+		if op.Ident != "" {
+			v, err := e.calculator.Peek()
+			if err != nil {
+				return Error(op.Pos, err)
+			}
+			// Set the variable
+			set := e.state.Set(op.Ident, v)
+			if !set {
+				// Not set then declare it in this scope
+				e.state.Declare(op.Ident)
+				_ = e.state.Set(op.Ident, v)
+			}
+		}*/
 
 	return nil
 }
