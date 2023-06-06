@@ -33,6 +33,12 @@ func (e *executor) statement(ctx context.Context) error {
 	switch {
 	case statement.Expression != nil:
 		return Error(statement.Pos, e.visitor.VisitExpression(statement.Expression))
+
+	case statement.IfStmt != nil:
+		return Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
+
+	case statement.WhileStmt != nil:
+		return Error(statement.Pos, e.visitor.VisitWhile(statement.WhileStmt))
 	}
 
 	return nil

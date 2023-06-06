@@ -11,6 +11,7 @@ const (
 	expressionKey     = "go-script/expression"
 	funcDecKey        = "go-script/funcDec"
 	funcBodyKey       = "go-script/funcBody"
+	ifKey             = "go-script/if"
 	multiplicationKey = "go-script/multiplication"
 	primaryKey        = "go-script/primary"
 	scriptKey         = "go-script/script"
@@ -18,4 +19,5 @@ const (
 	statementsKey     = "go-script/statements"
 	statementKey      = "go-script/statement"
 	unaryKey          = "go-script/unary"
+	whileKey          = "go-script/while"
 )

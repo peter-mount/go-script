@@ -3,6 +3,9 @@ package visitor
 import "github.com/peter-mount/go-script/script"
 
 func (v *visitor) VisitStatements(s *script.Statements) error {
+	if s == nil {
+		return nil
+	}
 	return v.visit(s.WithContext, func() error {
 		if err := v.statements.Do(v.ctx); err != nil {
 			return err
@@ -20,6 +23,9 @@ func (v *visitor) VisitStatements(s *script.Statements) error {
 }
 
 func (v *visitor) VisitStatement(s *script.Statement) error {
+	if s == nil {
+		return nil
+	}
 	return v.visit(s.WithContext, func() error {
 		if err := v.statement.Do(v.ctx); err != nil {
 			return err
@@ -33,4 +39,12 @@ func (v *visitor) VisitStatement(s *script.Statement) error {
 			return nil
 		}
 	})
+}
+
+func (v *visitor) VisitIf(s *script.IfStmt) error {
+	return v.visitTask(s.WithContext, v.ifStatement)
+}
+
+func (v *visitor) VisitWhile(s *script.WhileStmt) error {
+	return v.visitTask(s.WithContext, v.whileStatement)
 }

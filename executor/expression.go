@@ -68,30 +68,6 @@ func (e *executor) assignment(ctx context.Context) error {
 	} else {
 		return Error(op.Pos, e.visitor.VisitEquality(op.Left))
 	}
-	/*
-		// Visit right hand side
-		if err := e.visitor.VisitEquality(op.Left); err != nil {
-			return Error(op.Pos, err)
-		}
-
-		// If Ident is set then set that variable to the result of the right hand side.
-		// Peek the value, so it remains on the stack as we can use that to support multiple assignments
-		// or assignments within an expression (not C but it should in theory work)
-		if op.Ident != "" {
-			v, err := e.calculator.Peek()
-			if err != nil {
-				return Error(op.Pos, err)
-			}
-			// Set the variable
-			set := e.state.Set(op.Ident, v)
-			if !set {
-				// Not set then declare it in this scope
-				e.state.Declare(op.Ident)
-				_ = e.state.Set(op.Ident, v)
-			}
-		}*/
-
-	return nil
 }
 
 func (e *executor) equality(ctx context.Context) error {

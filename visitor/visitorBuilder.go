@@ -26,6 +26,7 @@ type Builder interface {
 	FuncBody(t task.Task) Builder
 	// FuncDec adds a task to invoke for each FuncDec object
 	FuncDec(t task.Task) Builder
+	If(t task.Task) Builder
 	Multiplication(t task.Task) Builder
 	Primary(t task.Task) Builder
 	// ScalarDec adds a task to invoke for each ScalarDec object
@@ -44,6 +45,7 @@ type Builder interface {
 	// content separately - e.g. Executor uses this.
 	StatementsNoNest() Builder
 	Unary(t task.Task) Builder
+	While(t task.Task) Builder
 	// WithContext creates a Visitor bound to a Context
 	WithContext(context.Context) Visitor
 }
@@ -111,6 +113,11 @@ func (b *builder) FuncBody(t task.Task) Builder {
 	return b
 }
 
+func (b *builder) If(t task.Task) Builder {
+	b.ifStatement = b.ifStatement.Then(t)
+	return b
+}
+
 func (b *builder) Multiplication(t task.Task) Builder {
 	b.multiplication = b.multiplication.Then(t)
 	return b
@@ -153,6 +160,11 @@ func (b *builder) Statement(t task.Task) Builder {
 
 func (b *builder) Unary(t task.Task) Builder {
 	b.unary = b.unary.Then(t)
+	return b
+}
+
+func (b *builder) While(t task.Task) Builder {
+	b.whileStatement = b.whileStatement.Then(t)
 	return b
 }
 

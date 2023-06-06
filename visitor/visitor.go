@@ -15,6 +15,7 @@ type Visitor interface {
 	VisitExpression(s *script.Expression) error
 	VisitFuncDec(s *script.FuncDec) error
 	VisitFuncBody(body *script.FuncBody) error
+	VisitIf(s *script.IfStmt) error
 	VisitMultiplication(s *script.Multiplication) error
 	VisitParameter(p *script.Parameter) error
 	VisitPrimary(s *script.Primary) error
@@ -22,6 +23,7 @@ type Visitor interface {
 	VisitStatement(s *script.Statement) error
 	VisitStatements(s *script.Statements) error
 	VisitUnary(s *script.Unary) error
+	VisitWhile(s *script.WhileStmt) error
 }
 
 func FromContext(ctx context.Context) Visitor {
@@ -43,8 +45,10 @@ type visitorCommon struct {
 	expressionNoNest bool
 	funcDec          task.Task
 	funcBody         task.Task
+	ifStatement      task.Task
 	multiplication   task.Task
 	primary          task.Task
+	returnStatement  task.Task
 	scalarDec        task.Task
 	scalarParamDec   task.Task
 	script           task.Task
@@ -52,6 +56,7 @@ type visitorCommon struct {
 	statements       task.Task
 	statementsNoNest bool
 	unary            task.Task
+	whileStatement   task.Task
 }
 
 type visitor struct {

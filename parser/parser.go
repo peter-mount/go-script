@@ -71,6 +71,8 @@ func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
 	err := visitor.New().
 		Statements(p.initStatements).
 		Statement(p.initStatement).
+		If(p.initIf).
+		While(p.initWhile).
 		WithContext(context.Background()).
 		VisitScript(s)
 	if err != nil {
@@ -119,6 +121,43 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 		parent := script.StatementsFromContext(ctx)
 		if parent != nil {
 			statement.Parent = parent
+		}
+
+		if statement.IfStmt != nil {
+			if err := p.initIf(statement.IfStmt.WithContext(ctx)); err != nil {
+				return err
+			}
+		}
+
+		if statement.WhileStmt != nil {
+			if err := p.initWhile(statement.WhileStmt.WithContext(ctx)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (p *defaultParser) initIf(ctx context.Context) error {
+	s := script.IfFromContext(ctx)
+	if s != nil {
+		v := visitor.FromContext(ctx)
+		if err := v.VisitStatement(s.Body); err != nil {
+			return err
+		}
+		if err := v.VisitStatement(s.Else); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *defaultParser) initWhile(ctx context.Context) error {
+	s := script.WhileFromContext(ctx)
+	if s != nil {
+		v := visitor.FromContext(ctx)
+		if err := v.VisitStatement(s.Body); err != nil {
+			return err
 		}
 	}
 	return nil

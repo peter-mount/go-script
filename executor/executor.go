@@ -43,12 +43,14 @@ func New(s *script.Script) (Executor, error) {
 		Equality(e.equality).
 		Expression(e.expression).
 		ExpressionNoNest().
+		If(e.ifStatement).
 		Multiplication(e.multiplication).
 		Primary(e.primary).
 		Statement(e.statement).
 		Statements(e.statements).
 		StatementsNoNest().
 		Unary(e.unary).
+		While(e.whileStatement).
 		WithContext(e.context)
 
 	return e, nil
