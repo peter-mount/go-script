@@ -2,7 +2,6 @@ package executor
 
 import (
 	"context"
-	"fmt"
 	"github.com/peter-mount/go-script/script"
 )
 
@@ -31,11 +30,9 @@ func (e *executor) statements(ctx context.Context) error {
 func (e *executor) statement(ctx context.Context) error {
 	statement := script.StatementFromContext(ctx)
 
-	fmt.Printf("%s %s\n", statement.Pos.String(), e.calculator.Dump())
-
 	switch {
 	case statement.Expression != nil:
-		// Wrap visit to expression so we don't leak return values on the stack
+		// Wrap visit to expression, so we don't leak return values on the stack
 		_, _, err := e.calculator.Calculate(func(_ context.Context) error {
 			return Error(statement.Pos, e.visitor.VisitExpression(statement.Expression))
 		}, ctx)
