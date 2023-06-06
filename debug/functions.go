@@ -3,7 +3,6 @@ package debug
 import (
 	"context"
 	"fmt"
-	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/state"
 	"github.com/peter-mount/go-script/visitor"
 	"strings"
@@ -16,16 +15,6 @@ func ListFunctions(s state.State) []string {
 	v := visitor.New().
 		FuncDec(func(_ context.Context) error {
 			b = nil
-			return nil
-		}).
-		ScalarParamDec(func(ctx context.Context) error {
-			p := script.ScalarDecFromContext(ctx)
-			b = append(b, fmt.Sprintf("%s %s", p.Name, p.Type))
-			return nil
-		}).
-		ArrayParamDec(func(ctx context.Context) error {
-			p := script.ArrayParameterFromContext(ctx)
-			b = append(b, fmt.Sprintf("%s %s[]", p.Name, p.Type))
 			return nil
 		}).
 		WithContext(context.Background())

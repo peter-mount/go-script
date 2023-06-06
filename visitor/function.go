@@ -24,12 +24,6 @@ func (v *visitor) VisitFuncDec(s *script.FuncDec) error {
 			return err
 		}
 
-		for _, param := range s.Parameters {
-			if err := v.VisitParameter(param); err != nil {
-				return err
-			}
-		}
-
 		if s.FunBody != nil {
 			// TODO visit VarDec here
 			if err := v.VisitStatements(s.FunBody.Statements); err != nil {
@@ -43,17 +37,6 @@ func (v *visitor) VisitFuncDec(s *script.FuncDec) error {
 
 func (v *visitor) VisitFuncBody(s *script.FuncBody) error {
 	return v.visitTask(s.WithContext, v.funcBody)
-}
-
-func (v *visitor) VisitParameter(p *script.Parameter) error {
-	switch {
-	case p.Scalar != nil:
-		return v.visitTask(p.Scalar.WithContext, v.scalarParamDec)
-	case p.Array != nil:
-		return v.visitTask(p.Array.WithContext, v.arrayParamDec)
-	default:
-		return nil
-	}
 }
 
 func (v *visitor) VisitCallFunc(s *script.CallFunc) error {

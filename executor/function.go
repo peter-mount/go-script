@@ -69,13 +69,8 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	}
 
 	for i, p := range f.Parameters {
-		if p.Scalar != nil {
-			e.state.Declare(p.Scalar.Name)
-			e.state.Set(p.Scalar.Name, args[i])
-		} else if p.Array != nil {
-			e.state.Declare(p.Array.Name)
-			e.state.Set(p.Array.Name, args[i])
-		}
+		e.state.Declare(p.Ident)
+		e.state.Set(p.Ident, args[i])
 	}
 
 	body := f.FunBody

@@ -40,23 +40,7 @@ func FuncBodyFromContext(ctx context.Context) *FuncBody {
 type Parameter struct {
 	Pos lexer.Position
 
-	Array  *ArrayParameter `parser:"  @@"`
-	Scalar *ScalarDec      `parser:"| @@"`
-}
-
-type ArrayParameter struct {
-	Pos lexer.Position
-
-	Type string `parser:"@Type"`
-	Name string `parser:"@Ident '[' ']'"`
-}
-
-func (s *ArrayParameter) WithContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, arrayParameterKey, s)
-}
-
-func ArrayParameterFromContext(ctx context.Context) *ArrayParameter {
-	return ctx.Value(arrayParameterKey).(*ArrayParameter)
+	Ident string `parser:"@Ident"`
 }
 
 type ReturnStmt struct {

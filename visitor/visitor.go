@@ -17,7 +17,6 @@ type Visitor interface {
 	VisitFuncBody(body *script.FuncBody) error
 	VisitIf(s *script.IfStmt) error
 	VisitMultiplication(s *script.Multiplication) error
-	VisitParameter(p *script.Parameter) error
 	VisitPrimary(s *script.Primary) error
 	VisitReturn(s *script.ReturnStmt) error
 	VisitScript(script *script.Script) error
@@ -37,7 +36,6 @@ func FromContext(ctx context.Context) Visitor {
 type visitorCommon struct {
 	addition         task.Task
 	arrayDec         task.Task
-	arrayParamDec    task.Task
 	assignment       task.Task
 	callFunc         task.Task
 	comparison       task.Task
@@ -51,7 +49,6 @@ type visitorCommon struct {
 	primary          task.Task
 	returnStatement  task.Task
 	scalarDec        task.Task
-	scalarParamDec   task.Task
 	script           task.Task
 	statement        task.Task
 	statements       task.Task
