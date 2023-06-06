@@ -33,7 +33,7 @@ func newVariables(parent Variables) Variables {
 }
 
 func (v *variables) NewScope() Variables {
-	return newVariables(v.parent)
+	return newVariables(v)
 }
 
 func (v *variables) EndScope() Variables {
