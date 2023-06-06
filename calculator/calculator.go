@@ -14,6 +14,7 @@ const (
 type Calculator interface {
 	// WithContext adds the Calculator to a Context
 	WithContext(ctx context.Context) context.Context
+	Reset()
 	// Push a value onto the stack
 	Push(v interface{})
 	// Pop a value from the stack. Return an error if the stack is empty
