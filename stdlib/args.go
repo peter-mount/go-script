@@ -17,7 +17,7 @@ func Args(e executor.Executor, call *script.CallFunc, ctx context.Context) ([]in
 		}, ctx)
 		switch {
 		case err != nil:
-			return nil, err
+			return nil, executor.Error(arg.Pos, err)
 		case ok:
 			a = append(a, v)
 		default:
