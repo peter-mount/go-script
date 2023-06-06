@@ -30,6 +30,7 @@ type Statement struct {
 	Next   *Statement  // Next statement within Statements
 
 	IfStmt     *IfStmt     `parser:"  @@"`
+	Break      *Break      `parser:"| @@"`
 	ReturnStmt *ReturnStmt `parser:"| @@"`
 	WhileStmt  *WhileStmt  `parser:"| @@"`
 	ForStmt    *ForStmt    `parser:"| @@"`

@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
 )
@@ -28,50 +29,48 @@ func (e *executor) ifStatement(ctx context.Context) error {
 	}
 
 	if b {
-		return Error(s.Pos, e.visitor.VisitStatement(s.Body))
+		err = Error(s.Pos, e.visitor.VisitStatement(s.Body))
 	} else {
-		return Error(s.Pos, e.visitor.VisitStatement(s.Else))
+		err = Error(s.Pos, e.visitor.VisitStatement(s.Else))
 	}
+
+	// Eat break so it just exits the If
+	if IsBreak(err) {
+		return nil
+	}
+	return err
 }
 
 func (e *executor) whileStatement(ctx context.Context) error {
 	s := script.WhileFromContext(ctx)
 
-	for {
-		b, err := e.condition(s.Condition, ctx)
-		if err != nil {
-			return Error(s.Pos, err)
-		}
-
-		if !b {
-			return nil
-		}
-
-		if err := Error(s.Pos, e.visitor.VisitStatement(s.Body)); err != nil {
-			return Error(s.Pos, err)
-		}
-	}
+	// while cond body is the same as for ;cond; body
+	return e.forLoop(s.Pos, nil, s.Condition, nil, s.Body, ctx)
 }
 
 func (e *executor) forStatement(ctx context.Context) error {
 	s := script.ForFromContext(ctx)
+	return e.forLoop(s.Pos, s.Init, s.Condition, s.Increment, s.Body, ctx)
+}
+
+func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expression, body *script.Statement, ctx context.Context) error {
 
 	// Run for in a new scope so variables declared there are not accessible outside
 	e.state.NewScope()
 	defer e.state.EndScope()
 
-	if s.Init != nil {
-		err := e.visitor.VisitExpression(s.Init)
+	if init != nil {
+		err := e.visitor.VisitExpression(init)
 		if err != nil {
-			return Error(s.Pos, err)
+			return Error(p, err)
 		}
 	}
 
 	for {
-		if s.Condition != nil {
-			b, err := e.condition(s.Condition, ctx)
+		if condition != nil {
+			b, err := e.condition(condition, ctx)
 			if err != nil {
-				return Error(s.Pos, err)
+				return Error(p, err)
 			}
 
 			if !b {
@@ -79,16 +78,21 @@ func (e *executor) forStatement(ctx context.Context) error {
 			}
 		}
 
-		if s.Body != nil {
-			err := Error(s.Pos, e.visitor.VisitStatement(s.Body))
+		if body != nil {
+			err := Error(p, e.visitor.VisitStatement(body))
 			if err != nil {
-				return Error(s.Pos, err)
+				// Consume break and exit the loop
+				if IsBreak(err) {
+					return nil
+				}
+
+				return Error(p, err)
 			}
 		}
 
-		if s.Increment != nil {
-			if err := e.visitor.VisitExpression(s.Increment); err != nil {
-				return Error(s.Pos, err)
+		if inc != nil {
+			if err := e.visitor.VisitExpression(inc); err != nil {
+				return Error(p, err)
 			}
 		}
 

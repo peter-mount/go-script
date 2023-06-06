@@ -49,6 +49,10 @@ func IsError(err error) bool {
 	return ok
 }
 
+func Break() error {
+	return breakError
+}
+
 // IsBreak returns true if err is from a break instruction being invoked.
 func IsBreak(err error) bool { return err == breakError }
 
