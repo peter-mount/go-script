@@ -11,7 +11,7 @@ func (e *executor) statements(ctx context.Context) error {
 	statements := script.StatementsFromContext(ctx)
 
 	if statements == nil {
-		panic("no statements?")
+		return nil
 	}
 
 	e.state.NewScope()
@@ -20,7 +20,7 @@ func (e *executor) statements(ctx context.Context) error {
 	s := statements.Statements[0]
 	for s != nil {
 		if err := e.visitor.VisitStatement(s); err != nil {
-			return err
+			return Error(s.Pos, err)
 		}
 		s = s.Next
 	}
@@ -32,8 +32,7 @@ func (e *executor) statement(ctx context.Context) error {
 
 	switch {
 	case statement.Expression != nil:
-		return e.visitor.VisitExpression(statement.Expression)
-
+		return Error(statement.Pos, e.visitor.VisitExpression(statement.Expression))
 	}
 
 	return nil

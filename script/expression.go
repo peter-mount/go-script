@@ -8,7 +8,7 @@ import (
 type Expression struct {
 	Pos lexer.Position
 
-	Assignment *Assignment `parser:"@@"`
+	Right *Assignment `parser:"@@"`
 }
 
 func (op *Expression) WithContext(ctx context.Context) context.Context {
@@ -22,9 +22,9 @@ func ExpressionFromContext(ctx context.Context) *Expression {
 type Assignment struct {
 	Pos lexer.Position
 
-	Left  *Equality `parser:"@@"`
-	Op    string    `parser:"( @'='"`
-	Right *Equality `parser:"  @@ )?"`
+	Ident string    `parser:"( @Ident"`
+	Op    string    `parser:"   @'=')?"`
+	Right *Equality `parser:"@@"`
 }
 
 func (op *Assignment) WithContext(ctx context.Context) context.Context {
@@ -102,9 +102,9 @@ func MultiplicationFromContext(ctx context.Context) *Multiplication {
 type Unary struct {
 	Pos lexer.Position
 
-	Op      string   `parser:"  ( @( '!' | '-' )"`
-	Unary   *Unary   `parser:"    @@ )"`
-	Primary *Primary `parser:"| @@"`
+	Op    string   `parser:"  ( @( '!' | '-' )"`
+	Left  *Unary   `parser:"    @@ )"`
+	Right *Primary `parser:"| @@"`
 }
 
 func (op *Unary) WithContext(ctx context.Context) context.Context {

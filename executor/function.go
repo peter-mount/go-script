@@ -32,7 +32,7 @@ func (e *executor) function(f *script.FuncDec, args ...interface{}) error {
 		if f.ReturnType != "" && f.ReturnType != "void" {
 			v, err := calculator.GetValue(f.ReturnType, ret.Value)
 			if err != nil {
-				return err
+				return Error(f.Pos, err)
 			}
 			e.calculator.Push(v)
 		}
@@ -44,7 +44,7 @@ func (e *executor) function(f *script.FuncDec, args ...interface{}) error {
 		return nil
 	}
 
-	return err
+	return Error(f.Pos, err)
 }
 
 func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
@@ -77,5 +77,4 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	}
 
 	return e.visitor.VisitStatements(body.Statements)
-	//return e.calculator.Exec(e.statements, body.Statements.WithContext(e.context))
 }

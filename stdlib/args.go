@@ -2,7 +2,6 @@ package stdlib
 
 import (
 	"context"
-	"fmt"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 )
@@ -22,7 +21,7 @@ func Args(e executor.Executor, call *script.CallFunc, ctx context.Context) ([]in
 		case ok:
 			a = append(a, v)
 		default:
-			return nil, fmt.Errorf("%s no value returned", arg.Pos)
+			return nil, executor.Errorf(arg.Pos, "no value returned")
 		}
 	}
 	return a, nil

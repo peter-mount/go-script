@@ -24,8 +24,8 @@ func (v *visitor) VisitExpression(s *script.Expression) error {
 			return err
 		}
 
-		if !v.expressionNoNest && s.Assignment != nil {
-			return v.VisitAssignment(s.Assignment)
+		if !v.expressionNoNest && s.Right != nil {
+			return v.VisitAssignment(s.Right)
 		}
 
 		return nil
