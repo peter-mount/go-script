@@ -112,7 +112,7 @@ func (p *defaultParser) initStatements(ctx context.Context) error {
 // initStatement sets Statement.Parent to the containing Statements instance.
 //
 // This works as Statement is only ever contained within a Statements instance
-// so the parent is it's parent.
+// so the parent is its parent.
 func (p *defaultParser) initStatement(ctx context.Context) error {
 	// The Statement being visited
 	statement := script.StatementFromContext(ctx)
@@ -131,6 +131,12 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 
 		if statement.WhileStmt != nil {
 			if err := p.initWhile(statement.WhileStmt.WithContext(ctx)); err != nil {
+				return err
+			}
+		}
+
+		if statement.ForStmt != nil {
+			if err := p.initFor(statement.ForStmt.WithContext(ctx)); err != nil {
 				return err
 			}
 		}
@@ -154,6 +160,17 @@ func (p *defaultParser) initIf(ctx context.Context) error {
 
 func (p *defaultParser) initWhile(ctx context.Context) error {
 	s := script.WhileFromContext(ctx)
+	if s != nil {
+		v := visitor.FromContext(ctx)
+		if err := v.VisitStatement(s.Body); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *defaultParser) initFor(ctx context.Context) error {
+	s := script.ForFromContext(ctx)
 	if s != nil {
 		v := visitor.FromContext(ctx)
 		if err := v.VisitStatement(s.Body); err != nil {

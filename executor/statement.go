@@ -38,6 +38,9 @@ func (e *executor) statement(ctx context.Context) error {
 		}, ctx)
 		return err
 
+	case statement.ForStmt != nil:
+		return Error(statement.Pos, e.visitor.VisitFor(statement.ForStmt))
+
 	case statement.IfStmt != nil:
 		return Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
 

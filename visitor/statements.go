@@ -41,6 +41,10 @@ func (v *visitor) VisitStatement(s *script.Statement) error {
 	})
 }
 
+func (v *visitor) VisitFor(s *script.ForStmt) error {
+	return v.visitTask(s.WithContext, v.forStatement)
+}
+
 func (v *visitor) VisitIf(s *script.IfStmt) error {
 	return v.visitTask(s.WithContext, v.ifStatement)
 }

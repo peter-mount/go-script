@@ -13,6 +13,7 @@ type Visitor interface {
 	VisitComparison(s *script.Comparison) error
 	VisitEquality(s *script.Equality) error
 	VisitExpression(s *script.Expression) error
+	VisitFor(s *script.ForStmt) error
 	VisitFuncDec(s *script.FuncDec) error
 	VisitFuncBody(body *script.FuncBody) error
 	VisitIf(s *script.IfStmt) error
@@ -41,6 +42,7 @@ type visitorCommon struct {
 	equality         task.Task
 	expression       task.Task
 	expressionNoNest bool
+	forStatement     task.Task
 	funcDec          task.Task
 	funcBody         task.Task
 	ifStatement      task.Task

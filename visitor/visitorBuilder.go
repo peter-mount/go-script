@@ -18,6 +18,7 @@ type Builder interface {
 	Equality(t task.Task) Builder
 	Expression(t task.Task) Builder
 	ExpressionNoNest() Builder
+	For(t task.Task) Builder
 	// FuncBody adds a task to invoke for each FuncBody object
 	FuncBody(t task.Task) Builder
 	// FuncDec adds a task to invoke for each FuncDec object
@@ -83,6 +84,11 @@ func (b *builder) Expression(t task.Task) Builder {
 
 func (b *builder) ExpressionNoNest() Builder {
 	b.expressionNoNest = true
+	return b
+}
+
+func (b *builder) For(t task.Task) Builder {
+	b.forStatement = b.forStatement.Then(t)
 	return b
 }
 

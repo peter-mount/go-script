@@ -5,6 +5,27 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
+type ForStmt struct {
+	Pos lexer.Position
+
+	Init      *Expression `parser:"'for' (@@)? ';'"`
+	Condition *Expression `parser:"(@@)? ';'"`
+	Increment *Expression `parser:"(@@)?"`
+	Body      *Statement  `parser:"@@"`
+}
+
+func (s *ForStmt) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, forKey, s)
+}
+
+func ForFromContext(ctx context.Context) *ForStmt {
+	v := ctx.Value(forKey)
+	if v != nil {
+		return v.(*ForStmt)
+	}
+	return nil
+}
+
 type WhileStmt struct {
 	Pos lexer.Position
 
