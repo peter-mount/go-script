@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peter-mount/go-kernel/v2/util/task"
+	"strings"
 )
 
 const (
@@ -44,6 +45,7 @@ type Calculator interface {
 	// or nil if the stack was empty.
 	Calculate(t task.Task, ctx context.Context) (interface{}, bool, error)
 	Exec(t task.Task, ctx context.Context) error
+	Dump() string
 }
 
 // FromContext returns the Calculator associated with a Context
@@ -134,12 +136,12 @@ func (c *calculator) Op2(op string) error {
 	}
 
 	a, b, err := c.Pop2()
-	if err == nil {
+	if err != nil {
 		return err
 	}
 
 	v, err := operation.BiCalculate(a, b)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 
@@ -180,4 +182,12 @@ func (c *calculator) Exec(t task.Task, ctx context.Context) error {
 	}()
 
 	return t.Do(ctx)
+}
+
+func (c *calculator) Dump() string {
+	var a []string
+	for _, e := range c.stack {
+		a = append(a, fmt.Sprintf("%T[%v]", e, e))
+	}
+	return "Stack=[" + strings.Join(a, " ") + "]"
 }
