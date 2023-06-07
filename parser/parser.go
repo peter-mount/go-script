@@ -215,7 +215,7 @@ func (p *defaultParser) initTry(ctx context.Context) error {
 	}
 
 	if s.Catch != nil {
-		if err := v.VisitStatement(s.Finally); err != nil {
+		if err := v.VisitStatement(s.Catch); err != nil {
 			return err
 		}
 	}
