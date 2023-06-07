@@ -41,6 +41,9 @@ func (e *executor) statement(ctx context.Context) error {
 	case statement.ForStmt != nil:
 		return Error(statement.Pos, e.visitor.VisitFor(statement.ForStmt))
 
+	case statement.ForRange != nil:
+		return Error(statement.Pos, e.visitor.VisitForRange(statement.ForRange))
+
 	case statement.IfStmt != nil:
 		return Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
 

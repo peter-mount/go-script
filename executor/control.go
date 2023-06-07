@@ -5,6 +5,7 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
+	"reflect"
 )
 
 func (e *executor) condition(expr *script.Expression, ctx context.Context) (bool, error) {
@@ -93,4 +94,93 @@ func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expres
 		}
 
 	}
+}
+
+func (e *executor) forRange(ctx context.Context) error {
+	op := script.ForRangeFromContext(ctx)
+
+	// Run for in a new scope so variables declared there are not accessible outside
+	e.state.NewScope()
+	defer e.state.EndScope()
+
+	// Declare in scope if := used
+	if op.Declare {
+		if op.Key != "_" {
+			e.state.Declare(op.Key)
+		}
+		if op.Value != "_" {
+			e.state.Declare(op.Value)
+		}
+	}
+
+	// Evaluate expression
+	err := e.visitor.VisitExpression(op.Expression)
+	if err != nil {
+		return Error(op.Pos, err)
+	}
+
+	r, err := e.calculator.Pop()
+	if err != nil {
+		return Error(op.Pos, err)
+	}
+
+	tv := reflect.ValueOf(r)
+	ti := reflect.Indirect(tv)
+	switch ti.Kind() {
+	case reflect.Map:
+		mi := ti.MapRange()
+		for mi.Next() {
+			if err := e.forRangeEntry(mi.Key(), mi.Value(), op, ctx); err != nil {
+				// Consume break and exit the loop
+				if IsBreak(err) {
+					return nil
+				}
+
+				return Error(op.Pos, err)
+			}
+		}
+
+	case reflect.Array, reflect.Slice, reflect.String:
+		l := ti.Len()
+		for i := 0; i < l; i++ {
+			if err := e.forRangeEntry(reflect.ValueOf(i), ti.Index(i), op, ctx); err != nil {
+				// Consume break and exit the loop
+				if IsBreak(err) {
+					return nil
+				}
+
+				return Error(op.Pos, err)
+			}
+		}
+
+	default:
+		return Errorf(op.Expression.Pos, "cannot range over %T", r)
+	}
+
+	return nil
+}
+
+func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
+	if op.Key != "_" {
+		if !e.state.Set(op.Key, key) {
+			e.state.Declare(op.Key)
+			_ = e.state.Set(op.Key, key)
+		}
+	}
+
+	if op.Value != "_" {
+		if !e.state.Set(op.Value, val) {
+			e.state.Declare(op.Value)
+			_ = e.state.Set(op.Value, val)
+		}
+	}
+
+	if op.Body != nil {
+		err := Error(op.Pos, e.visitor.VisitStatement(op.Body))
+		if err != nil {
+			return Error(op.Pos, err)
+		}
+	}
+
+	return nil
 }

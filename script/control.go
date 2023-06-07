@@ -26,6 +26,29 @@ func ForFromContext(ctx context.Context) *ForStmt {
 	return nil
 }
 
+// ForRange emulates go's "for i,v:=range expr {...}"
+type ForRange struct {
+	Pos lexer.Position
+
+	Key        string      `parser:"'for' @Ident ','"` // index in range, _ to ignore
+	Value      string      `parser:"@Ident"`           // value in range, _ to ignore
+	Declare    bool        `parser:"@(':')?"`          // := to declare in local scope
+	Expression *Expression `parser:" '=' 'range' @@"`
+	Body       *Statement  `parser:"@@"`
+}
+
+func (s *ForRange) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, forRangeKey, s)
+}
+
+func ForRangeFromContext(ctx context.Context) *ForRange {
+	v := ctx.Value(forRangeKey)
+	if v != nil {
+		return v.(*ForRange)
+	}
+	return nil
+}
+
 type WhileStmt struct {
 	Pos lexer.Position
 

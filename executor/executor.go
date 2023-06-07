@@ -46,6 +46,7 @@ func New(s *script.Script) (Executor, error) {
 		Expression(e.expression).
 		ExpressionNoNest().
 		For(e.forStatement).
+		ForRange(e.forRange).
 		If(e.ifStatement).
 		Multiplication(e.multiplication).
 		Primary(e.primary).

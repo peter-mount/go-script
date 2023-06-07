@@ -23,8 +23,16 @@ main() {
     println(testSlice2[1].C)
     println(testSlice2[2].C)
 
-    for i=0;i<3;i=i+1 {
+    for i=0;i<len(testSlice2);i=i+1 {
         println(i,testSlice2[i].C)
+    }
+
+    for i=0;i<len(testSlice);i=i+1 {
+        println(i,testSlice[i])
+    }
+
+    for _,e = range testSlice {
+        println(i,e)
     }
 
     println(testSlice2["2"].C)

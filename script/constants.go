@@ -8,6 +8,7 @@ const (
 	equalityKey       = "go-script/equality"
 	expressionKey     = "go-script/expression"
 	forKey            = "go-script/for"
+	forRangeKey       = "go-script/forRange"
 	funcDecKey        = "go-script/funcDec"
 	funcBodyKey       = "go-script/funcBody"
 	ifKey             = "go-script/if"

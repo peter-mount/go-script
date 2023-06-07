@@ -34,6 +34,7 @@ type Statement struct {
 	ReturnStmt *ReturnStmt `parser:"| @@"`
 	WhileStmt  *WhileStmt  `parser:"| @@"`
 	ForStmt    *ForStmt    `parser:"| @@"`
+	ForRange   *ForRange   `parser:"| @@"`
 	Block      *Statements `parser:"| '{' @@ '}'"`
 	Expression *Expression `parser:"| @@"`
 	Empty      bool        `parser:"| @';'"`

@@ -134,6 +134,12 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 			}
 		}
 
+		if statement.ForRange != nil {
+			if err := p.initForRange(statement.ForRange.WithContext(ctx)); err != nil {
+				return err
+			}
+		}
+
 		if statement.ForStmt != nil {
 			if err := p.initFor(statement.ForStmt.WithContext(ctx)); err != nil {
 				return err
@@ -170,6 +176,17 @@ func (p *defaultParser) initWhile(ctx context.Context) error {
 
 func (p *defaultParser) initFor(ctx context.Context) error {
 	s := script.ForFromContext(ctx)
+	if s != nil {
+		v := visitor.FromContext(ctx)
+		if err := v.VisitStatement(s.Body); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *defaultParser) initForRange(ctx context.Context) error {
+	s := script.ForRangeFromContext(ctx)
 	if s != nil {
 		v := visitor.FromContext(ctx)
 		if err := v.VisitStatement(s.Body); err != nil {
