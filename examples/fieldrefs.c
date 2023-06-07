@@ -28,13 +28,8 @@ main() {
     }
 
     println(testSlice2["2"].C)
-    println(testMap["a"])
-    println(testMap["b"].c)
-    println(testMap["b"]["c"])
-    println(testMap["b"]["d"].C)
-    println(testMap["b"].d.C)
-    println(testMap["b"].d["C"])
 
-    println(testMap["42"])
-    println(testMap.42)
+    println(testSlice2[1+1].C)
+
+    println(len(testSlice), len(testSlice2), len("testStruct"), len(testMap))
 }
