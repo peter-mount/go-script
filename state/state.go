@@ -92,6 +92,10 @@ func (s *state) GlobalScope() Variables {
 	return s.variables.GlobalScope()
 }
 
+func (s *state) Get(n string) (interface{}, bool) {
+	return s.variables.Get(n)
+}
+
 func (s *state) Declare(n string) { s.variables.Declare(n) }
 
 func (s *state) Set(n string, v interface{}) bool { return s.variables.Set(n, v) }

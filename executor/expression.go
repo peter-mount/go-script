@@ -181,7 +181,16 @@ func (e *executor) primary(ctx context.Context) error {
 		if !exists {
 			return Errorf(op.Pos, "%q undefined", op.Ident)
 		}
-		e.calculator.Push(v)
+		switch {
+
+		// We have a pointer to resolve
+		case op.Pointer != nil:
+			return Error(op.Pointer.Pos, e.resolveReference(op.Pointer, v))
+
+		// Just push variable onto stack
+		default:
+			e.calculator.Push(v)
+		}
 
 	case op.SubExpression != nil:
 		return Error(op.Pos, e.visitor.VisitExpression(op.SubExpression))

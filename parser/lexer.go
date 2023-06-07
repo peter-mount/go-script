@@ -11,11 +11,15 @@ var (
 		{"hashComment", `#.*`},
 		{"comment", `//.*|/\*.*?\*/`},
 		{"whitespace", `\s+`},
-		{"Ident", `\b(([a-zA-Z_][a-zA-Z0-9_]*)(\.([a-zA-Z_][a-zA-Z0-9_]*))*)\b`},
+		//{"Ident", `([a-zA-Z_][a-zA-Z0-9_]*)`},
+		{"Ident", `\b([a-zA-Z_][a-zA-Z0-9_]*)\b`},
+		//{"Ident", `\b(([a-zA-Z_][a-zA-Z0-9_]*)(\.([a-zA-Z_][a-zA-Z0-9_]*))*)\b`},
 		{"Punct", `[-,()*/+%{};&!=:<>]|\[|\]`},
-		{"Number", `[-+]?((\d*)?\.\d+|\d+\.(\d*)?)`},
+		{"Number", `[-+]?(\d+\.\d+)`},
+		//{"Number", `[-+]?((\d*)?\.\d+|\d+\.(\d*)?)`},
 		{"Int", `[-+]?\d+`},
 		{"String", `"(\\"|[^"])*"`},
+		{"Period", `(\.)`},
 	})
 
 	scriptParser = participle.MustBuild[script.Script](

@@ -124,6 +124,8 @@ type Primary struct {
 	ArrayIndex    *ArrayIndex `parser:"| @@"`
 	CallFunc      *CallFunc   `parser:"| @@"`
 	Ident         string      `parser:"| @Ident"`
+	PointOp       string      `parser:"  [ @Period"`
+	Pointer       *Primary    `parser:"    @@]"`
 	SubExpression *Expression `parser:"| '(' @@ ')' "`
 }
 
