@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/peter-mount/go-kernel/v2"
-	"github.com/peter-mount/go-script/tools/basic"
+	"github.com/peter-mount/go-script/tools/goscript"
 	"os"
 )
 
 func main() {
 	err := kernel.Launch(
-		&basic.Basic{},
+		&goscript.Script{},
 	)
 	if err != nil {
 		fmt.Println(err)

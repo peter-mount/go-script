@@ -1,4 +1,4 @@
-package basic
+package goscript
 
 import (
 	"flag"
@@ -6,10 +6,10 @@ import (
 	"github.com/peter-mount/go-script/parser"
 )
 
-type Basic struct {
+type Script struct {
 }
 
-func (b *Basic) Run() error {
+func (b *Script) Run() error {
 	p := parser.New()
 
 	for _, fileName := range flag.Args() {
