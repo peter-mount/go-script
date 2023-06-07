@@ -185,7 +185,7 @@ func (e *executor) primary(ctx context.Context) error {
 
 		// We have a pointer to resolve
 		case op.Pointer != nil:
-			return Error(op.Pointer.Pos, e.resolveReference(op.Pointer, v))
+			return Error(op.Pointer.Pos, e.getReference(op.Pointer, v))
 
 		// Just push variable onto stack
 		default:

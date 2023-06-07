@@ -16,12 +16,12 @@ import (
 // op the Primary defining the reference
 //
 // v the value this Primary is referencing.
-func (e *executor) resolveReference(op *script.Primary, v interface{}) error {
+func (e *executor) getReference(op *script.Primary, v interface{}) error {
 	// These are not valid at this point.
 	switch {
 
 	case op.Ident != "":
-		nv, err := e.resolveRefName(op, op.Ident, v)
+		nv, err := e.resolveReference(op, op.Ident, v)
 		if err != nil {
 			return Error(op.Pos, err)
 		}
@@ -30,7 +30,7 @@ func (e *executor) resolveReference(op *script.Primary, v interface{}) error {
 
 		// Move to next pointer in the chain
 		case op.Pointer != nil:
-			return e.resolveReference(op.Pointer, nv)
+			return e.getReference(op.Pointer, nv)
 
 		case op.ArrayIndex != nil:
 			return Errorf(op.Pos, "arrays unsupported")
@@ -55,7 +55,7 @@ func (e *executor) resolveReference(op *script.Primary, v interface{}) error {
 	}
 }
 
-func (e *executor) resolveRefName(op *script.Primary, name string, v interface{}) (interface{}, error) {
+func (e *executor) resolveReference(op *script.Primary, name string, v interface{}) (interface{}, error) {
 
 	tv := reflect.ValueOf(v)
 	ti := reflect.Indirect(tv)
