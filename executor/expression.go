@@ -170,9 +170,6 @@ func (e *executor) primary(ctx context.Context) error {
 	case op.String != nil:
 		e.calculator.Push(*op.String)
 
-	case op.ArrayIndex != nil:
-		return Errorf(op.Pos, "ArrayIndex not implemented")
-
 	case op.CallFunc != nil:
 		return Error(op.Pos, e.visitor.VisitCallFunc(op.CallFunc))
 
@@ -181,16 +178,20 @@ func (e *executor) primary(ctx context.Context) error {
 		if !exists {
 			return Errorf(op.Pos, "%q undefined", op.Ident)
 		}
-		switch {
 
-		// We have a pointer to resolve
-		case op.Pointer != nil:
+		// Handle arrays
+		v, err := e.resolveArray(op, v)
+		if err != nil {
+			return Error(op.Pos, err)
+		}
+
+		// Resolve references
+		if op.Pointer != nil {
 			return Error(op.Pointer.Pos, e.getReference(op.Pointer, v))
+		}
 
 		// Just push variable onto stack
-		default:
-			e.calculator.Push(v)
-		}
+		e.calculator.Push(v)
 
 	case op.SubExpression != nil:
 		return Error(op.Pos, e.visitor.VisitExpression(op.SubExpression))

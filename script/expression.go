@@ -118,15 +118,15 @@ func UnaryFromContext(ctx context.Context) *Unary {
 type Primary struct {
 	Pos lexer.Position
 
-	Float         *float64    `parser:"  @Number"`
-	Integer       *int        `parser:"| @Int"`
-	String        *string     `parser:"| @String"`
-	ArrayIndex    *ArrayIndex `parser:"| @@"`
-	CallFunc      *CallFunc   `parser:"| @@"`
-	Ident         string      `parser:"| @Ident"`
-	PointOp       string      `parser:"  [ @Period"`
-	Pointer       *Primary    `parser:"    @@]"`
-	SubExpression *Expression `parser:"| '(' @@ ')' "`
+	Float         *float64      `parser:"  @Number"`
+	Integer       *int          `parser:"| @Int"`
+	String        *string       `parser:"| @String"`
+	CallFunc      *CallFunc     `parser:"| @@"`
+	Ident         string        `parser:"| @Ident"`
+	ArrayIndex    []*Expression `parser:"  [ ('[' @@ ']')+ ]"`
+	PointOp       string        `parser:"  [ @Period"`
+	Pointer       *Primary      `parser:"    @@]"`
+	SubExpression *Expression   `parser:"| '(' @@ ')' "`
 }
 
 func (op *Primary) WithContext(ctx context.Context) context.Context {
