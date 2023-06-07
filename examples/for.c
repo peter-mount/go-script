@@ -22,4 +22,17 @@ main() {
         println(i,e)
     }
     println("after range",i)
+
+    println("before try")
+    try {
+        for i:=0;i<10;i=i+1 {
+            println("try",i)
+            if i>5 break
+        }
+        println(testSlice2[7677])
+    }
+    catch ex println("Exception", ex)
+    finally println("Finally block")
+
+    println("after try")
 }

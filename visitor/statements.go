@@ -57,6 +57,10 @@ func (v *visitor) VisitReturn(s *script.ReturnStmt) error {
 	return v.visitTask(s.WithContext, v.returnStatement)
 }
 
+func (v *visitor) VisitTry(s *script.Try) error {
+	return v.visitTask(s.WithContext, v.try)
+}
+
 func (v *visitor) VisitWhile(s *script.WhileStmt) error {
 	return v.visitTask(s.WithContext, v.whileStatement)
 }

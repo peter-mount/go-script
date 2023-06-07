@@ -54,6 +54,7 @@ func New(s *script.Script) (Executor, error) {
 		Statement(e.statement).
 		Statements(e.statements).
 		StatementsNoNest().
+		Try(e.try).
 		Unary(e.unary).
 		While(e.whileStatement).
 		WithContext(e.context)

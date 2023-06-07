@@ -24,6 +24,7 @@ type Visitor interface {
 	VisitScript(script *script.Script) error
 	VisitStatement(s *script.Statement) error
 	VisitStatements(s *script.Statements) error
+	VisitTry(s *script.Try) error
 	VisitUnary(s *script.Unary) error
 	VisitWhile(s *script.WhileStmt) error
 }
@@ -55,6 +56,7 @@ type visitorCommon struct {
 	statement        task.Task
 	statements       task.Task
 	statementsNoNest bool
+	try              task.Task
 	unary            task.Task
 	whileStatement   task.Task
 }

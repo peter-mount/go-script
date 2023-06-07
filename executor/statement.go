@@ -55,6 +55,9 @@ func (e *executor) statement(ctx context.Context) error {
 
 	case statement.Break != nil:
 		return Break()
+
+	case statement.Try != nil:
+		return Error(statement.Pos, e.visitor.VisitTry(statement.Try))
 	}
 
 	return nil

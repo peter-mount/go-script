@@ -145,51 +145,65 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 				return err
 			}
 		}
+
+		if statement.Try != nil {
+			if err := p.initTry(statement.Try.WithContext(ctx)); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
 func (p *defaultParser) initIf(ctx context.Context) error {
 	s := script.IfFromContext(ctx)
-	if s != nil {
-		v := visitor.FromContext(ctx)
-		if err := v.VisitStatement(s.Body); err != nil {
-			return err
-		}
-		if err := v.VisitStatement(s.Else); err != nil {
-			return err
-		}
+	v := visitor.FromContext(ctx)
+	if err := v.VisitStatement(s.Body); err != nil {
+		return err
+	}
+	if err := v.VisitStatement(s.Else); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (p *defaultParser) initWhile(ctx context.Context) error {
 	s := script.WhileFromContext(ctx)
-	if s != nil {
-		v := visitor.FromContext(ctx)
-		if err := v.VisitStatement(s.Body); err != nil {
-			return err
-		}
+	v := visitor.FromContext(ctx)
+	if err := v.VisitStatement(s.Body); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (p *defaultParser) initFor(ctx context.Context) error {
 	s := script.ForFromContext(ctx)
-	if s != nil {
-		v := visitor.FromContext(ctx)
-		if err := v.VisitStatement(s.Body); err != nil {
-			return err
-		}
+	v := visitor.FromContext(ctx)
+	if err := v.VisitStatement(s.Body); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (p *defaultParser) initForRange(ctx context.Context) error {
 	s := script.ForRangeFromContext(ctx)
-	if s != nil {
-		v := visitor.FromContext(ctx)
+	v := visitor.FromContext(ctx)
+	if err := v.VisitStatement(s.Body); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *defaultParser) initTry(ctx context.Context) error {
+	s := script.TryFromContext(ctx)
+	v := visitor.FromContext(ctx)
+	if s.Body != nil {
 		if err := v.VisitStatement(s.Body); err != nil {
+			return err
+		}
+	}
+	if s.Finally != nil {
+		if err := v.VisitStatement(s.Finally); err != nil {
 			return err
 		}
 	}

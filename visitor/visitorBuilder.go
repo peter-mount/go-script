@@ -39,6 +39,7 @@ type Builder interface {
 	// This is useful when you want to process a Statements but want to handle the
 	// content separately - e.g. Executor uses this.
 	StatementsNoNest() Builder
+	Try(t task.Task) Builder
 	Unary(t task.Task) Builder
 	While(t task.Task) Builder
 	// WithContext creates a Visitor bound to a Context
@@ -145,6 +146,11 @@ func (b *builder) StatementsNoNest() Builder {
 
 func (b *builder) Statement(t task.Task) Builder {
 	b.statement = b.statement.Then(t)
+	return b
+}
+
+func (b *builder) Try(t task.Task) Builder {
+	b.try = b.try.Then(t)
 	return b
 }
 
