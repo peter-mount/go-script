@@ -10,6 +10,8 @@ type Variables interface {
 	// passed to the parent if missing from the current scope.
 	// This is used to isolate variables inside functions
 	NewRootScope() Variables
+	// GlobalScope returns the global scope, usually the one returned by NewVariables()
+	GlobalScope() Variables
 	// Declare a variable.
 	Declare(n string)
 	// Set a variable. If the variable is declared in a parent scope this
@@ -21,21 +23,30 @@ type Variables interface {
 }
 
 type variables struct {
-	parent     Variables // If not nil then parent scope
-	trueParent Variables
-	vars       map[string]interface{}
+	parent      *variables // If not nil then parent scope for variable resolving
+	trueParent  *variables // Actual parent when ending a scope. nil for global
+	globalScope *variables // Pointer to the root global scope
+	vars        map[string]interface{}
 }
 
 func NewVariables() Variables {
 	return newVariables(nil, nil)
 }
 
-func newVariables(parent, trueParent Variables) Variables {
-	return &variables{
+func newVariables(parent, trueParent *variables) Variables {
+	v := &variables{
 		parent:     parent,
 		trueParent: trueParent,
 		vars:       make(map[string]interface{}),
 	}
+
+	if v.trueParent == nil {
+		v.globalScope = v
+	} else {
+		v.globalScope = v.trueParent.globalScope
+	}
+
+	return v
 }
 
 func (v *variables) NewScope() Variables {
@@ -43,7 +54,7 @@ func (v *variables) NewScope() Variables {
 }
 
 func (v *variables) NewRootScope() Variables {
-	return newVariables(nil, v)
+	return newVariables(v.globalScope, v)
 }
 
 func (v *variables) EndScope() Variables {
@@ -51,6 +62,10 @@ func (v *variables) EndScope() Variables {
 		return v
 	}
 	return v.trueParent
+}
+
+func (v *variables) GlobalScope() Variables {
+	return v.globalScope
 }
 
 func (v *variables) Get(n string) (interface{}, bool) {

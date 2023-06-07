@@ -12,6 +12,7 @@ type Executor interface {
 	Run() error
 	Visitor() visitor.Visitor
 	Calculator() calculator.Calculator
+	GlobalScope() state.Variables
 }
 
 type executor struct {
@@ -27,6 +28,7 @@ func New(s *script.Script) (Executor, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	e := &executor{
 		script:     s,
 		state:      execState,
@@ -82,4 +84,8 @@ func (e *executor) Visitor() visitor.Visitor {
 
 func (e *executor) Calculator() calculator.Calculator {
 	return e.calculator
+}
+
+func (e *executor) GlobalScope() state.Variables {
+	return e.state.GlobalScope()
 }
