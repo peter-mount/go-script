@@ -34,10 +34,6 @@ func (e *executor) ifStatement(ctx context.Context) error {
 		err = Error(s.Pos, e.visitor.VisitStatement(s.Else))
 	}
 
-	// Eat break so it just exits the If
-	if IsBreak(err) {
-		return nil
-	}
 	return err
 }
 
