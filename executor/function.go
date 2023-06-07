@@ -6,9 +6,23 @@ import (
 	"github.com/peter-mount/go-script/script"
 )
 
-var ctr = 0
-
 func (e *executor) callFunc(ctx context.Context) error {
+	err := e.callFuncImpl(ctx)
+	// Handle return values
+	if ret, ok := err.(*ReturnError); ok {
+		e.calculator.Push(ret.Value())
+		return nil
+	}
+
+	// Should not happen but capture breaks, so they don't leak out of the function
+	if IsBreak(err) {
+		return nil
+	}
+
+	return err
+}
+
+func (e *executor) callFuncImpl(ctx context.Context) error {
 	cf := script.CallFuncFromContext(ctx)
 
 	// Lookup builtin functions
@@ -23,13 +37,8 @@ func (e *executor) callFunc(ctx context.Context) error {
 		return fmt.Errorf("%s function %q not defined", cf.Pos, cf.Name)
 	}
 
-	ctr++
-	if ctr > 3 {
-		panic("boo")
-	}
-
 	// Process parameters
-	var a []interface{}
+	var args []interface{}
 	for _, p := range cf.Args {
 		v, ok, err := e.calculator.Calculate(e.assignment, p.Right.WithContext(ctx))
 		if err != nil {
@@ -38,28 +47,14 @@ func (e *executor) callFunc(ctx context.Context) error {
 		if !ok {
 			return Errorf(p.Pos, "No result from argument")
 		}
-		a = append(a, v)
+		args = append(args, v)
 	}
-	return e.function(f, a...)
+
+	return Error(f.Pos, e.functionImpl(f, args))
 }
 
-func (e *executor) function(f *script.FuncDec, args ...interface{}) error {
-	err := e.functionImpl(f, args)
-
-	// Handle return values
-	if ret, ok := err.(*ReturnError); ok {
-		e.calculator.Push(ret.Value())
-		return nil
-	}
-
-	// Should not happen but capture breaks, so they don't leak out of the function
-	if IsBreak(err) {
-		return nil
-	}
-
-	return Error(f.Pos, err)
-}
-
+// functionImpl invokes the function.
+// Used by callFuncImpl and executor.Run
 func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	// Use NewRootScope so we cannot access variables outside the function
 	e.state.NewRootScope()
@@ -74,7 +69,7 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 		e.state.Set(p.Ident, args[i])
 	}
 
-	return e.visitor.VisitStatements(f.FunBody.Statements)
+	return Error(f.Pos, e.visitor.VisitStatements(f.FunBody.Statements))
 }
 
 func (e *executor) returnStatement(ctx context.Context) error {

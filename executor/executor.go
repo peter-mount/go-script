@@ -64,7 +64,7 @@ func (e *executor) Run() error {
 		return Errorf(e.script.Pos, "main() function not defined")
 	}
 
-	err := e.function(main)
+	err := e.functionImpl(main, nil)
 
 	// Pass err unless it's return or break.
 	// break should happen lower down but this catches it, so it doesn't
