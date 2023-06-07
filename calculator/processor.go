@@ -1,9 +1,14 @@
 package calculator
 
+import "fmt"
+
 var (
 	Swap = swap{}
 	Dup  = dup{}
 	Drop = drop{}
+	Over = over{}
+	Rot  = rot{}
+	Dump = dump{}
 )
 
 func (c *calculator) Process(instructions ...Instruction) error {
@@ -17,6 +22,13 @@ func (c *calculator) Process(instructions ...Instruction) error {
 
 type Instruction interface {
 	Invoke(c Calculator) error
+}
+
+type dump struct{}
+
+func (d dump) Invoke(c Calculator) error {
+	fmt.Println(c.Dump())
+	return nil
 }
 
 func Push(v interface{}) Instruction { return push{v: v} }
@@ -46,6 +58,18 @@ type drop struct{}
 
 func (p drop) Invoke(c Calculator) error {
 	return c.Drop()
+}
+
+type over struct{}
+
+func (p over) Invoke(c Calculator) error {
+	return c.Over()
+}
+
+type rot struct{}
+
+func (p rot) Invoke(c Calculator) error {
+	return c.Rot()
 }
 
 func Op2(op string) Instruction { return op2{op: op} }

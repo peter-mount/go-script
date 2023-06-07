@@ -30,6 +30,10 @@ type Calculator interface {
 	// Swap the top two entries on the stack.
 	// Return an error if the stack does not have two entries to swap.
 	Swap() error
+	// Rot rotates third itm to top [n3 n2 n1] -> [n2 n1 n3]
+	Rot() error
+	// Over copies second item to top [n2 n1] -> [n2 n1 n2]
+	Over() error
 	// Dup duplicates the top entry on the stack
 	// Returns an error if the stack is empty.
 	Dup() error
@@ -139,6 +143,26 @@ func (c *calculator) Dup() error {
 		return stackEmpty
 	}
 	c.stack = append(c.stack, c.stack[l-1])
+	return nil
+}
+
+// Rot [n3 n2 n1] -> [n2 n1 n3]
+func (c *calculator) Rot() error {
+	l := len(c.stack)
+	if l < 3 {
+		return stackEmpty
+	}
+	c.stack[l-3], c.stack[l-2], c.stack[l-1] = c.stack[l-2], c.stack[l-1], c.stack[l-3]
+	return nil
+}
+
+// Over [n2 n1] -> [n2 n1 n2]
+func (c *calculator) Over() error {
+	l := len(c.stack)
+	if l < 2 {
+		return stackEmpty
+	}
+	c.stack = append(c.stack, c.stack[l-2])
 	return nil
 }
 
