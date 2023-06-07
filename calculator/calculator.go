@@ -50,7 +50,12 @@ type Calculator interface {
 	// Returns the top value of the stack at the end of the calculation,
 	// or nil if the stack was empty.
 	Calculate(t task.Task, ctx context.Context) (interface{}, bool, error)
+	// Exec is similar to Calculate but does not return a result.
 	Exec(t task.Task, ctx context.Context) error
+	// Process processes a series of Instruction's to perform a calculation
+	Process(instructions ...Instruction) error
+	// Dump returns the current stack as a string.
+	// Used for debugging
 	Dump() string
 }
 

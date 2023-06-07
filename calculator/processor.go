@@ -1,0 +1,59 @@
+package calculator
+
+var (
+	Swap = swap{}
+	Dup  = dup{}
+	Drop = drop{}
+)
+
+func (c *calculator) Process(instructions ...Instruction) error {
+	for _, i := range instructions {
+		if err := i.Invoke(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type Instruction interface {
+	Invoke(c Calculator) error
+}
+
+func Push(v interface{}) Instruction { return push{v: v} }
+
+type push struct {
+	v interface{}
+}
+
+func (p push) Invoke(c Calculator) error {
+	c.Push(p.v)
+	return nil
+}
+
+type swap struct{}
+
+func (p swap) Invoke(c Calculator) error {
+	return c.Swap()
+}
+
+type dup struct{}
+
+func (p dup) Invoke(c Calculator) error {
+	return c.Dup()
+}
+
+type drop struct{}
+
+func (p drop) Invoke(c Calculator) error {
+	return c.Drop()
+}
+
+func Op2(op string) Instruction { return op2{op: op} }
+
+type op2 struct {
+	op string
+}
+
+func (p op2) Invoke(c Calculator) error {
+	return c.Op2(p.op)
+}
