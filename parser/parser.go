@@ -5,7 +5,6 @@ import (
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/script"
-	_ "github.com/peter-mount/go-script/stdlib"
 	"github.com/peter-mount/go-script/visitor"
 	"io"
 	"os"
