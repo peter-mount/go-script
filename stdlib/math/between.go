@@ -5,7 +5,6 @@ import (
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
-	"github.com/peter-mount/go-script/stdlib"
 )
 
 func init() {
@@ -13,7 +12,7 @@ func init() {
 }
 
 func _between(e executor.Executor, call *script.CallFunc, ctx context.Context) error {
-	arg, err := stdlib.Args(e, call, ctx)
+	arg, err := executor.Args(e, call, ctx)
 	if err != nil {
 		return executor.Error(call.Pos, err)
 	}

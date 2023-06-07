@@ -1,12 +1,11 @@
-package stdlib
+package executor
 
 import (
 	"context"
-	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 )
 
-func Args(e executor.Executor, call *script.CallFunc, ctx context.Context) ([]interface{}, error) {
+func Args(e Executor, call *script.CallFunc, ctx context.Context) ([]interface{}, error) {
 	visitor := e.Visitor()
 	calc := e.Calculator()
 
@@ -17,11 +16,11 @@ func Args(e executor.Executor, call *script.CallFunc, ctx context.Context) ([]in
 		}, ctx)
 		switch {
 		case err != nil:
-			return nil, executor.Error(arg.Pos, err)
+			return nil, Error(arg.Pos, err)
 		case valReturned:
 			a = append(a, val)
 		default:
-			return nil, executor.Errorf(arg.Pos, "no value returned")
+			return nil, Errorf(arg.Pos, "no value returned")
 		}
 	}
 	return a, nil

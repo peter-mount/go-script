@@ -13,7 +13,7 @@ func init() {
 }
 
 func _print(e executor.Executor, call *script.CallFunc, ctx context.Context) error {
-	a, err := Args(e, call, ctx)
+	a, err := executor.Args(e, call, ctx)
 	if err != nil {
 		return executor.Error(call.Pos, err)
 	}
@@ -22,7 +22,7 @@ func _print(e executor.Executor, call *script.CallFunc, ctx context.Context) err
 }
 
 func _println(e executor.Executor, call *script.CallFunc, ctx context.Context) error {
-	a, err := Args(e, call, ctx)
+	a, err := executor.Args(e, call, ctx)
 	if err != nil {
 		return executor.Error(call.Pos, err)
 	}
