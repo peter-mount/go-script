@@ -8,7 +8,6 @@ import (
 type FuncDec struct {
 	Pos lexer.Position
 
-	ReturnType string       `parser:"@(Type | 'void')?"`
 	Name       string       `parser:"@Ident"`
 	Parameters []*Parameter `parser:"'(' ((@@ (',' @@)*) | 'void' )? ')'"`
 	FunBody    *FuncBody    `parser:"(';' | '{' @@ '}')"`
