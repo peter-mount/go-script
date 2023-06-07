@@ -62,8 +62,7 @@ func (e *executor) assignment(ctx context.Context) error {
 		}
 
 		// Set the variable
-		set := e.state.Set(name, v)
-		if !set {
+		if !e.state.Set(name, v) {
 			// Not set then declare it in this scope
 			e.state.Declare(name)
 			_ = e.state.Set(name, v)
