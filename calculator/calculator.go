@@ -14,23 +14,28 @@ const (
 type Calculator interface {
 	// WithContext adds the Calculator to a Context
 	WithContext(ctx context.Context) context.Context
-	Reset()
+	Reset() Calculator
 	// Push a value onto the stack
-	Push(v interface{})
+	Push(v interface{}) Calculator
 	// Pop a value from the stack. Return an error if the stack is empty
+	// Returns an error if the stack is empty.
 	Pop() (interface{}, error)
-	// Pop2 returns two values from the stack, returning an error if the stack is empty.
-	//
+	// Pop2 returns two values from the stack.
 	// The order returned (a,b) is if b was the top value on the stack whilst a was below it.
+	// Returns an error if the stack is empty.
 	Pop2() (interface{}, interface{}, error)
-	// Peek returns the top value on the stack, returning an error if the stack is empty.
-	// The stack is unchanged
+	// Peek returns the top value on the stack, the stack is unchanged
+	// Returns an error if the stack is empty.
 	Peek() (interface{}, error)
-	// Swap the top two entries on the stack. return an error if the stack does not have
-	// two entries to swap.
+	// Swap the top two entries on the stack.
+	// Return an error if the stack does not have two entries to swap.
 	Swap() error
 	// Dup duplicates the top entry on the stack
+	// Returns an error if the stack is empty.
 	Dup() error
+	// Drop removes the top entry on the stack
+	// Returns an error if the stack is empty.
+	Drop() error
 	// Op2 performs a named operation using the top two entries on the stack, returning
 	// the result to the stack.
 	//
@@ -71,12 +76,14 @@ func (c *calculator) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, calculatorKey, c)
 }
 
-func (c *calculator) Reset() {
+func (c *calculator) Reset() Calculator {
 	c.stack = nil
+	return c
 }
 
-func (c *calculator) Push(v interface{}) {
+func (c *calculator) Push(v interface{}) Calculator {
 	c.stack = append(c.stack, v)
+	return c
 }
 
 func (c *calculator) Pop() (interface{}, error) {
@@ -128,6 +135,11 @@ func (c *calculator) Dup() error {
 	}
 	c.stack = append(c.stack, c.stack[l-1])
 	return nil
+}
+
+func (c *calculator) Drop() error {
+	_, err := c.Pop()
+	return err
 }
 
 func (c *calculator) Op2(op string) error {
