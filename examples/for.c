@@ -24,7 +24,8 @@ main() {
     println("after range",i)
 
     println("before try")
-    try {
+    try (a:=testcl0 ; b:=testcl1 ) {
+    println(a,b)
         for i:=0;i<10;i=i+1 {
             println("try",i)
             if i>5 break

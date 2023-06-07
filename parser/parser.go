@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
+	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/visitor"
 	"io"
@@ -197,15 +198,33 @@ func (p *defaultParser) initForRange(ctx context.Context) error {
 func (p *defaultParser) initTry(ctx context.Context) error {
 	s := script.TryFromContext(ctx)
 	v := visitor.FromContext(ctx)
+
+	// try-resources ensure only assignments and enforce declare mode
+	// as those variables can only be accessed from within the body
+	for _, init := range s.Init {
+		if init.Right == nil || init.Right.Right == nil {
+			return executor.Errorf(init.Pos, "only assignments allowed in try-resources")
+		}
+		init.Right.Declare = true
+	}
+
 	if s.Body != nil {
 		if err := v.VisitStatement(s.Body); err != nil {
 			return err
 		}
 	}
+
+	if s.Catch != nil {
+		if err := v.VisitStatement(s.Finally); err != nil {
+			return err
+		}
+	}
+
 	if s.Finally != nil {
 		if err := v.VisitStatement(s.Finally); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
