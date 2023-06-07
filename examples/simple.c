@@ -1,15 +1,14 @@
-/* This is an example uC program. */
-void putint(int i);
+#! ./builds/linux/amd64/bin/goscript
 
-int fac(int n)
+/* This is an example uC program. */
+fac(n)
 {
     if (n < 2)
         return n;
     return n * fac(n - 1);
 }
 
-int sum(int n, int a[])
-{
+sum(int n, int a[]) {
     int i;
     int s;
 
@@ -22,7 +21,7 @@ int sum(int n, int a[])
     return s;
 }
 
-int main(void)
+main()
 {
     int a[2];
 

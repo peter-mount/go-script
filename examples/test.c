@@ -45,6 +45,17 @@ main() {
     for i=0;i<12;i=i+1 {
         println( min, "<=", i, "<=", max, between(i,min,max) )
     }
+
+    // Check we handle int/float conversions, specifically int,float => float,float
+    // If that breaks then this will be an infinite loop as i starts as an int but inc is float
+    for i=0;i<5;i=i+0.5 {
+        print(i," ")
+        if i>10 {
+            print("*** FAIL ***")
+            break
+        }
+    }
+    println()
 }
 
 increment(a) {

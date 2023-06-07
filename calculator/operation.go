@@ -39,13 +39,17 @@ func DoCalculation(calc Calculation, ctx context.Context) error {
 	return nil
 }
 
-// BiOpDef implements an operation whose behaviour depends on the type
-// of the left hand side
-type BiOpDef struct {
+type biOpCommon struct {
 	intOp    func(a, b int) (interface{}, error)
 	floatOp  func(a, b float64) (interface{}, error)
 	stringOp func(a, b string) (interface{}, error)
 	boolOp   func(a, b bool) (interface{}, error)
+}
+
+// BiOpDef implements an operation whose behaviour depends on the type
+// of the left hand side
+type BiOpDef struct {
+	biOpCommon
 }
 
 func (op *BiOpDef) doInt(a int, b interface{}) (interface{}, error) {
@@ -81,41 +85,33 @@ func (op *BiOpDef) doBool(a bool, b interface{}) (interface{}, error) {
 }
 
 func (op *BiOpDef) BiCalculate(a, b interface{}) (interface{}, error) {
-	if op.intOp != nil {
-		if i, ok := a.(int); ok {
-			return op.doInt(i, b)
-		}
-		if i, ok := a.(int64); ok {
-			return op.doInt(int(i), b)
-		}
-		if i, ok := a.(Int); ok {
-			return op.doInt(i.Int(), b)
-		}
+
+	// Convert so a and b are the same type
+	a, b, err := Convert(a, b)
+	if err != nil {
+		return nil, err
 	}
 
 	if op.floatOp != nil {
-		if f, ok := a.(float64); ok {
+		if f, ok := GetFloatRaw(a); ok {
 			return op.doFloat(f, b)
 		}
-		if f, ok := a.(Float); ok {
-			return op.doFloat(f.Float(), b)
-		}
-		if f, ok := a.(float32); ok {
-			return op.doFloat(float64(f), b)
+	}
+
+	if op.intOp != nil {
+		if i, ok := GetIntRaw(a); ok {
+			return op.doInt(i, b)
 		}
 	}
 
 	if op.stringOp != nil {
-		if s, ok := a.(string); ok {
+		if s, ok := GetStringRaw(a); ok {
 			return op.doString(s, b)
-		}
-		if s, ok := a.(String); ok {
-			return op.doString(s.String(), b)
 		}
 	}
 
 	if op.boolOp != nil {
-		if ab, ok := a.(bool); ok {
+		if ab, ok := GetBoolRaw(a); ok {
 			return op.doBool(ab, b)
 		}
 	}
@@ -137,37 +133,29 @@ type BiOpDefBuilder interface {
 }
 
 type biOpBuilder struct {
-	fInt    func(a, b int) (interface{}, error)
-	fFloat  func(a, b float64) (interface{}, error)
-	fString func(a, b string) (interface{}, error)
-	fBool   func(a, b bool) (interface{}, error)
+	biOpCommon
 }
 
 func (b *biOpBuilder) Int(f func(a, b int) (interface{}, error)) BiOpDefBuilder {
-	b.fInt = f
+	b.intOp = f
 	return b
 }
 
 func (b *biOpBuilder) Float(f func(a, b float64) (interface{}, error)) BiOpDefBuilder {
-	b.fFloat = f
+	b.floatOp = f
 	return b
 }
 
 func (b *biOpBuilder) String(f func(a, b string) (interface{}, error)) BiOpDefBuilder {
-	b.fString = f
+	b.stringOp = f
 	return b
 }
 
 func (b *biOpBuilder) Bool(f func(a, b bool) (interface{}, error)) BiOpDefBuilder {
-	b.fBool = f
+	b.boolOp = f
 	return b
 }
 
 func (b *biOpBuilder) Build() *BiOpDef {
-	return &BiOpDef{
-		intOp:    b.fInt,
-		floatOp:  b.fFloat,
-		stringOp: b.fString,
-		boolOp:   b.fBool,
-	}
+	return &BiOpDef{biOpCommon: b.biOpCommon}
 }
