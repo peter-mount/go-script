@@ -56,6 +56,11 @@ func (e *executor) assignment(ctx context.Context) error {
 			return Error(op.Pos, err)
 		}
 
+		// Implicit declare, e.g. `:=` used
+		if op.Declare {
+			e.state.Declare(name)
+		}
+
 		// Set the variable
 		set := e.state.Set(name, v)
 		if !set {
