@@ -23,7 +23,7 @@ type Try struct {
 
 	Init       []*Expression `parser:"'try' [ '(' ( @@ (';' @@)* ) ')' ]"` // init block
 	Body       *Statement    `parser:"@@"`                                 // body
-	CatchIdent string        `parser:"('catch' @Ident"`                    // catch var
+	CatchIdent string        `parser:"('catch' '(' @Ident ')'"`            // catch var
 	Catch      *Statement    `parser:" @@)?"`                              // catch block
 	Finally    *Statement    `parser:"('finally' @@)?"`                    // finally block
 }
