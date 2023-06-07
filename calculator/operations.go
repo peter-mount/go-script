@@ -53,5 +53,11 @@ var (
 			Int(func(a, b int) (interface{}, error) { return a / b, nil }).
 			Float(func(a, b float64) (interface{}, error) { return a / b, nil }).
 			Build(),
+		"&&": NewBiOpDef().
+			Bool(func(a, b bool) (interface{}, error) { return a && b, nil }).
+			Build(),
+		"||": NewBiOpDef().
+			Bool(func(a, b bool) (interface{}, error) { return a || b, nil }).
+			Build(),
 	}
 )
