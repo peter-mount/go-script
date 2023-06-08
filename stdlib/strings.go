@@ -8,10 +8,6 @@ import (
 	"reflect"
 )
 
-func init() {
-	executor.Register("len", _len)
-}
-
 func _len(e executor.Executor, call *script.CallFunc, ctx context.Context) (err error) {
 	var arg []interface{}
 	arg, err = executor.Args(e, call, ctx)

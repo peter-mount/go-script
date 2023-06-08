@@ -7,11 +7,6 @@ import (
 	"github.com/peter-mount/go-script/script"
 )
 
-func init() {
-	executor.Register("print", _print)
-	executor.Register("println", _println)
-}
-
 func _print(e executor.Executor, call *script.CallFunc, ctx context.Context) error {
 	a, err := executor.Args(e, call, ctx)
 	if err != nil {
