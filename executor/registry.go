@@ -15,6 +15,36 @@ var (
 
 type Function func(e Executor, call *script.CallFunc, ctx context.Context) error
 
+func (f Function) Do(e Executor, call *script.CallFunc, ctx context.Context) error {
+	if f == nil {
+		return nil
+	}
+	return f(e, call, ctx)
+}
+
+func (f Function) Then(b Function) Function {
+	if f == nil {
+		return b
+	}
+	if b == nil {
+		return f
+	}
+	return func(e Executor, call *script.CallFunc, ctx context.Context) error {
+		if err := f(e, call, ctx); err != nil {
+			return err
+		}
+		return b(e, call, ctx)
+	}
+}
+
+func Of(funcs ...Function) Function {
+	var r Function
+	for _, f := range funcs {
+		r = r.Then(f)
+	}
+	return r
+}
+
 // Register a Function against a name.
 // This will panic if name has already been registered
 func Register(name string, f Function) {

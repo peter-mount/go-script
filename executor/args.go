@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"github.com/peter-mount/go-script/script"
+	"math"
 )
 
 func Args(e Executor, call *script.CallFunc, ctx context.Context) ([]interface{}, error) {
@@ -24,4 +25,42 @@ func Args(e Executor, call *script.CallFunc, ctx context.Context) ([]interface{}
 		}
 	}
 	return a, nil
+}
+
+// RequireArgs enforces a function to be called with n arguments
+func (f Function) RequireArgs(n int) Function {
+	return f.RequireArgsRange(n, n)
+}
+
+// RequireMinArgs enforces a function to be called with at least n arguments
+func (f Function) RequireMinArgs(n int) Function {
+	return f.RequireArgsRange(n, math.MaxInt)
+}
+
+// RequireMaxArgs enforces a function to be called with a maximum of n arguments
+func (f Function) RequireMaxArgs(n int) Function {
+	return f.RequireArgsRange(0, n)
+}
+
+// RequireArgsRange enforces a function to be called with a range of arguments
+func (f Function) RequireArgsRange(min, max int) Function {
+	if min < 0 {
+		min = 0
+	}
+	if min > max {
+		min, max = max, min
+	}
+	return f.Then(func(e Executor, call *script.CallFunc, ctx context.Context) error {
+		l := len(call.Args)
+		switch {
+		case min == max && l != min:
+			return Errorf(call.Pos, "%s requires %d arguments")
+
+		case l < min:
+			return Errorf(call.Pos, "%s requires minimum of %d arguments")
+		case l > max:
+			return Errorf(call.Pos, "%s requires maximum of %d arguments")
+		}
+		return nil
+	})
 }
