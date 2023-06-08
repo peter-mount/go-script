@@ -121,6 +121,7 @@ type Primary struct {
 
 	Float         *float64      `parser:"  @Number"`
 	Integer       *int          `parser:"| @Int"`
+	KeyValue      *KeyValue     `parser:"| @@"`
 	String        *string       `parser:"| @String"`
 	CallFunc      *CallFunc     `parser:"| @@"`
 	Ident         string        `parser:"| @Ident"`
@@ -143,4 +144,12 @@ type ArrayIndex struct {
 
 	Ident string        `parser:"@Ident"`
 	Index []*Expression `parser:"('[' @@ ']')+"`
+}
+
+// KeyValue is "string": expression
+type KeyValue struct {
+	Pos lexer.Position
+
+	Key   string      `parser:"@String"`
+	Value *Expression `parser:"':' @@"`
 }

@@ -26,9 +26,27 @@ type Bool interface {
 	Bool() bool
 }
 
+// Value is an instance that can return it's value as an interface{}
+type Value interface {
+	Value() interface{}
+}
+
+// GetValue returns v calling v.Value() if it supports the Value interface
+func GetValue(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+	if val, ok := v.(Value); ok {
+		v = val.Value()
+	}
+	return v
+}
+
 // GetFloatRaw returns v as a float64 if it's a form of float.
 func GetFloatRaw(v interface{}) (float64, bool) {
 	if v != nil {
+		v = GetValue(v)
+
 		if f, ok := v.(float64); ok {
 			return f, true
 		}
@@ -49,6 +67,8 @@ func GetFloatRaw(v interface{}) (float64, bool) {
 // If v is a string it will parse it.
 // The bool is false if a float64 cannot be returned.
 func GetFloat(v interface{}) (float64, error) {
+	v = GetValue(v)
+
 	if f, ok := GetFloatRaw(v); ok {
 		return f, nil
 	}
@@ -75,6 +95,8 @@ func GetFloat(v interface{}) (float64, error) {
 // GetIntRaw returns v as an int if v is a form of integer.
 func GetIntRaw(v interface{}) (int, bool) {
 	if v != nil {
+		v = GetValue(v)
+
 		if i, ok := v.(int); ok {
 			return i, true
 		}
@@ -95,6 +117,8 @@ func GetIntRaw(v interface{}) (int, bool) {
 // If v is a string it will parse it.
 // The bool is false if an integer cannot be returned.
 func GetInt(v interface{}) (int, error) {
+	v = GetValue(v)
+
 	if i, ok := GetIntRaw(v); ok {
 		return i, nil
 	}
@@ -122,6 +146,8 @@ func GetInt(v interface{}) (int, error) {
 // Returns "",false if the value is not a string.
 func GetStringRaw(v interface{}) (string, bool) {
 	if v != nil {
+		v = GetValue(v)
+
 		if s, ok := v.(string); ok {
 			return s, true
 		}
@@ -141,6 +167,8 @@ func GetStringRaw(v interface{}) (string, bool) {
 // If a bool then "true" or "false" is returned.
 // Returns "",false if the value could not be converted to a string.
 func GetString(v interface{}) (string, error) {
+	v = GetValue(v)
+
 	if s, ok := GetStringRaw(v); ok {
 		return s, nil
 	}
@@ -168,6 +196,8 @@ func GetString(v interface{}) (string, error) {
 // GetBoolRaw returns a bool if v is a bool or implements Bool
 func GetBoolRaw(v interface{}) (bool, bool) {
 	if v != nil {
+		v = GetValue(v)
+
 		if b, ok := v.(bool); ok {
 			return b, true
 		}
@@ -186,6 +216,8 @@ func GetBoolRaw(v interface{}) (bool, bool) {
 //
 // For string this returns true if "true", "yes", "t" or "y", and false if "false", "no", "f" or "n".
 func GetBool(v interface{}) (bool, error) {
+	v = GetValue(v)
+
 	if b, ok := GetBoolRaw(v); ok {
 		return b, nil
 	}

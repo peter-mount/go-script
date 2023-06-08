@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
 )
 
@@ -199,6 +200,17 @@ func (e *executor) primary(ctx context.Context) error {
 
 	case op.SubExpression != nil:
 		return Error(op.Pos, e.visitor.VisitExpression(op.SubExpression))
+
+	case op.KeyValue != nil:
+		if err := Error(op.Pos, e.visitor.VisitExpression(op.KeyValue.Value)); err != nil {
+			return err
+		}
+
+		if val, err := e.calculator.Pop(); err != nil {
+			return Error(op.KeyValue.Pos, err)
+		} else {
+			e.calculator.Push(calculator.NewKeyValue(op.KeyValue.Key, val))
+		}
 
 	}
 
