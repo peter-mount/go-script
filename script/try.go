@@ -39,8 +39,3 @@ func TryFromContext(ctx context.Context) *Try {
 	}
 	return nil
 }
-
-// TryClosable if implemented by a value defined in Try.Init will be called when the try block completes
-type TryClosable interface {
-	Close() error
-}

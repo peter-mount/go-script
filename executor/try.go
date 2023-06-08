@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"github.com/peter-mount/go-script/script"
+	"io"
 )
 
 func (e *executor) try(ctx context.Context) (err error) {
@@ -68,7 +69,7 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 
 		// If implements TryClosable then defer it
 		if ok {
-			if cl, ok := val.(script.TryClosable); ok {
+			if cl, ok := val.(io.Closer); ok {
 				// IDE will show this as a possible resource leak due to
 				// defer being inside a for loop but in this instance
 				// we actually want this
