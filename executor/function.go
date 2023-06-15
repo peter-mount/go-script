@@ -92,54 +92,16 @@ func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx con
 
 	tf := f.Type()
 
-	var argVals []reflect.Value
-	for argN, argV := range args {
-		val := reflect.ValueOf(argV)
-		if argN < tf.NumIn() {
-			val, err = calculator.Cast(val, tf.In(argN))
-			if err != nil {
-				return nil, Error(cf.Args[argN].Pos, err)
-			}
-		}
-		argVals = append(argVals, val)
+	argVals, err := e.argsToValues(cf, tf, args)
+	if err != nil {
+		return nil, err
 	}
 
 	retVal := f.Call(argVals)
 
-	var ret []interface{}
-	for i := 0; i < tf.NumOut(); i++ {
-		tOut := tf.Out(i)
-		tk := tOut.Kind()
-
-		if tOut.Implements(errorInterface) {
-			// if err not nil fail the function
-			// otherwise drop the value from the results
-			if !retVal[i].IsNil() {
-				v := retVal[i].Interface()
-				return nil, v.(error)
-			}
-		} else {
-
-			switch tk {
-
-			case reflect.Float64, reflect.Float32:
-				ret = append(ret, retVal[i].Float())
-
-			case reflect.Int, reflect.Int64,
-				reflect.Int8, reflect.Int16, reflect.Int32:
-				ret = append(ret, retVal[i].Int())
-
-			case reflect.Uint, reflect.Uint64,
-				reflect.Uint8, reflect.Uint16, reflect.Uint32:
-				ret = append(ret, retVal[i].Int())
-
-			case reflect.Array, reflect.Map:
-				ret = append(ret, retVal[i].Interface())
-
-			default:
-				return nil, Errorf(cf.Pos, "unsupported return value %T in arg %d", retVal[i], i)
-			}
-		}
+	ret, err := e.valuesToRet(cf, tf, retVal)
+	if err != nil {
+		return nil, err
 	}
 
 	// Work out what to return
@@ -153,6 +115,78 @@ func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx con
 	default:
 		return ret, nil
 	}
+}
+
+func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []interface{}) (ret []reflect.Value, err error) {
+	for argN, argV := range args {
+		val := reflect.ValueOf(argV)
+
+		if argN < tf.NumIn() {
+			val, err = calculator.Cast(val, tf.In(argN))
+			if err != nil {
+				return nil, Error(cf.Args[argN].Pos, err)
+			}
+		}
+
+		ret = append(ret, val)
+	}
+	return
+}
+
+func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []reflect.Value) (ret []interface{}, err error) {
+
+	for i := 0; i < tf.NumOut(); i++ {
+		tOut := tf.Out(i)
+		tk := tOut.Kind()
+
+		rv := retVal[i]
+		if rv.Kind() == reflect.Pointer {
+			rv = rv.Elem()
+			tk = rv.Kind()
+		}
+
+		if tOut.Implements(errorInterface) {
+			// if err not nil fail the function
+			// otherwise drop the value from the results
+			if !rv.IsNil() {
+				v := rv.Interface()
+				return nil, v.(error)
+			}
+		} else {
+			var v interface{}
+
+			switch tk {
+
+			case reflect.Float64, reflect.Float32:
+				v = rv.Float()
+
+			case reflect.Int, reflect.Int64,
+				reflect.Int8, reflect.Int16, reflect.Int32:
+				v = rv.Int()
+
+			case reflect.Uint, reflect.Uint64,
+				reflect.Uint8, reflect.Uint16, reflect.Uint32:
+				v = rv.Int()
+
+			case reflect.Array, reflect.Map, reflect.Struct:
+				v = rv.Interface()
+
+			case reflect.String:
+				v = rv.String()
+
+			case reflect.Bool:
+				v = rv.Bool()
+
+			default:
+				v = rv.Interface()
+				return nil, Errorf(cf.Pos, "unsupported return value %T in arg %d", v, i)
+			}
+
+			ret = append(ret, v)
+		}
+	}
+
+	return
 }
 
 func (e *executor) returnStatement(ctx context.Context) error {
