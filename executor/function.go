@@ -84,7 +84,14 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	return Error(f.Pos, e.visitor.VisitStatements(f.FunBody.Statements))
 }
 
-func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx context.Context) (interface{}, error) {
+func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx context.Context) (ret interface{}, err error) {
+	// Any panics get resolved to errors
+	defer func() {
+		if err1 := recover(); err1 != nil {
+			err = Errorf(cf.Pos, "%v", err1)
+		}
+	}()
+
 	args, err := e.processParameters(cf, ctx)
 	if err != nil {
 		return nil, err
@@ -99,18 +106,18 @@ func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx con
 
 	retVal := f.Call(argVals)
 
-	ret, err := e.valuesToRet(cf, tf, retVal)
+	ret1, err := e.valuesToRet(cf, tf, retVal)
 	if err != nil {
 		return nil, err
 	}
 
 	// Work out what to return
-	switch len(ret) {
+	switch len(ret1) {
 	case 0:
 		return nil, nil
 
 	case 1:
-		return ret[0], nil
+		return ret1[0], nil
 
 	default:
 		return ret, nil
