@@ -67,9 +67,19 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 			return err1
 		}
 
-		// If implements TryClosable then defer it
 		if ok {
-			if cl, ok := val.(io.Closer); ok {
+			if cl, ok := val.(CreateCloser); ok {
+				// CreateCloser will allow us to have a cope created by Create but closed when the try block completes
+				err1 := cl.Create()
+				if err1 != nil {
+					return err1
+				}
+
+				// IDE will show this as a possible resource leak due to
+				// defer being inside a for loop but in this instance
+				// we actually want this
+				defer cl.Close()
+			} else if cl, ok := val.(io.Closer); ok {
 				// IDE will show this as a possible resource leak due to
 				// defer being inside a for loop but in this instance
 				// we actually want this
@@ -93,4 +103,9 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	}
 
 	return nil
+}
+
+type CreateCloser interface {
+	io.Closer
+	Create() error
 }
