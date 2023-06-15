@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
-	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/visitor"
 	"io"
@@ -202,10 +201,9 @@ func (p *defaultParser) initTry(ctx context.Context) error {
 	// try-resources ensure only assignments and enforce declare mode
 	// as those variables can only be accessed from within the body
 	for _, init := range s.Init {
-		if init.Right == nil || init.Right.Right == nil {
-			return executor.Errorf(init.Pos, "only assignments allowed in try-resources")
+		if init.Right != nil && init.Right.Right != nil {
+			init.Right.Declare = true
 		}
-		init.Right.Declare = true
 	}
 
 	if s.Body != nil {
