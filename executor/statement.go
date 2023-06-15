@@ -10,7 +10,8 @@ import (
 func (e *executor) statements(ctx context.Context) error {
 	statements := script.StatementsFromContext(ctx)
 
-	if statements == nil {
+	// Do nothing if it's an empty block
+	if statements == nil || len(statements.Statements) == 0 {
 		return nil
 	}
 

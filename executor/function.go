@@ -140,10 +140,6 @@ func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []re
 		tk := tOut.Kind()
 
 		rv := retVal[i]
-		/*if rv.Kind() == reflect.Pointer {
-			rv = rv.Elem()
-			tk = rv.Kind()
-		}*/
 
 		if tOut.Implements(errorInterface) {
 			// if err not nil fail the function
