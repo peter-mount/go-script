@@ -179,7 +179,6 @@ func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []re
 
 			default:
 				v = rv.Interface()
-				return nil, Errorf(cf.Pos, "unsupported return value %T in arg %d", v, i)
 			}
 
 			ret = append(ret, v)
