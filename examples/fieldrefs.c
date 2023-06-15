@@ -32,7 +32,7 @@ main() {
     }
 
     for _,e = range testSlice {
-        println(i,e)
+        println(e)
     }
 
     println(testSlice2["2"].C)

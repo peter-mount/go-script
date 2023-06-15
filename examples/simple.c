@@ -8,7 +8,7 @@ fac(n)
     return n * fac(n - 1);
 }
 
-sum(int n, int a[]) {
+sum(n, a) {
     int i;
     int s;
 
@@ -23,7 +23,7 @@ sum(int n, int a[]) {
 
 main()
 {
-    int a[2];
+    a:=[];
 
     a[0] = fac(5);
     a[1] = 27;
