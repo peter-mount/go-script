@@ -9,6 +9,7 @@ import (
 var (
 	scriptLexer = lexer.MustSimple([]lexer.SimpleRule{
 		{"hashComment", `#.*`},
+		{"sheBang", `#\!.*`},
 		{"comment", `//.*|/\*.*?\*/`},
 		{"whitespace", `\s+`},
 		//{"Ident", `([a-zA-Z_][a-zA-Z0-9_]*)`},
@@ -20,6 +21,7 @@ var (
 		{"Int", `[-+]?\d+`},
 		{"String", `"(\\"|[^"])*"`},
 		{"Period", `(\.)`},
+		{"NewLine", `[\n\r]+`},
 	})
 
 	scriptParser = participle.MustBuild[script.Script](

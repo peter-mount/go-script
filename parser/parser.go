@@ -2,12 +2,15 @@ package parser
 
 import (
 	"context"
+	"fmt"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
+	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/visitor"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 type Parser interface {
@@ -15,11 +18,13 @@ type Parser interface {
 	ParseBytes(fileName string, b []byte, opts ...participle.ParseOption) (*script.Script, error)
 	ParseString(fileName, src string, opts ...participle.ParseOption) (*script.Script, error)
 	ParseFile(fileName string, opts ...participle.ParseOption) (*script.Script, error)
+	IncludePath(s string) error
 }
 
 type defaultParser struct {
-	lexer  *lexer.StatefulDefinition
-	parser *participle.Parser[script.Script]
+	lexer       *lexer.StatefulDefinition
+	parser      *participle.Parser[script.Script]
+	includePath []string
 }
 
 func New() Parser {
@@ -27,6 +32,24 @@ func New() Parser {
 		lexer:  scriptLexer,
 		parser: scriptParser,
 	}
+}
+
+func (p *defaultParser) IncludePath(s string) error {
+	fi, err := os.Stat(s)
+	if err != nil {
+		return err
+	}
+
+	if fi.IsDir() {
+		s, err = filepath.Abs(s)
+		if err != nil {
+			return err
+		}
+		p.includePath = append(p.includePath, s)
+		return nil
+	}
+
+	return fmt.Errorf("not a directory %q", s)
 }
 
 func (p *defaultParser) Parse(fileName string, r io.Reader, opts ...participle.ParseOption) (*script.Script, error) {
@@ -54,20 +77,99 @@ func (p *defaultParser) ParseString(fileName, src string, opts ...participle.Par
 }
 
 func (p *defaultParser) ParseFile(fileName string, opts ...participle.ParseOption) (*script.Script, error) {
-	f, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	s, err := p.parser.Parse(fileName, f, opts...)
+	s, err := p.parseFile(fileName, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return p.init(s)
 }
 
+func (p *defaultParser) parseFile(fileName string, opts ...participle.ParseOption) (*script.Script, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return p.parser.Parse(fileName, f, opts...)
+}
+
+func (p *defaultParser) includeTopDec(s *script.Script, tds []*script.TopDec) error {
+	for _, td := range tds {
+		if td.Include != nil {
+			for _, path := range td.Include.Path {
+				if err := p.include(s, td.Pos, p.includePath, path); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p *defaultParser) include(s *script.Script, pos lexer.Position, paths []string, file string) error {
+	if s.Includes == nil {
+		s.Includes = make(map[string]interface{})
+	}
+
+	// Locate the file within paths
+	src, err := p.findFile(paths, file)
+	if err != nil {
+		return executor.Error(pos, err)
+	}
+
+	// To prevent an infinite loop, if we have already included a file, then dont include it
+	if _, exists := s.Includes[src]; exists {
+		return nil
+	}
+	s.Includes[src] = true
+
+	s1, err := p.parseFile(src)
+	if err != nil {
+		return err
+	}
+
+	for _, td := range s1.TopDec {
+		// Add any function definitions but do not include main()
+		if td.FunDec != nil && td.FunDec.Name != "main" {
+			s.TopDec = append(s.TopDec, td)
+		}
+
+		// Handle any includes in this file
+		err = p.includeTopDec(s, s1.TopDec)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *defaultParser) findFile(paths []string, file string) (string, error) {
+	if file == "" {
+		return "", fmt.Errorf("include cannot be %q", file)
+	}
+
+	for _, path := range paths {
+		fp := filepath.Join(path, file)
+		fi, err := os.Stat(fp)
+		if err != nil && !os.IsNotExist(err) {
+			return "", err
+		} else if !fi.IsDir() {
+			return filepath.Abs(fp)
+		}
+	}
+
+	return "", os.ErrNotExist
+}
+
 func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
-	err := visitor.New().
+	err := p.includeTopDec(s, s.TopDec)
+	if err != nil {
+		return nil, err
+	}
+
+	err = visitor.New().
 		Statements(p.initStatements).
 		Statement(p.initStatement).
 		If(p.initIf).
