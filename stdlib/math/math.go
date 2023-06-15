@@ -75,50 +75,50 @@ type Math struct {
 	MaxUint64              uint64
 }
 
-func (m *Math) Atan2(a, b float64) float64     { return math.Atan2(a, b) }
-func (m *Math) Copysign(a, b float64) float64  { return math.Copysign(a, b) }
-func (m *Math) Dim(a, b float64) float64       { return math.Dim(a, b) }
-func (m *Math) Hypot(a, b float64) float64     { return math.Hypot(a, b) }
-func (m *Math) Max(a, b float64) float64       { return math.Max(a, b) }
-func (m *Math) Min(a, b float64) float64       { return math.Min(a, b) }
-func (m *Math) Mod(a, b float64) float64       { return math.Mod(a, b) }
-func (m *Math) Nextafter(a, b float64) float64 { return math.Nextafter(a, b) }
-func (m *Math) Pow(a, b float64) float64       { return math.Pow(a, b) }
-func (m *Math) Remainder(a, b float64) float64 { return math.Remainder(a, b) }
+func (_ Math) Atan2(a, b float64) float64     { return math.Atan2(a, b) }
+func (_ Math) Copysign(a, b float64) float64  { return math.Copysign(a, b) }
+func (_ Math) Dim(a, b float64) float64       { return math.Dim(a, b) }
+func (_ Math) Hypot(a, b float64) float64     { return math.Hypot(a, b) }
+func (_ Math) Max(a, b float64) float64       { return math.Max(a, b) }
+func (_ Math) Min(a, b float64) float64       { return math.Min(a, b) }
+func (_ Math) Mod(a, b float64) float64       { return math.Mod(a, b) }
+func (_ Math) Nextafter(a, b float64) float64 { return math.Nextafter(a, b) }
+func (_ Math) Pow(a, b float64) float64       { return math.Pow(a, b) }
+func (_ Math) Remainder(a, b float64) float64 { return math.Remainder(a, b) }
 
-func (m *Math) Abs(a float64) float64         { return math.Abs(a) }
-func (m *Math) Acos(a float64) float64        { return math.Acos(a) }
-func (m *Math) Acosh(a float64) float64       { return math.Acosh(a) }
-func (m *Math) Asin(a float64) float64        { return math.Asin(a) }
-func (m *Math) Asinh(a float64) float64       { return math.Asinh(a) }
-func (m *Math) Atan(a float64) float64        { return math.Atan(a) }
-func (m *Math) Atanh(a float64) float64       { return math.Atanh(a) }
-func (m *Math) Cbrt(a float64) float64        { return math.Cbrt(a) }
-func (m *Math) Ceil(a float64) float64        { return math.Ceil(a) }
-func (m *Math) Cos(a float64) float64         { return math.Cos(a) }
-func (m *Math) Cosh(a float64) float64        { return math.Cosh(a) }
-func (m *Math) Erf(a float64) float64         { return math.Erf(a) }
-func (m *Math) Erfc(a float64) float64        { return math.Erfc(a) }
-func (m *Math) Erfcinv(a float64) float64     { return math.Erfcinv(a) }
-func (m *Math) Exp(a float64) float64         { return math.Exp(a) }
-func (m *Math) Exp2(a float64) float64        { return math.Exp2(a) }
-func (m *Math) Expm1(a float64) float64       { return math.Expm1(a) }
-func (m *Math) Floor(a float64) float64       { return math.Floor(a) }
-func (m *Math) Gamma(a float64) float64       { return math.Gamma(a) }
-func (m *Math) J0(a float64) float64          { return math.J0(a) }
-func (m *Math) J1(a float64) float64          { return math.J1(a) }
-func (m *Math) Log(a float64) float64         { return math.Log(a) }
-func (m *Math) Logb(a float64) float64        { return math.Logb(a) }
-func (m *Math) Log1p(a float64) float64       { return math.Log1p(a) }
-func (m *Math) Log2(a float64) float64        { return math.Log2(a) }
-func (m *Math) Log10(a float64) float64       { return math.Log10(a) }
-func (m *Math) Round(a float64) float64       { return math.Round(a) }
-func (m *Math) RoundToEven(a float64) float64 { return math.RoundToEven(a) }
-func (m *Math) Sin(a float64) float64         { return math.Sin(a) }
-func (m *Math) Sinh(a float64) float64        { return math.Sinh(a) }
-func (m *Math) Sqrt(a float64) float64        { return math.Sqrt(a) }
-func (m *Math) Tan(a float64) float64         { return math.Tan(a) }
-func (m *Math) Tanh(a float64) float64        { return math.Tanh(a) }
-func (m *Math) Trunc(a float64) float64       { return math.Trunc(a) }
-func (m *Math) Y0(a float64) float64          { return math.Y0(a) }
-func (m *Math) Y1(a float64) float64          { return math.Y1(a) }
+func (_ Math) Abs(a float64) float64         { return math.Abs(a) }
+func (_ Math) Acos(a float64) float64        { return math.Acos(a) }
+func (_ Math) Acosh(a float64) float64       { return math.Acosh(a) }
+func (_ Math) Asin(a float64) float64        { return math.Asin(a) }
+func (_ Math) Asinh(a float64) float64       { return math.Asinh(a) }
+func (_ Math) Atan(a float64) float64        { return math.Atan(a) }
+func (_ Math) Atanh(a float64) float64       { return math.Atanh(a) }
+func (_ Math) Cbrt(a float64) float64        { return math.Cbrt(a) }
+func (_ Math) Ceil(a float64) float64        { return math.Ceil(a) }
+func (_ Math) Cos(a float64) float64         { return math.Cos(a) }
+func (_ Math) Cosh(a float64) float64        { return math.Cosh(a) }
+func (_ Math) Erf(a float64) float64         { return math.Erf(a) }
+func (_ Math) Erfc(a float64) float64        { return math.Erfc(a) }
+func (_ Math) Erfcinv(a float64) float64     { return math.Erfcinv(a) }
+func (_ Math) Exp(a float64) float64         { return math.Exp(a) }
+func (_ Math) Exp2(a float64) float64        { return math.Exp2(a) }
+func (_ Math) Expm1(a float64) float64       { return math.Expm1(a) }
+func (_ Math) Floor(a float64) float64       { return math.Floor(a) }
+func (_ Math) Gamma(a float64) float64       { return math.Gamma(a) }
+func (_ Math) J0(a float64) float64          { return math.J0(a) }
+func (_ Math) J1(a float64) float64          { return math.J1(a) }
+func (_ Math) Log(a float64) float64         { return math.Log(a) }
+func (_ Math) Logb(a float64) float64        { return math.Logb(a) }
+func (_ Math) Log1p(a float64) float64       { return math.Log1p(a) }
+func (_ Math) Log2(a float64) float64        { return math.Log2(a) }
+func (_ Math) Log10(a float64) float64       { return math.Log10(a) }
+func (_ Math) Round(a float64) float64       { return math.Round(a) }
+func (_ Math) RoundToEven(a float64) float64 { return math.RoundToEven(a) }
+func (_ Math) Sin(a float64) float64         { return math.Sin(a) }
+func (_ Math) Sinh(a float64) float64        { return math.Sinh(a) }
+func (_ Math) Sqrt(a float64) float64        { return math.Sqrt(a) }
+func (_ Math) Tan(a float64) float64         { return math.Tan(a) }
+func (_ Math) Tanh(a float64) float64        { return math.Tanh(a) }
+func (_ Math) Trunc(a float64) float64       { return math.Trunc(a) }
+func (_ Math) Y0(a float64) float64          { return math.Y0(a) }
+func (_ Math) Y1(a float64) float64          { return math.Y1(a) }
