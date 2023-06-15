@@ -18,48 +18,41 @@ import (
 // op the Primary defining the reference
 //
 // v the value this Primary is referencing.
-func (e *executor) getReference(op *script.Primary, v interface{}, ctx context.Context) error {
+func (e *executor) getReference(op *script.Primary, v interface{}, ctx context.Context) (err error) {
 	// These are not valid at this point.
 	switch {
 
 	case op.Ident != "":
-		nv, err := e.resolveReference(op, op.Ident, v)
-		if err != nil {
-			return Error(op.Pos, err)
+		v, err = e.resolveReference(op, op.Ident, v)
+		if err == nil {
+			// Handle arrays
+			v, err = e.resolveArray(op, v)
 		}
 
-		// Handle arrays
-		nv, err = e.resolveArray(op, nv)
-		if err != nil {
-			return Error(op.Pos, err)
-		}
-
-		// recurse as we have a pointer to the next field
-		if op.Pointer != nil {
-			return e.getReference(op.Pointer, nv, ctx)
-		}
-
-		e.calculator.Push(nv)
-		return nil
+	// method reference against v not declared functions
+	case op.CallFunc != nil:
+		v, err = e.resolveFunction(op.CallFunc, v, ctx)
 
 	// Nonsensical to be part of a reference
 	case op.SubExpression != nil:
 		return Errorf(op.Pos, "invalid reference")
 
-	// method reference against v not declared functions
-	case op.CallFunc != nil:
-		nv, err := e.resolveFunction(op.CallFunc, v, ctx)
-		if err != nil {
-			return Error(op.Pos, err)
-		}
-
-		e.calculator.Push(nv)
-		return nil
-
 	// Default say unimplemented as we may allow these in the future?
 	default:
 		return Errorf(op.Pos, "not supported yet")
 	}
+
+	if err != nil {
+		return Error(op.Pos, err)
+	}
+
+	// recurse as we have a pointer to the next field
+	if op.Pointer != nil {
+		return e.getReference(op.Pointer, v, ctx)
+	}
+
+	e.calculator.Push(v)
+	return nil
 }
 
 func (e *executor) resolveReference(op *script.Primary, name string, v interface{}) (ret interface{}, err error) {
