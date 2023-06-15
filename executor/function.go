@@ -118,6 +118,13 @@ func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx con
 }
 
 func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []interface{}) (ret []reflect.Value, err error) {
+	// Any panics get resolved to errors
+	defer func() {
+		if err1 := recover(); err1 != nil {
+			err = Errorf(cf.Pos, "%v", err1)
+		}
+	}()
+
 	for argN, argV := range args {
 		val := reflect.ValueOf(argV)
 
