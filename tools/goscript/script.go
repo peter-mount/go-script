@@ -2,6 +2,7 @@ package goscript
 
 import (
 	"flag"
+	"fmt"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
 	"math"
@@ -74,6 +75,12 @@ func (b *Script) Run() error {
 			TestStruct2{C: 42},
 		})
 
+		for i := 0; i < 3; i++ {
+			n := fmt.Sprintf("testcl%d", i)
+			globals.Declare(n)
+			globals.Set(n, &TestClosable{Id: n})
+		}
+
 		err = exec.Run()
 		if err != nil {
 			return err
@@ -92,4 +99,12 @@ type TestStruct struct {
 type TestStruct2 struct {
 	B *TestStruct
 	C float64
+}
+
+type TestClosable struct {
+	Id string
+}
+
+func (t *TestClosable) Close() {
+	fmt.Printf("**** Close %q ****\n", t.Id)
 }

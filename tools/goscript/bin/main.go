@@ -10,11 +10,10 @@ import (
 )
 
 func main() {
-	err := kernel.Launch(
+	if err := kernel.Launch(
 		&goscript.Script{},
-	)
-	if err != nil {
-		fmt.Println(err)
+	); err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

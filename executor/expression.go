@@ -192,7 +192,7 @@ func (e *executor) primary(ctx context.Context) error {
 
 		// Resolve references
 		if op.Pointer != nil {
-			return Error(op.Pointer.Pos, e.getReference(op.Pointer, v))
+			return Error(op.Pointer.Pos, e.getReference(op.Pointer, v, ctx))
 		}
 
 		// Just push variable onto stack

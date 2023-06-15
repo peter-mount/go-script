@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"github.com/peter-mount/go-script/packages"
 	"github.com/peter-mount/go-script/script"
 	"sort"
 	"strings"
@@ -93,9 +94,18 @@ func (s *state) GlobalScope() Variables {
 }
 
 func (s *state) Get(n string) (interface{}, bool) {
-	return s.variables.Get(n)
+	v, exists := s.variables.Get(n)
+	if exists {
+		return v, true
+	}
+
+	return packages.Lookup(n)
 }
 
-func (s *state) Declare(n string) { s.variables.Declare(n) }
+func (s *state) Declare(n string) {
+	s.variables.Declare(n)
+}
 
-func (s *state) Set(n string, v interface{}) bool { return s.variables.Set(n, v) }
+func (s *state) Set(n string, v interface{}) bool {
+	return s.variables.Set(n, v)
+}

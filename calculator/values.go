@@ -3,6 +3,7 @@ package calculator
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"strconv"
 )
 
@@ -294,4 +295,57 @@ func Convert(a, b interface{}) (interface{}, interface{}, error) {
 	}
 
 	return nil, nil, fmt.Errorf("unable to convert %T to %T", b, a)
+}
+
+// Cast takes a Value and attempt to cast it to a specific Type.
+// This will attempt to use our conversions for Int, Float, Bool, String etc. as part of that conversion.
+func Cast(rv reflect.Value, as reflect.Type) (reflect.Value, error) {
+	v := rv.Interface()
+	vt := reflect.ValueOf(v)
+
+	switch as.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		if vt.Kind() != reflect.Int {
+			i, err := GetInt(v)
+			if err != nil {
+				return reflect.Value{}, err
+			}
+			vt = reflect.ValueOf(i)
+		}
+
+	case reflect.Float64, reflect.Float32:
+		if vt.Kind() != reflect.Float64 {
+			f, err := GetFloat(v)
+			if err != nil {
+				return reflect.Value{}, err
+			}
+			vt = reflect.ValueOf(f)
+		}
+
+	case reflect.Bool:
+		if vt.Kind() != reflect.Bool {
+			f, err := GetBool(v)
+			if err != nil {
+				return reflect.Value{}, err
+			}
+			vt = reflect.ValueOf(f)
+		}
+
+	case reflect.String:
+		if vt.Kind() != reflect.String {
+			f, err := GetString(v)
+			if err != nil {
+				return reflect.Value{}, err
+			}
+			vt = reflect.ValueOf(f)
+		}
+
+	}
+
+	if vt.CanConvert(as) {
+		vt = vt.Convert(as)
+	}
+
+	return vt, nil
 }

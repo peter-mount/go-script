@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"context"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
@@ -17,7 +18,7 @@ import (
 // op the Primary defining the reference
 //
 // v the value this Primary is referencing.
-func (e *executor) getReference(op *script.Primary, v interface{}) error {
+func (e *executor) getReference(op *script.Primary, v interface{}, ctx context.Context) error {
 	// These are not valid at this point.
 	switch {
 
@@ -35,7 +36,7 @@ func (e *executor) getReference(op *script.Primary, v interface{}) error {
 
 		// recurse as we have a pointer to the next field
 		if op.Pointer != nil {
-			return e.getReference(op.Pointer, nv)
+			return e.getReference(op.Pointer, nv, ctx)
 		}
 
 		e.calculator.Push(nv)
@@ -47,7 +48,13 @@ func (e *executor) getReference(op *script.Primary, v interface{}) error {
 
 	// method reference against v not declared functions
 	case op.CallFunc != nil:
-		return Errorf(op.Pos, "not supported yet")
+		nv, err := e.resolveFunction(op.CallFunc, v, ctx)
+		if err != nil {
+			return Error(op.Pos, err)
+		}
+
+		e.calculator.Push(nv)
+		return nil
 
 	// Default say unimplemented as we may allow these in the future?
 	default:
@@ -71,12 +78,14 @@ func (e *executor) resolveReference(op *script.Primary, name string, v interface
 		tf := ti.FieldByName(name)
 		if tf.IsValid() {
 			ret = tf.Interface()
+			return
 		}
 
 	case reflect.Map:
 		me := ti.MapIndex(reflect.ValueOf(name))
 		if me.IsValid() {
 			ret = me.Interface()
+			return
 		}
 
 	case reflect.Array, reflect.Slice, reflect.String:
@@ -91,12 +100,10 @@ func (e *executor) resolveReference(op *script.Primary, name string, v interface
 		}
 
 		ret = ti.Index(idx).Interface()
-
-	default:
-		return nil, Errorf(op.Pos, "%T has no field %q", v, name)
+		return
 	}
 
-	return
+	return nil, Errorf(op.Pos, "%T has no field %q", v, name)
 }
 
 func (e *executor) resolveArray(op *script.Primary, v interface{}) (interface{}, error) {
@@ -179,4 +186,23 @@ func (e *executor) resolveArrayIndex(index, v interface{}, dimension *script.Exp
 	}
 
 	return
+}
+
+func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx context.Context) (ret interface{}, err error) {
+
+	tv := reflect.ValueOf(v)
+	// Loop so we check tv, then if that doesn't match *tv
+	// This allows for "func(m *type) name()" and "func(m type) name()"
+	for _, ti := range []reflect.Value{tv, reflect.Indirect(tv)} {
+		switch ti.Kind() {
+		case reflect.Struct:
+			tf := tv.MethodByName(op.Name)
+			if tf.IsValid() {
+				ret, err = e.callReflectFunc(op, tf, ctx)
+				return
+			}
+		}
+	}
+
+	return nil, Errorf(op.Pos, "%T has no function %q", v, op.Name)
 }
