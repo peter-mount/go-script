@@ -1,4 +1,4 @@
-package math
+package time
 
 import (
 	"github.com/peter-mount/go-script/packages"
