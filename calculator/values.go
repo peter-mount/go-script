@@ -306,40 +306,32 @@ func Cast(rv reflect.Value, as reflect.Type) (reflect.Value, error) {
 	switch as.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
-		if vt.Kind() != reflect.Int {
-			i, err := GetInt(v)
-			if err != nil {
-				return reflect.Value{}, err
-			}
-			vt = reflect.ValueOf(i)
+		i, err := GetInt(v)
+		if err != nil {
+			return reflect.Value{}, err
 		}
+		vt = reflect.ValueOf(i)
 
 	case reflect.Float64, reflect.Float32:
-		if vt.Kind() != reflect.Float64 {
-			f, err := GetFloat(v)
-			if err != nil {
-				return reflect.Value{}, err
-			}
-			vt = reflect.ValueOf(f)
+		f, err := GetFloat(v)
+		if err != nil {
+			return reflect.Value{}, err
 		}
+		vt = reflect.ValueOf(f)
 
 	case reflect.Bool:
-		if vt.Kind() != reflect.Bool {
-			f, err := GetBool(v)
-			if err != nil {
-				return reflect.Value{}, err
-			}
-			vt = reflect.ValueOf(f)
+		f, err := GetBool(v)
+		if err != nil {
+			return reflect.Value{}, err
 		}
+		vt = reflect.ValueOf(f)
 
 	case reflect.String:
-		if vt.Kind() != reflect.String {
-			f, err := GetString(v)
-			if err != nil {
-				return reflect.Value{}, err
-			}
-			vt = reflect.ValueOf(f)
+		f, err := GetString(v)
+		if err != nil {
+			return reflect.Value{}, err
 		}
+		vt = reflect.ValueOf(f)
 
 	}
 

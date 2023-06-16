@@ -88,7 +88,7 @@ func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx con
 	// Any panics get resolved to errors
 	defer func() {
 		if err1 := recover(); err1 != nil {
-			err = Errorf(cf.Pos, "%v", err1)
+			err = Errorf(cf.Pos, "callReflectFunc %v", err1)
 		}
 	}()
 
@@ -128,7 +128,7 @@ func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 	// Any panics get resolved to errors
 	defer func() {
 		if err1 := recover(); err1 != nil {
-			err = Errorf(cf.Pos, "%v", err1)
+			err = Errorf(cf.Pos, "argsToValues %v", err1)
 		}
 	}()
 
