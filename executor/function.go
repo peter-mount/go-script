@@ -120,7 +120,7 @@ func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx con
 		return ret1[0], nil
 
 	default:
-		return ret, nil
+		return ret1, nil
 	}
 }
 
