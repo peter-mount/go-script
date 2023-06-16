@@ -1,7 +1,11 @@
 #! ./builds/linux/amd64/bin/goscript
 
-// Hello world
 main() {
+    test()
+}
+
+// Hello world
+test() {
     b = 1
     println(b)
     c = increment(b)
