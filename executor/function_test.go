@@ -1,9 +1,9 @@
 package executor
 
 import (
+	"fmt"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
-	"strconv"
 	"testing"
 )
 
@@ -12,7 +12,10 @@ import (
 func Test_executor_callReflectFuncImpl(t *testing.T) {
 	// Dummies needed to make calls
 	e := &executor{}
-	cf := &script.CallFunc{}
+	cf := &script.CallFunc{
+		// 3 expressions for 3 args in test function
+		Args: []*script.Expression{{}, {}, {}},
+	}
 
 	tests := []struct {
 		// Arguments to pass to function
@@ -21,57 +24,71 @@ func Test_executor_callReflectFuncImpl(t *testing.T) {
 		want interface{}
 		// true if we want it to fail
 		wantErr bool
+		// True to mark the function call as variadic
+		variadic bool
 	}{
 		// Differing number of var args including none
-		{[]interface{}{1.0, 2.0, 3.0}, 6.0, false},
-		{[]interface{}{1.0, 2.0, 3.0, 4.0}, 10.0, false},
-		{[]interface{}{1.0, 2.0, 3.0, 4.0, 5.0}, 15.0, false},
-		{[]interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}, 21.0, false},
-		{[]interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0}, 28.0, false},
+		{args: []interface{}{1.0, 2.0, 3.0}, want: 6.0},
+		{args: []interface{}{1.0, 2.0, 3.0, 4.0}, want: 10.0},
+		{args: []interface{}{1.0, 2.0, 3.0, 4.0, 5.0}, want: 15.0},
+		{args: []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}, want: 21.0},
+		{args: []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0}, want: 28.0},
 		// Here we are passing an empty variadic so only the fixed parameters are present
-		{[]interface{}{1.0, 2.0}, 3.0, false},
+		{args: []interface{}{1.0, 2.0}, want: 3.0},
 		// Special case, passing different values in the variadic section
-		{[]interface{}{1, 2, 3, 4}, 10.0, false},
-		{[]interface{}{1.0, 2.0, 3.0, 4, 5.0, "6", 7.0}, 28.0, false},
+		{args: []interface{}{1, 2, 3, 4}, want: 10.0},
+		{args: []interface{}{1.0, 2.0, 3.0, 4, 5.0, "6", 7.0}, want: 28.0},
+		// Test variadic function calls, here it should expand the slice
+		{args: []interface{}{1.0, 2.0, []interface{}{3.0, 4.0, 5.0, 6.0, 7.0}}, want: 28.0, variadic: true},
+		{args: []interface{}{1.0, 2.0, 3.0, []interface{}{4.0, 5.0, 6.0, 7.0}}, want: 28.0, variadic: true},
+		{args: []interface{}{1.0, 2.0, 3.0, 4.0, []interface{}{5.0, 6.0, 7.0}}, want: 28.0, variadic: true},
+		{args: []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, []interface{}{6.0, 7.0}}, want: 28.0, variadic: true},
+		// Variadic call but last entry is not a slice - this should pass as here this is valid
+		{args: []interface{}{1.0, 2.0, 3.0, 4, 5.0, "6", 7.0}, want: 28.0, variadic: true},
+		// Should fail as we pass a slice, but it is variadic
+		{args: []interface{}{1.0, 2.0, []interface{}{3.0, 4.0, 5.0, 6.0, 7.0}}, want: 28.0, wantErr: true},
+		// Should fail as last entry is not a slice but a preceding one is
+		{args: []interface{}{1.0, 2.0, []interface{}{3.0, 4.0, 5.0, 6.0}, 7.0}, want: 28.0, wantErr: true},
+		{args: []interface{}{1.0, 2.0, []interface{}{3.0, 4.0, 5.0}, 6.0, 7.0}, want: 28.0, wantErr: true},
 	}
 
 	for ti, tt := range tests {
-		t.Run(strconv.Itoa(ti), func(t *testing.T) {
-			// Reset run test
-			run := false
-			variadic := func(a, b float64, c ...float64) float64 {
-				// Mark we have been called
-				run = true
+		t.Run(fmt.Sprintf("%02d %v %v %v", ti, tt.want, tt.variadic, tt.wantErr),
+			func(t *testing.T) {
+				// Mark the call as Variadic - e.g. '...' after last argument
+				cf.Variadic = tt.variadic
 
-				// Test we have the correct number of arguments passed to the function
-				// -2 is to account for a & b
-				if len(c) != (len(tt.args) - 2) {
-					t.Errorf("variadic expected %d elements got %d ", len(tt.args)-2, len(c))
+				// Reset run test
+				run := false
+				variadic := func(a, b float64, c ...float64) float64 {
+					// Mark we have been called
+					run = true
+
+					// Calculate sum of all arguments
+					total := a + b
+					for _, d := range c {
+						total = total + d
+					}
+					return total
 				}
 
-				// Calculate sum of all arguments
-				total := a + b
-				for _, d := range c {
-					total = total + d
+				got, err := e.callReflectFuncImpl(cf, reflect.ValueOf(variadic), tt.args)
+				if err != nil {
+					if !tt.wantErr {
+						t.Error(err)
+					}
+					return
 				}
-				return total
-			}
 
-			got, err := e.callReflectFuncImpl(cf, reflect.ValueOf(variadic), tt.args)
-			if err != nil {
-				t.Error(err)
-				return
-			}
+				if tt.wantErr {
+					t.Errorf("Expected error to be returned")
+				}
 
-			if tt.wantErr {
-				t.Errorf("Expected error to be returned")
-			}
-
-			if !run {
-				t.Errorf("Variadic did not run")
-			} else if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Got %T %v wanted %T %v", got, got, tt.want, tt.want)
-			}
-		})
+				if !run {
+					t.Errorf("Variadic did not run")
+				} else if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Got %T %v wanted %T %v", got, got, tt.want, tt.want)
+				}
+			})
 	}
 }

@@ -139,6 +139,26 @@ func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 		}
 	}()
 
+	// '...' so if the last value in args so if it's a slice expand it
+	// Unlike go this is supported for any function call not just variadic
+	if cf.Variadic {
+		if len(args) == 0 {
+			return nil, Errorf(cf.Pos, "'...' with no arguments")
+		}
+
+		lArg := args[len(args)-1]
+		lArgV := reflect.ValueOf(lArg)
+		if lArgV.Kind() == reflect.Slice {
+			lArgC := lArgV.Len()
+
+			// Replace last arg with the slice's content
+			args = args[:len(args)-1]
+			for i := 0; i < lArgC; i++ {
+				args = append(args, lArgV.Index(i).Interface())
+			}
+		}
+	}
+
 	// argC = number of arguments function accepts.
 	// However, if it's variadic when we take the last one off as we handle that
 	// last one specially due to it being a slice.
@@ -147,6 +167,7 @@ func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 		argC = argC - 1
 	}
 
+	// Cast every argument excluding the variadic one (if present)
 	for argN, argV := range args {
 		if argN < argC {
 			ret, err = e.castArg(ret, argV, tf.In(argN))
@@ -154,7 +175,6 @@ func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 				return nil, Error(cf.Args[argN].Pos, err)
 			}
 		}
-
 	}
 
 	if tf.IsVariadic() {
@@ -177,7 +197,6 @@ func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 
 func (e *executor) castArg(ret []reflect.Value, arg interface{}, as reflect.Type) ([]reflect.Value, error) {
 	argV := reflect.ValueOf(arg)
-
 	val, err := calculator.Cast(argV, as)
 	if err != nil {
 		return nil, err
