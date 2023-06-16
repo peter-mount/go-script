@@ -3,25 +3,30 @@
 // Hello world
 main() {
 
-    i=0
-    println("i before loop",i)
-    for i=0; i<len(testSlice2); i=i+1 {
-        println(i,testSlice2[i].C)
-    }
-    println("i after loop",i)
+    try {
+        i=0
+        println("i before loop",i)
+        for i=0; i<len(testSlice2); i=i+1 {
+            println(i,testSlice2[i].C)
+        }
+        println("i after loop",i)
 
-    i=42
-    println("i before loop",i)
-    for i:=0; i<len(testSlice); i=i+1 {
-        println(i,testSlice[i])
-    }
-    println("i after loop",i)
+        i=42
+        println("i before loop",i)
+        for i:=0; i<len(testSlice); i=i+1 {
+            println(i,testSlice[i])
+        }
+        println("i after loop",i)
 
-    println("before range",i)
-    for i,e := range testSlice {
-        println(i,e)
+        println("before range",i)
+        for i,e := range testSlice {
+            println(i,e)
+        }
+        println("after range",i)
     }
-    println("after range",i)
+    catch(ex) {
+        println("Exception", ex)
+    }
 
     println("before try")
     try (a=testcl0 ; b=testcl1 ) {
@@ -45,5 +50,9 @@ main() {
     for k,v := range m { println(k,v)}
     println("c=",m.c)
     println("c=",m["c"])
+
+    try( f := os.Create("/tmp/test.txt") ) {
+        fmt.Fprintln(f, "Hello world!")
+    }
 
 }

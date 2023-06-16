@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/peter-mount/go-kernel/v2/util/task"
 	"github.com/peter-mount/go-script/script"
 	"io"
 )
@@ -57,6 +58,25 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	e.state.NewScope()
 	defer e.state.EndScope()
 
+	var action task.Task
+
+	if op.Body != nil {
+		action = action.Then(func(_ context.Context) error {
+			err := Error(op.Pos, e.visitor.VisitStatement(op.Body))
+			if err != nil {
+				if IsReturn(err) {
+					return err
+				}
+				if IsBreak(err) {
+					return nil
+				}
+
+				return Error(op.Pos, err)
+			}
+			return nil
+		})
+	}
+
 	// Configure andy try-with-resources
 	for _, init := range op.Init {
 		// Wrap visit to expression, so we don't leak return values on the stack
@@ -75,34 +95,18 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 					return err1
 				}
 
-				// IDE will show this as a possible resource leak due to
-				// defer being inside a for loop but in this instance
-				// we actually want this
-				defer cl.Close()
+				action = action.Defer(func(_ context.Context) error {
+					return cl.Close()
+				})
 			} else if cl, ok := val.(io.Closer); ok {
-				// IDE will show this as a possible resource leak due to
-				// defer being inside a for loop but in this instance
-				// we actually want this
-				defer cl.Close()
+				action = action.Defer(func(_ context.Context) error {
+					return cl.Close()
+				})
 			}
 		}
 	}
 
-	if op.Body != nil {
-		err := Error(op.Pos, e.visitor.VisitStatement(op.Body))
-		if err != nil {
-			if IsReturn(err) {
-				return err
-			}
-			if IsBreak(err) {
-				return nil
-			}
-
-			return Error(op.Pos, err)
-		}
-	}
-
-	return nil
+	return action.Do(ctx)
 }
 
 type CreateCloser interface {

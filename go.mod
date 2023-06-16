@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/alecthomas/participle/v2 v2.0.0
-	github.com/peter-mount/go-kernel/v2 v2.0.3-0.20230124175314-cffb95a03dd0
+	github.com/peter-mount/go-kernel/v2 v2.0.3-0.20230616110552-1599935c5d02
 )
 
 require (
