@@ -65,7 +65,7 @@ func (e *executor) processParameters(cf *script.CallFunc, ctx context.Context) (
 	return args, nil
 }
 
-// functionImpl invokes the function.
+// functionImpl invokes a function declared within the script.
 // Used by callFuncImpl and executor.Run
 func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	// Use NewRootScope so we cannot access variables outside the function
@@ -84,18 +84,25 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	return Error(f.Pos, e.visitor.VisitStatements(f.FunBody.Statements))
 }
 
+// callReflectFunc invokes a function within go from a script
 func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx context.Context) (ret interface{}, err error) {
-	// Any panics get resolved to errors
-	defer func() {
-		if err1 := recover(); err1 != nil {
-			err = Errorf(cf.Pos, "callReflectFunc %v", err1)
-		}
-	}()
-
 	args, err := e.processParameters(cf, ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	return e.callReflectFuncImpl(cf, f, args)
+}
+
+// callReflectFuncImpl makes a function call via reflection.
+// Used by callReflectFunc and tests
+func (e *executor) callReflectFuncImpl(cf *script.CallFunc, f reflect.Value, args []interface{}) (ret interface{}, err error) {
+	// Any panics get resolved to errors
+	defer func() {
+		if err1 := recover(); err1 != nil {
+			err = Errorf(cf.Pos, "%v", err1)
+		}
+	}()
 
 	tf := f.Type()
 
@@ -104,9 +111,9 @@ func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx con
 		return nil, err
 	}
 
-	retVal := f.Call(argVals)
+	ret0 := f.Call(argVals)
 
-	ret1, err := e.valuesToRet(cf, tf, retVal)
+	ret1, err := e.valuesToRet(cf, tf, ret0)
 	if err != nil {
 		return nil, err
 	}
@@ -132,19 +139,50 @@ func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 		}
 	}()
 
-	for argN, argV := range args {
-		val := reflect.ValueOf(argV)
+	// argC = number of arguments function accepts.
+	// However, if it's variadic when we take the last one off as we handle that
+	// last one specially due to it being a slice.
+	argC := tf.NumIn()
+	if tf.IsVariadic() {
+		argC = argC - 1
+	}
 
-		if argN < tf.NumIn() {
-			val, err = calculator.Cast(val, tf.In(argN))
+	for argN, argV := range args {
+		if argN < argC {
+			ret, err = e.castArg(ret, argV, tf.In(argN))
 			if err != nil {
 				return nil, Error(cf.Args[argN].Pos, err)
 			}
 		}
 
-		ret = append(ret, val)
 	}
+
+	if tf.IsVariadic() {
+		// Type of variadic parameter, always the last one
+		variadicIndex := tf.NumIn() - 1
+		// last element is actually a slice so call Elem to get the actual type
+		variadicType := tf.In(variadicIndex).Elem()
+
+		// For remaining args convert to the same type as the Variadic
+		for i := len(ret); i < len(args); i++ {
+			ret, err = e.castArg(ret, args[i], variadicType)
+			if err != nil {
+				return nil, Error(cf.Args[variadicIndex].Pos, err)
+			}
+		}
+	}
+
 	return
+}
+
+func (e *executor) castArg(ret []reflect.Value, arg interface{}, as reflect.Type) ([]reflect.Value, error) {
+	argV := reflect.ValueOf(arg)
+
+	val, err := calculator.Cast(argV, as)
+	if err != nil {
+		return nil, err
+	}
+	return append(ret, val), nil
 }
 
 func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []reflect.Value) (ret []interface{}, err error) {
