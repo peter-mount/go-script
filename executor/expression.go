@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
+	"reflect"
 )
 
 func (e *executor) expression(ctx context.Context) error {
@@ -26,8 +27,31 @@ func (e *executor) assignment(ctx context.Context) error {
 	op := script.AssignmentFromContext(ctx)
 
 	if op.Op == "=" {
-		// left hand side must resolve to Ident
-		var name string
+		/*
+			// left hand side must resolve to Ident
+			var name string
+			// This is messy TODO clean up this mess
+			if log := op.Left; log != nil {
+				if eq := log.Left; eq != nil {
+					if comp := eq.Left; comp != nil {
+						if add := comp.Left; add != nil {
+							if mul := add.Left; mul != nil {
+								if unary := mul.Left; unary != nil {
+									if unary.Right != nil {
+										name = unary.Right.Ident
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if name == "" {
+				return Errorf(op.Pos, "Assignment without target")
+			}
+		*/
+
+		var primary *script.Primary
 		// This is messy TODO clean up this mess
 		if log := op.Left; log != nil {
 			if eq := log.Left; eq != nil {
@@ -35,40 +59,89 @@ func (e *executor) assignment(ctx context.Context) error {
 					if add := comp.Left; add != nil {
 						if mul := add.Left; mul != nil {
 							if unary := mul.Left; unary != nil {
-								if unary.Right != nil {
-									name = unary.Right.Ident
-								}
+								primary = unary.Right
 							}
 						}
 					}
 				}
 			}
 		}
-		if name == "" {
+
+		if primary == nil || primary.Ident == "" {
 			return Errorf(op.Pos, "Assignment without target")
 		}
 
-		// Process RHS to get value
-		err := e.visitor.VisitEquality(op.Right)
-		if err != nil {
-			return Error(op.Pos, err)
-		}
+		name := primary.Ident
 
-		v, err := e.calculator.Peek()
-		if err != nil {
-			return Error(op.Pos, err)
-		}
+		if primary.Pointer == nil {
+			// POVS = plain old variable setter
 
-		// Implicit declare, e.g. `:=` used
-		if op.Declare {
-			e.state.Declare(name)
-		}
+			// Process RHS to get value
+			err := e.visitor.VisitEquality(op.Right)
+			if err != nil {
+				return Error(op.Pos, err)
+			}
 
-		// Set the variable
-		if !e.state.Set(name, v) {
-			// Not set then declare it in this scope
-			e.state.Declare(name)
-			_ = e.state.Set(name, v)
+			v, err := e.calculator.Peek()
+			if err != nil {
+				return Error(op.Pos, err)
+			}
+
+			// Implicit declare, e.g. `:=` used
+			if op.Declare {
+				e.state.Declare(name)
+			}
+
+			// Set the variable
+			if !e.state.Set(name, v) {
+				// Not set then declare it in this scope
+				e.state.Declare(name)
+				_ = e.state.Set(name, v)
+			}
+		} else {
+			v, err := e.resolveIdent(primary, ctx)
+			if err != nil && !IsNoFieldErr(err) {
+				return Error(op.Pos, err)
+			}
+
+			if nfe, ok := GetNoFieldErr(err); ok {
+				v = nfe.Value()
+				name = nfe.Name()
+				err = nil
+			}
+
+			vV := reflect.ValueOf(v)
+			if vV.IsNil() {
+				return Errorf(op.Pos, "Cannot set nil")
+			}
+			vT := vV.Type()
+
+			// Process RHS to get value
+			err = e.visitor.VisitEquality(op.Right)
+			if err != nil {
+				return Error(op.Pos, err)
+			}
+
+			setV, err := e.calculator.Peek()
+			if err != nil {
+				return Error(op.Pos, err)
+			}
+
+			switch vT.Kind() {
+			case reflect.Map:
+				vV.SetMapIndex(reflect.ValueOf(name), reflect.ValueOf(setV))
+
+			case reflect.Struct:
+				f := vV.FieldByName(name)
+				if f.IsValid() && f.CanSet() {
+					f.Set(reflect.ValueOf(setV))
+				} else {
+					return Errorf(op.Pos, "Cannot set %q on %T", name, setV)
+				}
+
+			default:
+				return Errorf(op.Pos, "Cannot set %T", setV)
+			}
 		}
 
 		return nil
@@ -213,20 +286,9 @@ func (e *executor) primary(ctx context.Context) error {
 		e.calculator.Push(false)
 
 	case op.Ident != "":
-		v, exists := e.state.Get(op.Ident)
-		if !exists {
-			return Errorf(op.Pos, "%q undefined", op.Ident)
-		}
-
-		// Handle arrays
-		v, err := e.resolveArray(op, v)
+		v, err := e.resolveIdent(op, ctx)
 		if err != nil {
 			return Error(op.Pos, err)
-		}
-
-		// Resolve references
-		if op.Pointer != nil {
-			return Error(op.Pointer.Pos, e.getReference(op.Pointer, v, ctx))
 		}
 
 		// Just push variable onto stack
@@ -249,4 +311,29 @@ func (e *executor) primary(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interface{}, error) {
+	v, exists := e.state.Get(op.Ident)
+	if !exists {
+		return nil, Errorf(op.Pos, "%q undefined", op.Ident)
+	}
+
+	// Handle arrays
+	v, err := e.resolveArray(op, v)
+
+	if err == nil && op.Pointer != nil {
+		// Resolve references
+		v, err = e.getReferenceImpl(op.Pointer, v, ctx)
+	}
+
+	if IsNoFieldErr(err) {
+		return v, err
+	}
+
+	if err != nil {
+		return nil, Error(op.Pos, err)
+	}
+
+	return v, nil
 }

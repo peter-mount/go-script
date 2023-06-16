@@ -34,7 +34,7 @@ func Error(pos lexer.Position, err error) error {
 	// If err is a PosError then return it as it has the position already.
 	// Also, if err is nil then return nil, so we can use it as a catch-all
 	// Break and return dummy errors also are unchanged
-	if err == nil || IsError(err) || IsBreak(err) || IsReturn(err) {
+	if err == nil || IsError(err) || IsBreak(err) || IsReturn(err) || IsNoFieldErr(err) {
 		return err
 	}
 	return Errorf(pos, err.Error())
@@ -47,6 +47,42 @@ func IsError(err error) bool {
 	}
 	_, ok := err.(*posError)
 	return ok
+}
+
+func NoField(pos lexer.Position, v interface{}, n string) error {
+	return &NoFieldError{
+		msg: fmt.Sprintf("%s %T has no field %q", pos.String(), v, n),
+		v:   v,
+		n:   n,
+	}
+}
+
+type NoFieldError struct {
+	msg string
+	v   interface{}
+	n   string
+}
+
+func (e *NoFieldError) Error() string {
+	return e.msg
+}
+
+func (e *NoFieldError) Value() interface{} {
+	return e.v
+}
+
+func (e *NoFieldError) Name() string {
+	return e.n
+}
+
+func IsNoFieldErr(err error) bool {
+	_, ok := err.(*NoFieldError)
+	return ok
+}
+
+func GetNoFieldErr(err error) (*NoFieldError, bool) {
+	e, ok := err.(*NoFieldError)
+	return e, ok
 }
 
 func Break() error {

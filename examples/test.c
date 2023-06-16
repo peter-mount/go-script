@@ -76,6 +76,12 @@ test() {
 
     val:= 1
     println( "-  :", val, -val, -(42), -(-42) )
+
+    m :=map( "a": 42)
+    println("m:", m, m.a)
+    m.b = 3.14
+    println("m:", m)
+
 }
 
 increment(a) {

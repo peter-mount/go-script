@@ -19,6 +19,18 @@ import (
 //
 // v the value this Primary is referencing.
 func (e *executor) getReference(op *script.Primary, v interface{}, ctx context.Context) (err error) {
+	ref, err := e.getReferenceImpl(op, v, ctx)
+
+	if err != nil {
+		return Error(op.Pos, err)
+	}
+
+	e.calculator.Push(ref)
+	return nil
+}
+
+// getReferenceImpl is like getReference but is used to locate a field/variable to set
+func (e *executor) getReferenceImpl(op *script.Primary, v interface{}, ctx context.Context) (ref interface{}, err error) {
 	// These are not valid at this point.
 	switch {
 
@@ -35,24 +47,23 @@ func (e *executor) getReference(op *script.Primary, v interface{}, ctx context.C
 
 	// Nonsensical to be part of a reference
 	case op.SubExpression != nil:
-		return Errorf(op.Pos, "invalid reference")
+		return nil, Errorf(op.Pos, "invalid reference")
 
 	// Default say unimplemented as we may allow these in the future?
 	default:
-		return Errorf(op.Pos, "not supported yet")
+		return nil, Errorf(op.Pos, "not supported yet")
 	}
 
 	if err != nil {
-		return Error(op.Pos, err)
+		return nil, Error(op.Pos, err)
 	}
 
 	// recurse as we have a pointer to the next field
 	if op.Pointer != nil {
-		return e.getReference(op.Pointer, v, ctx)
+		return e.getReferenceImpl(op.Pointer, v, ctx)
 	}
 
-	e.calculator.Push(v)
-	return nil
+	return ref, nil
 }
 
 func (e *executor) resolveReference(op *script.Primary, name string, v interface{}) (ret interface{}, err error) {
@@ -96,7 +107,7 @@ func (e *executor) resolveReference(op *script.Primary, name string, v interface
 		return
 	}
 
-	return nil, Errorf(op.Pos, "%T has no field %q", v, name)
+	return v, NoField(op.Pos, v, name)
 }
 
 func (e *executor) resolveArray(op *script.Primary, v interface{}) (interface{}, error) {
