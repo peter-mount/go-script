@@ -178,6 +178,9 @@ func (e *executor) primary(ctx context.Context) error {
 	case op.CallFunc != nil:
 		return Error(op.Pos, e.visitor.VisitCallFunc(op.CallFunc))
 
+	case op.Null, op.Nil:
+		e.calculator.Push(nil)
+
 	case op.Ident != "":
 		v, exists := e.state.Get(op.Ident)
 		if !exists {

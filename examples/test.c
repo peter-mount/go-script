@@ -64,8 +64,10 @@ test() {
     array := newArray()
     for i:=0;i<10;i=i+1 {
         array = append( array, i )
-        println(i,array)
     }
+    println("append:",array)
+
+    println("Null",null,"Nil",nil)
 }
 
 increment(a) {

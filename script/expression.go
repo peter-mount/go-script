@@ -124,6 +124,8 @@ type Primary struct {
 	KeyValue      *KeyValue     `parser:"| @@"`
 	String        *string       `parser:"| @String"`
 	CallFunc      *CallFunc     `parser:"| @@"`
+	Null          bool          `parser:"| @'null'"`
+	Nil           bool          `parser:"| @'nil'"`
 	Ident         string        `parser:"| @Ident"`
 	ArrayIndex    []*Expression `parser:"  [ ('[' @@ ']')+ ]"`
 	SubExpression *Expression   `parser:"| '(' @@ ')' "`
