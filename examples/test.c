@@ -71,6 +71,10 @@ test() {
 
     println( true && true )
 
+    println( true || false )
+    println( false || true )
+    println( true || true )
+
     println( 17 % 3, 17.0 % 3, math.Mod(17,3) )
 }
 
