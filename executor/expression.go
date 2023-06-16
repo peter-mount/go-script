@@ -29,13 +29,15 @@ func (e *executor) assignment(ctx context.Context) error {
 		// left hand side must resolve to Ident
 		var name string
 		// This is messy TODO clean up this mess
-		if eq := op.Left; eq != nil {
-			if comp := eq.Left; comp != nil {
-				if add := comp.Left; add != nil {
-					if mul := add.Left; mul != nil {
-						if unary := mul.Left; unary != nil {
-							if unary.Right != nil {
-								name = unary.Right.Ident
+		if log := op.Left; log != nil {
+			if eq := log.Left; eq != nil {
+				if comp := eq.Left; comp != nil {
+					if add := comp.Left; add != nil {
+						if mul := add.Left; mul != nil {
+							if unary := mul.Left; unary != nil {
+								if unary.Right != nil {
+									name = unary.Right.Ident
+								}
 							}
 						}
 					}
@@ -71,8 +73,26 @@ func (e *executor) assignment(ctx context.Context) error {
 
 		return nil
 	} else {
-		return Error(op.Pos, e.visitor.VisitEquality(op.Left))
+		return Error(op.Pos, e.visitor.VisitLogic(op.Left))
 	}
+}
+
+func (e *executor) logic(ctx context.Context) error {
+	op := script.LogicFromContext(ctx)
+
+	if err := e.visitor.VisitEquality(op.Left); err != nil {
+		return Error(op.Pos, err)
+	}
+
+	if op.Right != nil {
+		err := e.visitor.VisitLogic(op.Right)
+		if err == nil {
+			err = e.calculator.Op2(op.Op)
+		}
+		return Error(op.Pos, err)
+	}
+
+	return nil
 }
 
 func (e *executor) equality(ctx context.Context) error {
@@ -180,6 +200,12 @@ func (e *executor) primary(ctx context.Context) error {
 
 	case op.Null, op.Nil:
 		e.calculator.Push(nil)
+
+	case op.True:
+		e.calculator.Push(true)
+
+	case op.False:
+		e.calculator.Push(false)
 
 	case op.Ident != "":
 		v, exists := e.state.Get(op.Ident)

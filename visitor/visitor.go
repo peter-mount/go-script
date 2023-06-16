@@ -17,6 +17,7 @@ type Visitor interface {
 	VisitForRange(s *script.ForRange) error
 	VisitFuncDec(s *script.FuncDec) error
 	VisitFuncBody(body *script.FuncBody) error
+	VisitLogic(s *script.Logic) error
 	VisitIf(s *script.IfStmt) error
 	VisitMultiplication(s *script.Multiplication) error
 	VisitPrimary(s *script.Primary) error
@@ -49,6 +50,7 @@ type visitorCommon struct {
 	funcDec          task.Task
 	funcBody         task.Task
 	ifStatement      task.Task
+	logic            task.Task
 	multiplication   task.Task
 	primary          task.Task
 	returnStatement  task.Task

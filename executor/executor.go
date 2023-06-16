@@ -48,6 +48,7 @@ func New(s *script.Script) (Executor, error) {
 		Addition(e.addition).
 		Assignment(e.assignment).
 		CallFunc(e.callFunc).
+		Logic(e.logic).
 		Comparison(e.comparison).
 		Equality(e.equality).
 		Expression(e.expression).

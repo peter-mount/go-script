@@ -22,7 +22,7 @@ func ExpressionFromContext(ctx context.Context) *Expression {
 type Assignment struct {
 	Pos lexer.Position
 
-	Left    *Equality `parser:"@@"`        // Expression or ident/reference to value to set
+	Left    *Logic    `parser:"@@"`        // Expression or ident/reference to value to set
 	Declare bool      `parser:"( @(':')?"` // := to declare in local scope, unset to use outer if already defined
 	Op      string    `parser:"  @'='"`    // assign value
 	Right   *Equality `parser:"  @@ )?"`   // Expression to define value
@@ -34,6 +34,22 @@ func (op *Assignment) WithContext(ctx context.Context) context.Context {
 
 func AssignmentFromContext(ctx context.Context) *Assignment {
 	return ctx.Value(assignmentKey).(*Assignment)
+}
+
+type Logic struct {
+	Pos lexer.Position
+
+	Left  *Equality `parser:"@@"`
+	Op    string    `parser:"[ @( '&' '&' | '|' '|' )"`
+	Right *Logic    `parser:"  @@ ]"`
+}
+
+func (op *Logic) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, logicKey, op)
+}
+
+func LogicFromContext(ctx context.Context) *Logic {
+	return ctx.Value(logicKey).(*Logic)
 }
 
 type Equality struct {
@@ -126,6 +142,8 @@ type Primary struct {
 	CallFunc      *CallFunc     `parser:"| @@"`
 	Null          bool          `parser:"| @'null'"`
 	Nil           bool          `parser:"| @'nil'"`
+	True          bool          `parser:"| @'true'"`
+	False         bool          `parser:"| @'false'"`
 	Ident         string        `parser:"| @Ident"`
 	ArrayIndex    []*Expression `parser:"  [ ('[' @@ ']')+ ]"`
 	SubExpression *Expression   `parser:"| '(' @@ ')' "`

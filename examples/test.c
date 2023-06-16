@@ -68,6 +68,8 @@ test() {
     println("append:",array)
 
     println("Null",null,"Nil",nil)
+
+    println( true && true )
 }
 
 increment(a) {

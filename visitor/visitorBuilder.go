@@ -25,6 +25,7 @@ type Builder interface {
 	// FuncDec adds a task to invoke for each FuncDec object
 	FuncDec(t task.Task) Builder
 	If(t task.Task) Builder
+	Logic(t task.Task) Builder
 	Multiplication(t task.Task) Builder
 	Primary(t task.Task) Builder
 	Return(t task.Task) Builder
@@ -52,6 +53,11 @@ type builder struct {
 
 func New() Builder {
 	return &builder{}
+}
+
+func (b *builder) Logic(t task.Task) Builder {
+	b.logic = b.logic.Then(t)
+	return b
 }
 
 func (b *builder) Addition(t task.Task) Builder {

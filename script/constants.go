@@ -12,6 +12,7 @@ const (
 	funcDecKey        = "go-script/funcDec"
 	funcBodyKey       = "go-script/funcBody"
 	ifKey             = "go-script/if"
+	logicKey          = "go-script/logic"
 	multiplicationKey = "go-script/multiplication"
 	primaryKey        = "go-script/primary"
 	returnKey         = "go-script/return"

@@ -2,6 +2,10 @@ package visitor
 
 import "github.com/peter-mount/go-script/script"
 
+func (v *visitor) VisitLogic(s *script.Logic) error {
+	return v.visitTask(s.WithContext, v.logic)
+}
+
 func (v *visitor) VisitAddition(s *script.Addition) error {
 	return v.visitTask(s.WithContext, v.addition)
 }
