@@ -70,6 +70,8 @@ test() {
     println("Null",null,"Nil",nil)
 
     println( true && true )
+
+    println( 17 % 3, 17.0 % 3, math.Mod(17,3) )
 }
 
 increment(a) {
