@@ -40,6 +40,11 @@ type Calculator interface {
 	// Drop removes the top entry on the stack
 	// Returns an error if the stack is empty.
 	Drop() error
+	// Op1 performs a named operation using the top entry on the stack, returning
+	// the result to the stack.
+	//
+	// Returns an error if the stack doesn't have an entry or the calculation fails
+	Op1(op string) error
 	// Op2 performs a named operation using the top two entries on the stack, returning
 	// the result to the stack.
 	//
@@ -171,8 +176,28 @@ func (c *calculator) Drop() error {
 	return err
 }
 
+func (c *calculator) Op1(op string) error {
+	operation, exists := monoOperations[op]
+	if !exists {
+		return fmt.Errorf("operation %q undefined", op)
+	}
+
+	a, err := c.Pop()
+	if err != nil {
+		return err
+	}
+
+	v, err := operation.MonoCalculate(a)
+	if err != nil {
+		return err
+	}
+
+	c.Push(v)
+	return nil
+}
+
 func (c *calculator) Op2(op string) error {
-	operation, exists := operations[op]
+	operation, exists := biOperations[op]
 	if !exists {
 		return fmt.Errorf("operation %q undefined", op)
 	}

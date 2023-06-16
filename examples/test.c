@@ -69,13 +69,13 @@ test() {
 
     println("Null",null,"Nil",nil)
 
-    println( true && true )
+    println( "&& :", true && true, true && false, false && true, false && false )
+    println( "|| :", true || false, false || true, true || true )
+    println( "%  :", 17 % 3, 17.0 % 3, math.Mod(17,3) )
+    println( "!  :", true, !true, false, !false )
 
-    println( true || false )
-    println( false || true )
-    println( true || true )
-
-    println( 17 % 3, 17.0 % 3, math.Mod(17,3) )
+    val:= 1
+    println( "-  :", val, -val, -(42), -(-42) )
 }
 
 increment(a) {

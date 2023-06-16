@@ -171,8 +171,13 @@ func (e *executor) unary(ctx context.Context) error {
 	op := script.UnaryFromContext(ctx)
 
 	if op.Left != nil {
-		// TODO implement
-		return Errorf(op.Pos, "%q not implemented", op.Op)
+		err := e.visitor.VisitUnary(op.Left)
+		if err == nil {
+			err = e.calculator.Op1(op.Op)
+		}
+		if err != nil {
+			return Error(op.Pos, err)
+		}
 	}
 
 	if op.Right != nil {

@@ -5,6 +5,11 @@ import (
 	"fmt"
 )
 
+// MonoCalculation performs an operation against two values
+type MonoCalculation interface {
+	MonoCalculate(a interface{}) (interface{}, error)
+}
+
 // BiCalculation performs an operation against two values
 type BiCalculation interface {
 	BiCalculate(a, b interface{}) (interface{}, error)
@@ -158,4 +163,87 @@ func (b *biOpBuilder) Bool(f func(a, b bool) (interface{}, error)) BiOpDefBuilde
 
 func (b *biOpBuilder) Build() *BiOpDef {
 	return &BiOpDef{biOpCommon: b.biOpCommon}
+}
+
+// NewMonoOpDef creates a new NewBiOp based on the provided
+func NewMonoOpDef() MonoOpDefBuilder {
+	return &monoOpBuilder{}
+}
+
+type MonoOpDefBuilder interface {
+	Int(func(a int) (interface{}, error)) MonoOpDefBuilder
+	Float(func(a float64) (interface{}, error)) MonoOpDefBuilder
+	String(func(a string) (interface{}, error)) MonoOpDefBuilder
+	Bool(func(a bool) (interface{}, error)) MonoOpDefBuilder
+	Build() *MonoOpDef
+}
+
+type monoOpCommon struct {
+	intOp    func(a int) (interface{}, error)
+	floatOp  func(a float64) (interface{}, error)
+	stringOp func(a string) (interface{}, error)
+	boolOp   func(a bool) (interface{}, error)
+}
+
+// MonoOpDef implements an operation whose behaviour depends on the type
+// of the left hand side
+type MonoOpDef struct {
+	monoOpCommon
+}
+
+func (op *MonoOpDef) MonoCalculate(a interface{}) (interface{}, error) {
+
+	if op.floatOp != nil {
+		if f, ok := GetFloatRaw(a); ok {
+			return op.floatOp(f)
+		}
+	}
+
+	if op.intOp != nil {
+		if i, ok := GetIntRaw(a); ok {
+			return op.intOp(i)
+		}
+	}
+
+	if op.stringOp != nil {
+		if s, ok := GetStringRaw(a); ok {
+			return op.stringOp(s)
+		}
+	}
+
+	if op.boolOp != nil {
+		if ab, ok := GetBoolRaw(a); ok {
+			return op.boolOp(ab)
+		}
+	}
+
+	return nil, fmt.Errorf("unable to convert %T", a)
+}
+
+type monoOpBuilder struct {
+	monoOpCommon
+}
+
+func (b *monoOpBuilder) Int(f func(a int) (interface{}, error)) MonoOpDefBuilder {
+	b.intOp = f
+	return b
+}
+
+func (b *monoOpBuilder) Float(f func(a float64) (interface{}, error)) MonoOpDefBuilder {
+	b.floatOp = f
+	return b
+}
+
+func (b *monoOpBuilder) String(f func(a string) (interface{}, error)) MonoOpDefBuilder {
+	b.stringOp = f
+	return b
+}
+
+func (b *monoOpBuilder) Bool(f func(a bool) (interface{}, error)) MonoOpDefBuilder {
+	b.boolOp = f
+	return b
+}
+
+func (b *monoOpBuilder) Build() *MonoOpDef {
+	return &MonoOpDef{monoOpCommon: b.monoOpCommon}
 }
