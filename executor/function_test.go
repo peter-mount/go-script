@@ -72,7 +72,7 @@ func Test_executor_callReflectFuncImpl(t *testing.T) {
 					return total
 				}
 
-				got, err := e.callReflectFuncImpl(cf, reflect.ValueOf(variadic), tt.args)
+				got, err := e.CallReflectFuncImpl(cf, reflect.ValueOf(variadic), tt.args)
 				if err != nil {
 					if !tt.wantErr {
 						t.Error(err)

@@ -39,7 +39,7 @@ func (e *executor) callFuncImpl(ctx context.Context) error {
 		return fmt.Errorf("%s function %q not defined", cf.Pos, cf.Name)
 	}
 
-	args, err := e.processParameters(cf, ctx)
+	args, err := e.ProcessParameters(cf, ctx)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (e *executor) callFuncImpl(ctx context.Context) error {
 	return Error(f.Pos, e.functionImpl(f, args))
 }
 
-func (e *executor) processParameters(cf *script.CallFunc, ctx context.Context) ([]interface{}, error) {
+func (e *executor) ProcessParameters(cf *script.CallFunc, ctx context.Context) ([]interface{}, error) {
 
 	// Process parameters
 	var args []interface{}
@@ -86,17 +86,17 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 
 // callReflectFunc invokes a function within go from a script
 func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx context.Context) (ret interface{}, err error) {
-	args, err := e.processParameters(cf, ctx)
+	args, err := e.ProcessParameters(cf, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return e.callReflectFuncImpl(cf, f, args)
+	return e.CallReflectFuncImpl(cf, f, args)
 }
 
-// callReflectFuncImpl makes a function call via reflection.
+// CallReflectFuncImpl makes a function call via reflection.
 // Used by callReflectFunc and tests
-func (e *executor) callReflectFuncImpl(cf *script.CallFunc, f reflect.Value, args []interface{}) (ret interface{}, err error) {
+func (e *executor) CallReflectFuncImpl(cf *script.CallFunc, f reflect.Value, args []interface{}) (ret interface{}, err error) {
 	// Any panics get resolved to errors
 	defer func() {
 		if err1 := recover(); err1 != nil {
@@ -106,7 +106,7 @@ func (e *executor) callReflectFuncImpl(cf *script.CallFunc, f reflect.Value, arg
 
 	tf := f.Type()
 
-	argVals, err := e.argsToValues(cf, tf, args)
+	argVals, err := e.ArgsToValues(cf, tf, args)
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +131,11 @@ func (e *executor) callReflectFuncImpl(cf *script.CallFunc, f reflect.Value, arg
 	}
 }
 
-func (e *executor) argsToValues(cf *script.CallFunc, tf reflect.Type, args []interface{}) (ret []reflect.Value, err error) {
+func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []interface{}) (ret []reflect.Value, err error) {
 	// Any panics get resolved to errors
 	defer func() {
 		if err1 := recover(); err1 != nil {
-			err = Errorf(cf.Pos, "argsToValues %v", err1)
+			err = Errorf(cf.Pos, "ArgsToValues %v", err1)
 		}
 	}()
 

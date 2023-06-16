@@ -6,6 +6,7 @@ import (
 	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/state"
 	"github.com/peter-mount/go-script/visitor"
+	"reflect"
 )
 
 type Executor interface {
@@ -13,6 +14,12 @@ type Executor interface {
 	Visitor() visitor.Visitor
 	Calculator() calculator.Calculator
 	GlobalScope() state.Variables
+	// ProcessParameters will call each parameter in a CallFunc returning the true values
+	ProcessParameters(*script.CallFunc, context.Context) ([]interface{}, error)
+	// ArgsToValues will take a slice of arguments and convert to reflect.Value.
+	// This will handle if CallFunc.Variadic is set
+	ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []interface{}) ([]reflect.Value, error)
+	CallReflectFuncImpl(*script.CallFunc, reflect.Value, []interface{}) (interface{}, error)
 }
 
 type executor struct {

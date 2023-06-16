@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
+	"reflect"
 	"sync"
 )
 
@@ -129,4 +130,40 @@ func float2(f func(float64, float64) float64, e Executor, call *script.CallFunc,
 	}
 
 	return NewReturn(f(af, bf))
+}
+
+func FuncDelegate(f any) Function {
+	fV := reflect.ValueOf(f)
+	fT := fV.Type()
+	if fT.Kind() != reflect.Func {
+		panic(fmt.Errorf("cannot create function delegate for %T", f))
+	}
+
+	return func(e Executor, call *script.CallFunc, ctx context.Context) error {
+
+		// Validate argument count
+		argC, numIn := len(call.Args), fT.NumIn()
+		if fT.IsVariadic() && argC < (numIn-1) {
+			return Errorf(call.Pos, "%n requires at least %d parameters", call.Name, numIn)
+		}
+		if !fT.IsVariadic() && argC != fT.NumIn() {
+			return Errorf(call.Pos, "%n requires %d parameters", call.Name, numIn)
+		}
+
+		// Process arguments
+		args, err := e.ProcessParameters(call, ctx)
+		if err != nil {
+			return Error(call.Pos, err)
+		}
+
+		// call method
+		ret, err := e.CallReflectFuncImpl(call, fV, args)
+		if err != nil {
+			return Error(call.Pos, err)
+		}
+
+		// Result on stack
+		e.Calculator().Push(ret)
+		return nil
+	}
 }
