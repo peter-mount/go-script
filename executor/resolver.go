@@ -35,15 +35,15 @@ func (e *executor) getReferenceImpl(op *script.Primary, v interface{}, ctx conte
 	switch {
 
 	case op.Ident != "":
-		v, err = e.resolveReference(op, op.Ident, v)
+		ref, err = e.resolveReference(op, op.Ident, v)
 		if err == nil {
 			// Handle arrays
-			v, err = e.resolveArray(op, v)
+			ref, err = e.resolveArray(op, ref)
 		}
 
 	// method reference against v not declared functions
 	case op.CallFunc != nil:
-		v, err = e.resolveFunction(op.CallFunc, v, ctx)
+		ref, err = e.resolveFunction(op.CallFunc, v, ctx)
 
 	// Nonsensical to be part of a reference
 	case op.SubExpression != nil:
@@ -60,7 +60,7 @@ func (e *executor) getReferenceImpl(op *script.Primary, v interface{}, ctx conte
 
 	// recurse as we have a pointer to the next field
 	if op.Pointer != nil {
-		return e.getReferenceImpl(op.Pointer, v, ctx)
+		return e.getReferenceImpl(op.Pointer, ref, ctx)
 	}
 
 	return ref, nil

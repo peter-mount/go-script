@@ -82,6 +82,8 @@ test() {
     m.b = 3.14
     println("m:", m)
 
+    a := math.Max(1,2)
+    println("Max",a,math.Max(1,2))
 }
 
 increment(a) {
