@@ -88,7 +88,7 @@ type Addition struct {
 	Pos lexer.Position
 
 	Left  *Multiplication `parser:"@@"`
-	Op    string          `parser:"[ @( '-' | '+' )"`
+	Op    string          `parser:"[ @( '+' | '-' )"`
 	Right *Addition       `parser:"  @@ ]"`
 }
 
@@ -104,7 +104,7 @@ type Multiplication struct {
 	Pos lexer.Position
 
 	Left  *Unary          `parser:"@@"`
-	Op    string          `parser:"[ @( '/' | '*' | '%' )"`
+	Op    string          `parser:"[ @( '*' | '/' | '%' )"`
 	Right *Multiplication `parser:"  @@ ]"`
 }
 
