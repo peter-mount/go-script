@@ -27,29 +27,6 @@ func (e *executor) assignment(ctx context.Context) error {
 	op := script.AssignmentFromContext(ctx)
 
 	if op.Op == "=" {
-		/*
-			// left hand side must resolve to Ident
-			var name string
-			// This is messy TODO clean up this mess
-			if log := op.Left; log != nil {
-				if eq := log.Left; eq != nil {
-					if comp := eq.Left; comp != nil {
-						if add := comp.Left; add != nil {
-							if mul := add.Left; mul != nil {
-								if unary := mul.Left; unary != nil {
-									if unary.Right != nil {
-										name = unary.Right.Ident
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			if name == "" {
-				return Errorf(op.Pos, "Assignment without target")
-			}
-		*/
 
 		var primary *script.Primary
 		// This is messy TODO clean up this mess
@@ -78,6 +55,12 @@ func (e *executor) assignment(ctx context.Context) error {
 
 			// Process RHS to get value
 			err := e.visitor.VisitEquality(op.Right)
+			if err != nil {
+				return Error(op.Pos, err)
+			}
+
+			// Ensure we don't have a pending operation
+			err = e.calculator.QueueOp(nil)
 			if err != nil {
 				return Error(op.Pos, err)
 			}
@@ -122,6 +105,12 @@ func (e *executor) assignment(ctx context.Context) error {
 				return Error(op.Pos, err)
 			}
 
+			// Ensure we don't have an operation queued
+			err = e.calculator.QueueOp(nil)
+			if err != nil {
+				return Error(op.Pos, err)
+			}
+
 			setV, err := e.calculator.Peek()
 			if err != nil {
 				return Error(op.Pos, err)
@@ -158,9 +147,11 @@ func (e *executor) logic(ctx context.Context) error {
 	}
 
 	if op.Right != nil {
-		err := e.visitor.VisitLogic(op.Right)
+		err := e.calculator.QueueOp(func(_ context.Context) error {
+			return e.calculator.Op2(op.Op)
+		})
 		if err == nil {
-			err = e.calculator.Op2(op.Op)
+			err = e.visitor.VisitLogic(op.Right)
 		}
 		return Error(op.Pos, err)
 	}
@@ -176,9 +167,11 @@ func (e *executor) equality(ctx context.Context) error {
 	}
 
 	if op.Right != nil {
-		err := e.visitor.VisitEquality(op.Right)
+		err := e.calculator.QueueOp(func(_ context.Context) error {
+			return e.calculator.Op2(op.Op)
+		})
 		if err == nil {
-			err = e.calculator.Op2(op.Op)
+			err = e.visitor.VisitEquality(op.Right)
 		}
 		return Error(op.Pos, err)
 	}
@@ -194,9 +187,11 @@ func (e *executor) comparison(ctx context.Context) error {
 	}
 
 	if op.Right != nil {
-		err := e.visitor.VisitComparison(op.Right)
+		err := e.calculator.QueueOp(func(_ context.Context) error {
+			return e.calculator.Op2(op.Op)
+		})
 		if err == nil {
-			err = e.calculator.Op2(op.Op)
+			err = e.visitor.VisitComparison(op.Right)
 		}
 		return Error(op.Pos, err)
 	}
@@ -212,9 +207,11 @@ func (e *executor) addition(ctx context.Context) error {
 	}
 
 	if op.Right != nil {
-		err := e.visitor.VisitAddition(op.Right)
+		err := e.calculator.QueueOp(func(_ context.Context) error {
+			return e.calculator.Op2(op.Op)
+		})
 		if err == nil {
-			err = e.calculator.Op2(op.Op)
+			err = e.visitor.VisitAddition(op.Right)
 		}
 		return Error(op.Pos, err)
 	}
@@ -230,9 +227,11 @@ func (e *executor) multiplication(ctx context.Context) error {
 	}
 
 	if op.Right != nil {
-		err := e.visitor.VisitMultiplication(op.Right)
+		err := e.calculator.QueueOp(func(_ context.Context) error {
+			return e.calculator.Op2(op.Op)
+		})
 		if err == nil {
-			err = e.calculator.Op2(op.Op)
+			err = e.visitor.VisitMultiplication(op.Right)
 		}
 		return Error(op.Pos, err)
 	}
