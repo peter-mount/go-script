@@ -234,21 +234,6 @@ func (c *calculator) Calculate(t task.Task, ctx context.Context) (interface{}, b
 		return nil, false, nil
 	}
 
-	// Exec the Task
-	if err := c.Exec(t, ctx); err != nil {
-		return nil, false, err
-	}
-
-	// Ignore the error as a value is optional but use it for the return bool
-	v, err := c.Pop()
-	return v, err == nil, nil
-}
-
-func (c *calculator) Exec(t task.Task, ctx context.Context) error {
-	if c == nil {
-		return nil
-	}
-
 	oldStack := c.stack
 	oldTask := c.queuedTask
 	c.stack = nil
@@ -260,11 +245,23 @@ func (c *calculator) Exec(t task.Task, ctx context.Context) error {
 
 	err := t.Do(ctx)
 	if err != nil {
-		return err
+		return nil, false, err
 	}
 
 	// Ensure any queued operation is run
-	return c.QueueOp(nil)
+	err = c.QueueOp(nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Ignore the error as a value is optional but use it for the return bool
+	v, err := c.Pop()
+	return v, err == nil, nil
+}
+
+func (c *calculator) Exec(t task.Task, ctx context.Context) error {
+	_, _, err := c.Calculate(t, ctx)
+	return err
 }
 
 func (c *calculator) Dump() string {
