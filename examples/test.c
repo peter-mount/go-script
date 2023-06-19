@@ -1,5 +1,7 @@
 #! ./builds/linux/amd64/bin/goscript
 
+include "examples/test2.c"
+
 main() {
     test()
 }
@@ -84,7 +86,14 @@ test() {
 
     a := math.Max(1,2)
     println("Max",a,math.Max(1,2))
+
+    // This should call _test() in test2 and return 42 - not Pi as the one here
+    fmt.Println( answerToLifeTheUniverseAndEverything() )
+    // This should call _test() here and not the one in test2
+    fmt.Println( _test() )
 }
+
+_test() { return math.Pi }
 
 increment(a) {
     return a+10

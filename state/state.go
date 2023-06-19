@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/packages"
 	"github.com/peter-mount/go-script/script"
 	"sort"
@@ -17,7 +18,7 @@ const (
 type State interface {
 	Variables
 	// GetFunction by name
-	GetFunction(n string) (*script.FuncDec, bool)
+	GetFunction(pos lexer.Position, n string) (*script.FuncDec, bool)
 	// GetFunctions returns a list of declared functions
 	GetFunctions() []string
 	WithContext(context.Context) context.Context
@@ -47,7 +48,19 @@ func (s *state) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, stateKey, s)
 }
 
-func (s *state) GetFunction(n string) (*script.FuncDec, bool) {
+func (s *state) GetFunction(pos lexer.Position, n string) (*script.FuncDec, bool) {
+
+	// If function name starts with _ then it's local so prefix with the filename
+	// so that it's not accessible from outside its own file.
+	//
+	// The format of the actual name stored in the map is in a format that a
+	// script cannot use for a function call, protecting the local method.
+	//
+	// This is only used here and in declareFunction().
+	if strings.HasPrefix(n, "_") {
+		n = "!" + pos.Filename + "!" + n
+	}
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

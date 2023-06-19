@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/state"
@@ -71,7 +72,7 @@ func New(s *script.Script) (Executor, error) {
 }
 
 func (e *executor) Run() error {
-	main, hasMain := e.state.GetFunction("main")
+	main, hasMain := e.state.GetFunction(lexer.Position{}, "main")
 	if !hasMain {
 		return Errorf(e.script.Pos, "main() function not defined")
 	}

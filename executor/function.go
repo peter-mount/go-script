@@ -34,7 +34,7 @@ func (e *executor) callFuncImpl(ctx context.Context) error {
 	}
 
 	// Lookup local function
-	f, exists := e.state.GetFunction(cf.Name)
+	f, exists := e.state.GetFunction(cf.Pos, cf.Name)
 	if !exists {
 		return fmt.Errorf("%s function %q not defined", cf.Pos, cf.Name)
 	}
