@@ -50,8 +50,6 @@ type Calculator interface {
 	//
 	// Returns an error if the stack doesn't have two entries or the calculation fails
 	Op2(op string) error
-	// QueueOp queues an operation, executing any previous one.
-	QueueOp(f task.Task) error
 	// Calculate executes a Calculation against this calculator.
 	//
 	// It ensures that the stack is valid for just this calculation, preserving
@@ -81,12 +79,16 @@ func FromContext(ctx context.Context) Calculator {
 
 // New Calculator
 func New() Calculator {
-	return &calculator{}
+	c := &calculator{}
+	return c.Reset()
+}
+
+type state struct {
+	stack []interface{}
 }
 
 type calculator struct {
-	stack      []interface{}
-	queuedTask task.Task
+	state
 }
 
 func (c *calculator) WithContext(ctx context.Context) context.Context {
@@ -95,7 +97,6 @@ func (c *calculator) WithContext(ctx context.Context) context.Context {
 
 func (c *calculator) Reset() Calculator {
 	c.stack = nil
-	c.queuedTask = nil
 	return c
 }
 
@@ -220,36 +221,18 @@ func (c *calculator) Op2(op string) error {
 	return nil
 }
 
-func (c *calculator) QueueOp(f task.Task) error {
-	// Always set queuedTask after we run
-	defer func() {
-		c.queuedTask = f
-	}()
-	// Run the previously Queued operation
-	return c.queuedTask.Do(context.Background())
-}
-
 func (c *calculator) Calculate(t task.Task, ctx context.Context) (interface{}, bool, error) {
 	if c == nil {
 		return nil, false, nil
 	}
 
-	oldStack := c.stack
-	oldTask := c.queuedTask
-	c.stack = nil
-	c.queuedTask = nil
+	oldState := c.state
+	c.Reset()
 	defer func() {
-		c.stack = oldStack
-		c.queuedTask = oldTask
+		c.state = oldState
 	}()
 
 	err := t.Do(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
-	// Ensure any queued operation is run
-	err = c.QueueOp(nil)
 	if err != nil {
 		return nil, false, err
 	}
