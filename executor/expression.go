@@ -59,12 +59,6 @@ func (e *executor) assignment(ctx context.Context) error {
 				return Error(op.Pos, err)
 			}
 
-			// Ensure we don't have a pending operation
-			err = e.calculator.QueueOp(nil)
-			if err != nil {
-				return Error(op.Pos, err)
-			}
-
 			v, err := e.calculator.Peek()
 			if err != nil {
 				return Error(op.Pos, err)
@@ -105,12 +99,6 @@ func (e *executor) assignment(ctx context.Context) error {
 				return Error(op.Pos, err)
 			}
 
-			// Ensure we don't have an operation queued
-			err = e.calculator.QueueOp(nil)
-			if err != nil {
-				return Error(op.Pos, err)
-			}
-
 			setV, err := e.calculator.Peek()
 			if err != nil {
 				return Error(op.Pos, err)
@@ -142,100 +130,100 @@ func (e *executor) assignment(ctx context.Context) error {
 func (e *executor) logic(ctx context.Context) error {
 	op := script.LogicFromContext(ctx)
 
-	if err := e.visitor.VisitEquality(op.Left); err != nil {
-		return Error(op.Pos, err)
-	}
-
-	if op.Right != nil {
-		err := e.calculator.QueueOp(func(_ context.Context) error {
-			return e.calculator.Op2(op.Op)
-		})
+	err := e.visitor.VisitEquality(op.Left)
+	for err == nil && op.Right != nil {
+		err = e.visitor.VisitEquality(op.Right.Left)
 		if err == nil {
-			err = e.visitor.VisitLogic(op.Right)
+			err = e.calculator.Op2(op.Op)
 		}
-		return Error(op.Pos, err)
+		if err == nil {
+			op = op.Right
+		}
 	}
 
+	if err != nil {
+		return Error(op.Pos, err)
+	}
 	return nil
 }
 
 func (e *executor) equality(ctx context.Context) error {
 	op := script.EqualityFromContext(ctx)
 
-	if err := e.visitor.VisitComparison(op.Left); err != nil {
-		return Error(op.Pos, err)
-	}
-
-	if op.Right != nil {
-		err := e.calculator.QueueOp(func(_ context.Context) error {
-			return e.calculator.Op2(op.Op)
-		})
+	err := e.visitor.VisitComparison(op.Left)
+	for err == nil && op.Right != nil {
+		err = e.visitor.VisitComparison(op.Right.Left)
 		if err == nil {
-			err = e.visitor.VisitEquality(op.Right)
+			err = e.calculator.Op2(op.Op)
 		}
-		return Error(op.Pos, err)
+		if err == nil {
+			op = op.Right
+		}
 	}
 
+	if err != nil {
+		return Error(op.Pos, err)
+	}
 	return nil
 }
 
 func (e *executor) comparison(ctx context.Context) error {
 	op := script.ComparisonFromContext(ctx)
 
-	if err := e.visitor.VisitAddition(op.Left); err != nil {
-		return Error(op.Pos, err)
-	}
-
-	if op.Right != nil {
-		err := e.calculator.QueueOp(func(_ context.Context) error {
-			return e.calculator.Op2(op.Op)
-		})
+	err := e.visitor.VisitAddition(op.Left)
+	for err == nil && op.Right != nil {
+		err = e.visitor.VisitAddition(op.Right.Left)
 		if err == nil {
-			err = e.visitor.VisitComparison(op.Right)
+			err = e.calculator.Op2(op.Op)
 		}
-		return Error(op.Pos, err)
+		if err == nil {
+			op = op.Right
+		}
 	}
 
+	if err != nil {
+		return Error(op.Pos, err)
+	}
 	return nil
 }
 
 func (e *executor) addition(ctx context.Context) error {
 	op := script.AdditionFromContext(ctx)
 
-	if err := e.visitor.VisitMultiplication(op.Left); err != nil {
-		return Error(op.Pos, err)
-	}
-
-	if op.Right != nil {
-		err := e.calculator.QueueOp(func(_ context.Context) error {
-			return e.calculator.Op2(op.Op)
-		})
+	err := e.visitor.VisitMultiplication(op.Left)
+	for err == nil && op.Right != nil {
+		err = e.visitor.VisitMultiplication(op.Right.Left)
 		if err == nil {
-			err = e.visitor.VisitAddition(op.Right)
+			err = e.calculator.Op2(op.Op)
 		}
-		return Error(op.Pos, err)
+		if err == nil {
+			op = op.Right
+		}
 	}
 
+	if err != nil {
+		return Error(op.Pos, err)
+	}
 	return nil
 }
 
 func (e *executor) multiplication(ctx context.Context) error {
 	op := script.MultiplicationFromContext(ctx)
 
-	if err := e.visitor.VisitUnary(op.Left); err != nil {
-		return Error(op.Pos, err)
-	}
-
-	if op.Right != nil {
-		err := e.calculator.QueueOp(func(_ context.Context) error {
-			return e.calculator.Op2(op.Op)
-		})
+	err := e.visitor.VisitUnary(op.Left)
+	for err == nil && op.Right != nil {
+		err = e.visitor.VisitUnary(op.Right.Left)
 		if err == nil {
-			err = e.visitor.VisitMultiplication(op.Right)
+			err = e.calculator.Op2(op.Op)
 		}
-		return Error(op.Pos, err)
+		if err == nil {
+			op = op.Right
+		}
 	}
 
+	if err != nil {
+		return Error(op.Pos, err)
+	}
 	return nil
 }
 

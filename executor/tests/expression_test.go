@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
+	"github.com/peter-mount/go-script/util/debug"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -22,12 +24,19 @@ func Test_executor_Addition(t *testing.T) {
 		{expr: "%v+%v-%v-%v", args: []any{1, 2, 3, 4}, want: 1 + 2 - 3 - 4, wantErr: false},
 		{expr: "%v+%v-%v-%v", args: []any{1, 2, 6, 3}, want: 1 + 2 - 6 - 3, wantErr: false},
 		// A + B * C - D should be A + (B * C) - D but currently processes as ((A + B)*C)-D)
-		// Broken 2023-06-18
+		// Fixed 2023-06-19
 		{expr: "%v+%v*%v-%v", args: []any{1, 2, 6, 3}, want: 1 + 2*6 - 3, wantErr: false},
+		{expr: "(%v+%v)*(%v-%v)", args: []any{1, 2, 6, 3}, want: (1 + 2) * (6 - 3), wantErr: false},
+		{expr: "%v+%v/%v-%v", args: []any{1, 2, 6, 3}, want: 1 + 2/6 - 3, wantErr: false},
+		// Broken 2023-06-19
+		{expr: "%v+%v/%v/%v", args: []any{1, 2, 6, 3}, want: 1 + 2/6/3, wantErr: false},
+		// Broken 2023-06-19
+		{expr: "%f+(%f/%f)/%f", args: []any{1.0, 2.0, 6.0, 3.0}, want: 1.0 + 2.0/6.0/3.0, wantErr: false},
 	}
 
-	for _, tt := range tests {
-		tn := fmt.Sprintf(tt.expr, tt.args...)
+	for tid, tt := range tests {
+		fArgs := append([]any{tid}, tt.args...)
+		tn := fmt.Sprintf("%d "+tt.expr, fArgs...)
 		t.Run(tn,
 			func(t *testing.T) {
 				src := fmt.Sprintf("main() {result = "+tt.expr+"}", tt.args...)
@@ -40,6 +49,9 @@ func Test_executor_Addition(t *testing.T) {
 					t.Error(err)
 					return
 				}
+
+				// Uncomment to create a html file for each test showing structure
+				_ = os.WriteFile(fmt.Sprintf("/tmp/test-%02d.html", tid), []byte(debug.Visualize(s)), 0644)
 
 				e, err := executor.New(s)
 				if err != nil {
