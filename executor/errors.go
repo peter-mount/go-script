@@ -76,11 +76,17 @@ func (e *NoFieldError) Name() string {
 }
 
 func IsNoFieldErr(err error) bool {
+	if err == nil {
+		return false
+	}
 	_, ok := err.(*NoFieldError)
 	return ok
 }
 
 func GetNoFieldErr(err error) (*NoFieldError, bool) {
+	if err == nil {
+		return nil, false
+	}
 	e, ok := err.(*NoFieldError)
 	return e, ok
 }
