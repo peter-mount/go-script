@@ -76,9 +76,6 @@ test: go-test
 build: test
 	@${MAKE} --no-print-directory -f Makefile.gen all
 
-jenkins:
-	$(call cmd,"GENERATE","Jenkinsfile");$(BUILDS)/dataencoder -d $(BUILDS) -jenkins Jenkinsfile
-
 dist: build
 	$(MKDIR) $(DIST)
 	$(foreach PLATFORM,$(shell cd $(BUILDS);ls -d */*),$(call TAR,$(PLATFORM))${\n})
