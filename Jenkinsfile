@@ -21,11 +21,7 @@ node("go") {
     sh 'make clean init test'
   }
   stage( 'aix' ) {
-    parallel {
-      stage( 'ppc64' ) {
         sh 'make -f Makefile.gen aix_ppc64'
-      }
-    }
   }
   stage( 'darwin' ) {
     parallel {
@@ -38,11 +34,7 @@ node("go") {
     }
   }
   stage( 'dragonfly' ) {
-    parallel {
-      stage( 'amd64' ) {
         sh 'make -f Makefile.gen dragonfly_amd64'
-      }
-    }
   }
   stage( 'freebsd' ) {
     parallel {
@@ -64,11 +56,7 @@ node("go") {
     }
   }
   stage( 'illumos' ) {
-    parallel {
-      stage( 'amd64' ) {
         sh 'make -f Makefile.gen illumos_amd64'
-      }
-    }
   }
   stage( 'linux' ) {
     parallel {
@@ -174,11 +162,7 @@ node("go") {
     }
   }
   stage( 'solaris' ) {
-    parallel {
-      stage( 'amd64' ) {
         sh 'make -f Makefile.gen solaris_amd64'
-      }
-    }
   }
   stage( 'windows' ) {
     parallel {
