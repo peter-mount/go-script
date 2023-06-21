@@ -36,12 +36,16 @@ func (a Arch) Platform() string {
 	return strings.Join([]string{a.GOOS, a.GOARCH, a.GOARM}, ":")
 }
 
+func (a Arch) Arch() string {
+	return a.GOARCH + a.GOARM
+}
+
 func (a Arch) Target() string {
-	return a.GOOS + "_" + a.GOARCH + a.GOARM
+	return a.GOOS + "_" + a.Arch()
 }
 
 func (a Arch) BaseDir(builds string) string {
-	return filepath.Join(builds, a.GOOS, a.GOARCH+a.GOARM)
+	return filepath.Join(builds, a.GOOS, a.Arch())
 }
 
 func (a Arch) Tool(builds, tool string) string {
@@ -77,7 +81,7 @@ func (s *Build) Start() error {
 			return err
 		}
 
-		return s.jenkinsfile(tools, arch)
+		return s.jenkinsfile(arch)
 	}
 	return nil
 }
@@ -293,7 +297,7 @@ func (s *Build) platformIndex(arches []Arch) error {
 	return os.WriteFile("platforms.md", []byte(strings.Join(a, "\n")), 0644)
 }
 
-func (s *Build) jenkinsfile(tools []string, arches []Arch) error {
+func (s *Build) jenkinsfile(arches []Arch) error {
 
 	var a []string
 
@@ -325,15 +329,59 @@ func (s *Build) jenkinsfile(tools []string, arches []Arch) error {
 		"    sh 'make clean init test'",
 		"  }")
 
-	los := ""
+	// Map of stages -> arch -> steps
+	stages := make(map[string]map[string]*Stage)
 	for _, arch := range arches {
-		if los != arch.GOOS {
-			los = arch.GOOS
-			a = append(a,
-				"  stage( '"+los+"' ) {",
-				"    sh 'make -f Makefile.gen "+arch.GOOS+"'",
-				"  }")
+		stage := stages[arch.GOOS]
+		if stage == nil {
+			stage = make(map[string]*Stage)
 		}
+		stage1 := stage[arch.Arch()]
+		if stage1 == nil {
+			stage1 = &Stage{arch: arch}
+		}
+		stage1.steps = append(stage1.steps, "        sh 'make -f Makefile.gen "+arch.Target()+"'")
+		stage[arch.Arch()] = stage1
+		stages[arch.GOOS] = stage
+	}
+
+	// Sort keys
+	var stagesKeys []string
+	for stagesKey, _ := range stages {
+		stagesKeys = append(stagesKeys, stagesKey)
+	}
+	sort.SliceStable(stagesKeys, func(i, j int) bool { return stagesKeys[i] < stagesKeys[j] })
+
+	for _, stagesKey := range stagesKeys {
+		var stageKeys []string
+		for stageKey, _ := range stages[stagesKey] {
+			stageKeys = append(stageKeys, stageKey)
+		}
+		sort.SliceStable(stageKeys, func(i, j int) bool { return stageKeys[i] < stageKeys[j] })
+
+		a = append(a, "  stage( '"+stagesKey+"' ) {")
+
+		switch len(stageKeys) {
+		case 0:
+			fmt.Println("Warning! No stages in", stagesKey)
+		case 1:
+			a = append(a, stages[stagesKey][stageKeys[0]].steps...)
+		default:
+			a = append(a, "    parallel(")
+
+			var c []string
+			for _, stageKey := range stageKeys {
+				var b []string
+				b = append(b, "      "+stageKey+": {")
+				b = append(b, stages[stagesKey][stageKey].steps...)
+				b = append(b, "      }")
+				c = append(c, strings.Join(b, "\n"))
+			}
+			a = append(a, strings.Join(c, ",\n"), "    )")
+		}
+
+		a = append(a, "  }")
+
 	}
 
 	// End node
@@ -343,4 +391,9 @@ func (s *Build) jenkinsfile(tools []string, arches []Arch) error {
 	a = append(a, "")
 
 	return os.WriteFile("Jenkinsfile", []byte(strings.Join(a, "\n")), 0644)
+}
+
+type Stage struct {
+	arch  Arch
+	steps []string
 }
