@@ -14,10 +14,18 @@ import (
 )
 
 type Build struct {
-	Encoder   *Encoder `kernel:"inject"`
-	Dest      *string  `kernel:"flag,build,generate build files"`
-	Platforms *string  `kernel:"flag,build-platform,platform(s) to build"`
+	Encoder      *Encoder `kernel:"inject"`
+	Dest         *string  `kernel:"flag,build,generate build files"`
+	Platforms    *string  `kernel:"flag,build-platform,platform(s) to build"`
+	PackageName  *string  `kernel:"flag,package,package name"`
+	Dist         *string  `kernel:"flag,dist,distribution destination"`
+	Prefix       *string  `kernel:"flag,prefix,Prefix to archive"`
+	libProviders []LibProvider
 }
+
+// LibProvider handles calls to generate additional files/directories in a build
+// returns destPath and arguments to pass
+type LibProvider func(builds string) (string, []string)
 
 // Arch output from go tool dist list
 type Arch struct {
@@ -30,6 +38,10 @@ type Arch struct {
 
 func (a Arch) IsMobile() bool {
 	return a.GOOS == "android" || a.GOOS == "ios" || a.GOOS == "js"
+}
+
+func (a Arch) IsWindows() bool {
+	return a.GOOS == "windows"
 }
 
 func (a Arch) Platform() string {
@@ -55,11 +67,11 @@ func (a Arch) Tool(builds, tool string) string {
 	return filepath.Join(a.BaseDir(builds), "bin", tool)
 }
 
-func (a Arch) Lib(builds, lib string) string {
-	return filepath.Join(a.BaseDir(builds), "lib", lib)
+func (b *Build) AddLibProvider(p LibProvider) {
+	b.libProviders = append(b.libProviders, p)
 }
 
-func (s *Build) Start() error {
+func (s *Build) Run() error {
 	if *s.Dest != "" {
 		arch, err := s.getDist()
 		if err != nil {
@@ -183,7 +195,8 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 	}
 	a = append(a, "all: "+strings.Join(archListTargets, " "), "")
 
-	var archList, toolList, libList []string
+	var archList, toolList []string
+	libList := make(map[string][]string)
 
 	los := ""
 	var losdep []string
@@ -224,10 +237,34 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 			)
 		}
 
-		// Rules for lib files
-		//libList, archListTargets = s.build(libList, archListTargets, arch, "bsc5.bin", "-bsc5", "data/bsc5.dat.gz")
-		//libList, archListTargets = s.build(libList, archListTargets, arch, "vsop87b", "-vsop87", "data")
-		//libList, archListTargets = s.build(libList, archListTargets, arch, "web", "-web", "web")
+		// Run LibProvider's
+		localLib := make(map[string][]string)
+		for _, p := range s.libProviders {
+			s.build(localLib, p)
+		}
+
+		// Add localLib to targets & global libList
+		for k, v := range localLib {
+			libList[k] = append(libList[k], v...)
+			archListTargets = append(archListTargets, k)
+		}
+
+		// Tar/Zip
+		archive := filepath.Join(*s.Dist, fmt.Sprintf("%s-%s_%s%s.tgz", *s.Prefix, arch.GOOS, arch.GOARCH, arch.GOARM))
+		toolList = append(toolList,
+			"",
+			archive+":",
+			"\t@mkdir -p "+*s.Dist,
+			fmt.Sprintf(
+				"\t$(call cmd,\"TAR\",%s);tar -P --transform \"s|^%s|%s|\" -czpf %s %s",
+				archive,
+				arch.BaseDir(*s.Encoder.Dest),
+				*s.PackageName,
+				archive,
+				arch.BaseDir(*s.Encoder.Dest),
+			),
+		)
+		archListTargets = append(archListTargets, archive)
 
 		// Do archList last
 		archList = append(archList, arch.Target()+": "+strings.Join(archListTargets, " "))
@@ -235,10 +272,17 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 
 	a = append(a, archList...)
 	a = append(a, toolList...)
-	a = append(a, libList...)
 
-	// Ensure we have a blank line at end
-	a = append(a, "")
+	var keys []string
+	for k, _ := range libList {
+		keys = append(keys, k)
+	}
+	sort.SliceStable(keys, func(i, j int) bool { return keys[i] < keys[j] })
+
+	for _, k := range keys {
+		a = append(a, "", k+":")
+		a = append(a, libList[k]...)
+	}
 
 	if err := os.MkdirAll(filepath.Dir(*s.Dest), 0755); err != nil {
 		return err
@@ -246,23 +290,17 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 	return os.WriteFile(*s.Dest, []byte(strings.Join(a, "\n")), 0644)
 }
 
-func (s *Build) build(libList, archListTargets []string, arch Arch, lib string, args ...string) ([]string, []string) {
-	dest := arch.Lib(*s.Encoder.Dest, lib)
-	libList = append(libList,
-		"",
-		dest+":",
+func (s *Build) build(libList map[string][]string, f LibProvider) {
+	dest, args := f(*s.Encoder.Dest)
+	libList[dest] = append(libList[dest],
 		fmt.Sprintf(
 			"\t$(call cmd,\"GENERATE\",\"%s\");%s -d %s %s",
-			lib,
+			strings.Join(strings.Split(dest, "/")[1:], " "),
 			filepath.Join(*s.Encoder.Dest, "dataencoder"),
 			dest,
 			strings.Join(args, " "),
 		),
 	)
-
-	archListTargets = append(archListTargets, dest)
-
-	return libList, archListTargets
 }
 
 func (s *Build) platformIndex(arches []Arch) error {
