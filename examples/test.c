@@ -91,6 +91,14 @@ test() {
     fmt.Println( answerToLifeTheUniverseAndEverything() )
     // This should call _test() here and not the one in test2
     fmt.Println( _test() )
+
+    testMap := map( "a": 42)
+    for frame:=0;frame<10;frame=frame+1 {
+        fmt.Println(testMap)
+        fmt.Println(frame)
+        testMap.b = 23232
+        testMap.frameNumber = frame
+    }
 }
 
 _test() { return math.Pi }

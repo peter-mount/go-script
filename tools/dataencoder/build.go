@@ -121,10 +121,10 @@ func (s *Build) getDist() ([]Arch, error) {
 		return a.GOARCH < b.GOARCH
 	})
 
-	// Filter out mobile/web OS's
+	// Filter out blocked platforms
 	var a []Arch
 	for _, e := range arch {
-		if !e.IsMobile() {
+		if !e.IsBlocked() {
 			if e.GOARCH == "arm" {
 				// We support arm 6 & 7 for 32bits
 				e.GOARM = "6"
