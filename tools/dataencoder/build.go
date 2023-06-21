@@ -240,7 +240,7 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 		// Run LibProvider's
 		localLib := make(map[string][]string)
 		for _, p := range s.libProviders {
-			s.build(localLib, p)
+			s.build(arch, localLib, p)
 		}
 
 		// Add localLib to targets & global libList
@@ -290,8 +290,8 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 	return os.WriteFile(*s.Dest, []byte(strings.Join(a, "\n")), 0644)
 }
 
-func (s *Build) build(libList map[string][]string, f LibProvider) {
-	dest, args := f(*s.Encoder.Dest)
+func (s *Build) build(arch Arch, libList map[string][]string, f LibProvider) {
+	dest, args := f(arch.BaseDir(*s.Encoder.Dest))
 	libList[dest] = append(libList[dest],
 		fmt.Sprintf(
 			"\t$(call cmd,\"GENERATE\",\"%s\");%s -d %s %s",
