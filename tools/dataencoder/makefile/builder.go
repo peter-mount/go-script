@@ -9,8 +9,11 @@ type Builder interface {
 	Blank() Builder
 	Block() Builder
 	Comment(string, ...any) Builder
+
 	Command(string, ...any) Builder
 	Include(string, ...any) Builder
+	SetVar(string, string, ...any) Builder
+
 	Line(string, ...any) Builder
 	Rule(string, ...string) Builder
 	Phony(...string) Builder
@@ -110,6 +113,10 @@ func (b *builder) IsCommand() bool {
 
 func (b *builder) Include(f string, a ...any) Builder {
 	return b.Command("include "+f, a...)
+}
+
+func (b *builder) SetVar(name, f string, a ...any) Builder {
+	return b.Command(name+" = "+f, a...)
 }
 
 func (b *builder) Phony(dependencies ...string) Builder {

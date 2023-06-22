@@ -134,6 +134,10 @@ func (s *Build) generate(tools []string, arches []Arch, meta *meta.Meta) error {
 
 	builder := makefile.New()
 	builder.Comment("Generated Makefile %s", meta.Time).
+		SetVar("BUILD", meta.ToolName).
+		SetVar("export BUILD_VERSION", "%q", meta.Version).
+		SetVar("export BUILD_TIME", "%q", meta.Time).
+		SetVar("export BUILD_PACKAGE_PREFIX", "%q", meta.PackagePrefix).
 		Phony("all clean test")
 
 	s.init(builder)
@@ -229,45 +233,37 @@ func (s *Build) init(builder makefile.Builder) {
 		Mkdir(*s.Encoder.Dest, *s.Dist)
 }
 
+func (s *Build) callGo(builder makefile.Builder, cmd string, args ...string) {
+	builder.Line("@$(BUILD) -go %s %s", cmd, strings.Join(args, " "))
+}
+
 func (s *Build) clean(builder makefile.Builder) {
-	builder.Rule("clean").
-		Echo("GO CLEAN", "").
-		Line("go clean -testcache").
+	rule := builder.Rule("clean").
 		RM(*s.Encoder.Dest, *s.Dist)
+	s.callGo(rule, "clean", "--", "-testcache")
 }
 
 func (s *Build) test(builder makefile.Builder) {
 	out := filepath.Join(*s.Encoder.Dest, "go-text.txt")
-	builder.Rule("test", "init").
-		Mkdir(filepath.Dir(out)).
-		Echo("GO TEST", out).
-		Line("go test ./... >%s 2>&1 || cat %s", out, out)
+
+	rule := builder.Rule("test", "init").
+		Mkdir(filepath.Dir(out))
+
+	s.callGo(rule, "test")
 }
 
 // Build a tool in go
 func (s *Build) goBuild(arch Arch, target makefile.Builder, tool string, meta *meta.Meta) {
 	dest := arch.Tool(*s.Encoder.Dest, tool)
 
-	target.Rule(dest).
-		Mkdir(filepath.Dir(dest)).
-		Echo("GO BUILD", dest).
-		Line(
-			"CGO_ENABLED=0 GOOS=%s GOARCH=%s GOARM=%s go build"+
-				` -ldflags="-X '%s.Version=%s (%s %s %s %s %s)'"`+
-				" -o %s %s",
-			// platform go is to build against
-			arch.GOOS, arch.GOARCH, arch.GOARM,
-			// Version string
-			meta.PackagePrefix,
-			filepath.Base(dest),
-			meta.Version,
-			arch.GOOS, arch.Arch(),
-			meta.Uid,
-			meta.Time,
-			// Output and start source .go file
-			dest,
-			filepath.Join("tools", tool, "bin/main.go"),
-		)
+	rule := target.Rule(dest).
+		Mkdir(filepath.Dir(dest))
+
+	if arch.GOARM == "" {
+		rule.Line("@$(BUILD) -d %s -go build %s %s %s", *s.Encoder.Dest, arch.GOOS, arch.GOARCH, tool)
+	} else {
+		rule.Line("@$(BUILD) -d %s -go build %s %s %s %s", *s.Encoder.Dest, arch.GOOS, arch.GOARCH, arch.GOARM, tool)
+	}
 }
 
 // Add rules for a LibProvider
@@ -275,7 +271,7 @@ func (s *Build) libProvider(arch Arch, target makefile.Builder, f LibProvider, m
 	dest, args := f(arch.BaseDir(*s.Encoder.Dest))
 	target.Rule(dest).
 		Echo("GENERATE", strings.Join(strings.Split(dest, "/")[1:], " ")).
-		Line("%s -d %s %s", meta.ToolName, dest, strings.Join(args, " "))
+		Line("$(BUILD) -d %s %s", dest, strings.Join(args, " "))
 }
 
 // Add rule for a tar distribution
@@ -296,6 +292,7 @@ func (s *Build) tar(arch Arch, target makefile.Builder, meta *meta.Meta) {
 			arch.BaseDir(*s.Encoder.Dest),
 		)
 }
+
 func (s *Build) platformIndex(arches []Arch) error {
 	var a []string
 	a = append(a,
