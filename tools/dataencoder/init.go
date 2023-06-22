@@ -8,5 +8,6 @@ func init() {
 	kernel.Register(
 		&Build{},
 		&Go{},
+		&Tar{},
 	)
 }

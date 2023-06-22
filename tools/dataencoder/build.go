@@ -137,8 +137,9 @@ func (s *Build) generate(tools []string, arches []Arch, meta *meta.Meta) error {
 		SetVar("BUILD", meta.ToolName).
 		SetVar("export BUILD_VERSION", "%q", meta.Version).
 		SetVar("export BUILD_TIME", "%q", meta.Time).
+		SetVar("export BUILD_PACKAGE_NAME", "%q", meta.PackageName).
 		SetVar("export BUILD_PACKAGE_PREFIX", "%q", meta.PackagePrefix).
-		Phony("all clean test")
+		Phony("all", "clean", "init", "test")
 
 	s.init(builder)
 	s.clean(builder)
@@ -233,14 +234,14 @@ func (s *Build) init(builder makefile.Builder) {
 		Mkdir(*s.Encoder.Dest, *s.Dist)
 }
 
-func (s *Build) callGo(builder makefile.Builder, cmd string, args ...string) {
-	builder.Line("@$(BUILD) -go %s %s", cmd, strings.Join(args, " "))
+func (s *Build) callBuilder(builder makefile.Builder, action, cmd string, args ...string) {
+	builder.Line("@$(BUILD) -d %s -%s %s %s", *s.Encoder.Dest, action, cmd, strings.Join(args, " "))
 }
 
 func (s *Build) clean(builder makefile.Builder) {
 	rule := builder.Rule("clean").
 		RM(*s.Encoder.Dest, *s.Dist)
-	s.callGo(rule, "clean", "--", "-testcache")
+	s.callBuilder(rule, "go", "clean", "--", "-testcache")
 }
 
 func (s *Build) test(builder makefile.Builder) {
@@ -249,7 +250,7 @@ func (s *Build) test(builder makefile.Builder) {
 	rule := builder.Rule("test", "init").
 		Mkdir(filepath.Dir(out))
 
-	s.callGo(rule, "test")
+	s.callBuilder(rule, "go", "test")
 }
 
 // Build a tool in go
@@ -281,16 +282,10 @@ func (s *Build) tar(arch Arch, target makefile.Builder, meta *meta.Meta) {
 		fmt.Sprintf("%s_%s_%s_%s%s.tgz", meta.PackageName, meta.Version, arch.GOOS, arch.GOARCH, arch.GOARM),
 	)
 
-	target.Rule(archive).
-		Mkdir(*s.Dist).
-		Echo("TAR", archive).
-		Line(
-			"tar -P --transform \"s|^%s|%s|\" -czpf %s %s",
-			arch.BaseDir(*s.Encoder.Dest),
-			meta.PackageName,
-			archive,
-			arch.BaseDir(*s.Encoder.Dest),
-		)
+	rule := target.Rule(archive).
+		Mkdir(*s.Dist)
+
+	s.callBuilder(rule, "tar", archive, arch.BaseDir(*s.Encoder.Dest))
 }
 
 func (s *Build) platformIndex(arches []Arch) error {
