@@ -29,38 +29,38 @@ type Build struct {
 // returns destPath and arguments to pass
 type LibProvider func(builds string) (string, []string)
 
-func (b *Build) AddLibProvider(p LibProvider) {
-	b.libProviders = append(b.libProviders, p)
+func (s *Build) AddLibProvider(p LibProvider) {
+	s.libProviders = append(s.libProviders, p)
 }
 
-func (b *Build) Run() error {
-	if *b.Dest != "" {
-		arch, err := b.getDist()
+func (s *Build) Run() error {
+	if *s.Dest != "" {
+		arch, err := s.getDist()
 		if err != nil {
 			return err
 		}
 
-		tools, err := b.getTools()
+		tools, err := s.getTools()
 		if err != nil {
 			return err
 		}
 
-		err = b.generate(tools, arch)
+		err = s.generate(tools, arch)
 		if err != nil {
 			return err
 		}
 
-		err = b.platformIndex(arch)
+		err = s.platformIndex(arch)
 		if err != nil {
 			return err
 		}
 
-		return b.jenkinsfile(arch)
+		return s.jenkinsfile(arch)
 	}
 	return nil
 }
 
-func (b *Build) getDist() ([]Arch, error) {
+func (s *Build) getDist() ([]Arch, error) {
 	var buf bytes.Buffer
 	cmd := exec.Command("go", "tool", "dist", "list", "-json")
 	cmd.Stdout = &buf
@@ -102,7 +102,7 @@ func (b *Build) getDist() ([]Arch, error) {
 	return a, nil
 }
 
-func (b *Build) getTools() ([]string, error) {
+func (s *Build) getTools() ([]string, error) {
 	var tools []string
 
 	if err := walk.NewPathWalker().
@@ -136,119 +136,22 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 		Include("Go.include").
 		Line("")
 
-	var archListTargets []string
+	root := s.allRule(arches, builder)
 
-	// Generate all target with either all or subset of platforms
-	if *s.Platforms != "" {
-		plats := strings.Split(*s.Platforms, " ")
-		for _, arch := range arches {
-			for _, plat := range plats {
-				if strings.TrimSpace(plat) == arch.Platform() {
-					archListTargets = append(archListTargets, arch.Target())
-				}
-			}
-		}
-	} else if len(archListTargets) == 0 {
-		for _, arch := range arches {
-			archListTargets = append(archListTargets, arch.Target())
-		}
-	}
-
-	builder.Rule("all", archListTargets...)
-
-	//var archList, toolList []string
-	libList := make(map[string][]string)
-
-	los := ""
-	var losdep []string
-	for _, arch := range arches {
-		if los != arch.GOOS {
-			if len(losdep) > 0 {
-				builder.Rule(los, losdep...)
-			}
-			los = arch.GOOS
-			losdep = nil
-		}
-		losdep = append(losdep, arch.Target())
-	}
-
-	builder.Rule(los, losdep...)
+	targetGroups := s.targetGroups(arches, root)
 
 	for _, arch := range arches {
-		builder.Line("").
-			Comment(arch.Platform())
+		target := targetGroups.Get(arch.Target())
 
-		archListTargets = nil
 		for _, tool := range tools {
-			archListTargets = append(archListTargets, arch.Tool(*s.Encoder.Dest, tool))
+			s.goBuild(arch, target, tool)
 		}
 
-		// Now rules for each tool
-		for _, tool := range tools {
-			dest := arch.Tool(*s.Encoder.Dest, tool)
-
-			builder.Rule(dest).
-				Line(`@echo %-8s %s;\`, "GO-BUILD", arch.Platform()).
-				Line(
-					"CGO_ENABLED=0 GOOS=%s GOARCH=%s GOARM=%s go build"+
-						` -ldflags="-X '%s.Version=%s (%s %s %s) $(shell id -u -n) $(shell date))'"`+
-						" -o %s %s",
-					arch.GOOS,
-					arch.GOARCH,
-					arch.GOARM,
-					"PACKAGE_PREFIX",
-					filepath.Base(dest),
-					"version", arch.GOOS, arch.Arch(),
-					dest,
-					filepath.Join("tools", tool, "bin/main.go"),
-				)
-		}
-
-		// Run LibProvider's
-		localLib := make(map[string][]string)
 		for _, p := range s.libProviders {
-			s.build(arch, localLib, p)
+			s.libProvider(arch, target, p)
 		}
 
-		// Add localLib to targets & global libList
-		for k, v := range localLib {
-			libList[k] = append(libList[k], v...)
-			archListTargets = append(archListTargets, k)
-		}
-
-		// Tar/Zip
-		archive := filepath.Join(*s.Dist, fmt.Sprintf("%s-%s_%s%s.tgz", *s.Prefix, arch.GOOS, arch.GOARCH, arch.GOARM))
-		builder.Rule(archive).
-			Line("@mkdir -p %s", *s.Dist).
-			Line(`@echo %-8s %s;\`, "TAR", archive).
-			Line(
-				"tar -P --transform \"s|^%s|%s|\" -czpf %s %s",
-				arch.BaseDir(*s.Encoder.Dest),
-				*s.PackageName,
-				archive,
-				arch.BaseDir(*s.Encoder.Dest),
-			)
-
-		archListTargets = append(archListTargets, archive)
-
-		// Do archList last
-		builder.Rule(arch.Target(), archListTargets...)
-	}
-
-	/*	a = append(a, archList...)
-		a = append(a, toolList...)
-	*/
-	var keys []string
-	for k, _ := range libList {
-		keys = append(keys, k)
-	}
-	sort.SliceStable(keys, func(i, j int) bool { return keys[i] < keys[j] })
-
-	for _, k := range keys {
-		r := builder.Rule(k)
-		for _, l := range libList[k] {
-			r.Line(l)
-		}
+		s.tar(arch, target)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(*s.Dest), 0755); err != nil {
@@ -258,19 +161,115 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 	return os.WriteFile(*s.Dest, []byte(builder.Build()), 0644)
 }
 
-func (s *Build) build(arch Arch, libList map[string][]string, f LibProvider) {
+func (s *Build) allRule(arches []Arch, builder makefile.Builder) makefile.Builder {
+	all := builder.Rule("all")
+
+	// Generate all target with either all or subset of platforms
+	if *s.Platforms != "" {
+		plats := strings.Split(*s.Platforms, " ")
+		for _, arch := range arches {
+			for _, plat := range plats {
+				if strings.TrimSpace(plat) == arch.Platform() {
+					all.AddDependency(arch.Target())
+				}
+			}
+		}
+	}
+
+	// If all is still empty then return it so the Operating System rules
+	// will get added to it automatically
+	if all.IsEmptyRule() {
+		return all
+	}
+
+	// All is not empty so return the original builder
+	return builder
+}
+
+func (s *Build) targetGroups(arches []Arch, builder makefile.Builder) makefile.Map {
+	osGroups := makefile.NewMap(builder)
+	targetGroups := makefile.NewMap(builder)
+
+	for _, arch := range arches {
+		goos := arch.GOOS
+		if !osGroups.Contains(goos) {
+			osGroups.Add(goos, func(builder makefile.Builder) makefile.Builder {
+				return builder.Block().
+					Blank().
+					Comment("==================").
+					Comment(goos).
+					Comment("==================").
+					Rule(goos)
+			})
+		}
+
+		target := arch.Target()
+		if !targetGroups.Contains(target) {
+			targetGroups.Add(target, func(_ makefile.Builder) makefile.Builder {
+				return osGroups.Get(goos).
+					Block().
+					Blank().
+					Comment("------------------").
+					Comment("%s %s", arch.GOOS, arch.Arch()).
+					Comment("------------------").
+					Rule(target)
+			})
+		}
+	}
+
+	return targetGroups
+}
+
+// Build a tool in go
+func (s *Build) goBuild(arch Arch, target makefile.Builder, tool string) {
+	dest := arch.Tool(*s.Encoder.Dest, tool)
+
+	target.Rule(dest).
+		Line(`@echo "%-8s %s";\`, "GO-BUILD", dest).
+		Line(
+			"CGO_ENABLED=0 GOOS=%s GOARCH=%s GOARM=%s go build"+
+				` -ldflags="-X '%s.Version=%s (%s %s %s) $(shell id -u -n) $(shell date))'"`+
+				" -o %s %s",
+			arch.GOOS,
+			arch.GOARCH,
+			arch.GOARM,
+			"PACKAGE_PREFIX",
+			filepath.Base(dest),
+			"version", arch.GOOS, arch.Arch(),
+			dest,
+			filepath.Join("tools", tool, "bin/main.go"),
+		)
+}
+
+// Add rules for a LibProvider
+func (s *Build) libProvider(arch Arch, target makefile.Builder, f LibProvider) {
 	dest, args := f(arch.BaseDir(*s.Encoder.Dest))
-	libList[dest] = append(libList[dest],
-		fmt.Sprintf(
-			"\t$(call cmd,\"GENERATE\",\"%s\");%s -d %s %s",
+	target.Rule(dest).
+		Line(`@echo "%-8s %s";\`,
+			"GENERATE",
 			strings.Join(strings.Split(dest, "/")[1:], " "),
+		).
+		Line("%s -d %s %s",
 			filepath.Join(*s.Encoder.Dest, "dataencoder"),
 			dest,
 			strings.Join(args, " "),
-		),
-	)
+		)
 }
 
+// Add rule for a tar distribution
+func (s *Build) tar(arch Arch, target makefile.Builder) {
+	archive := filepath.Join(*s.Dist, fmt.Sprintf("%s-%s_%s%s.tgz", *s.Prefix, arch.GOOS, arch.GOARCH, arch.GOARM))
+	target.Rule(archive).
+		Line("@mkdir -p %s", *s.Dist).
+		Line(`@echo "%-8s %s";\`, "TAR", archive).
+		Line(
+			"tar -P --transform \"s|^%s|%s|\" -czpf %s %s",
+			arch.BaseDir(*s.Encoder.Dest),
+			*s.PackageName,
+			archive,
+			arch.BaseDir(*s.Encoder.Dest),
+		)
+}
 func (s *Build) platformIndex(arches []Arch) error {
 	var a []string
 	a = append(a,
@@ -303,7 +302,7 @@ func (s *Build) platformIndex(arches []Arch) error {
 	return os.WriteFile("platforms.md", []byte(strings.Join(a, "\n")), 0644)
 }
 
-func (b *Build) jenkinsfile(arches []Arch) error {
+func (s *Build) jenkinsfile(arches []Arch) error {
 
 	builder := jenkinsfile.New()
 
