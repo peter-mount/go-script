@@ -5,11 +5,13 @@ import (
 	"compress/gzip"
 	"errors"
 	"flag"
+	"fmt"
 	"github.com/peter-mount/go-kernel/v2/util/walk"
 	"io"
 	"os"
 	"os/user"
 	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -47,6 +49,8 @@ func (s *Tar) tar(archive, dir string) error {
 	tw := tar.NewWriter(gz)
 	defer tw.Close()
 
+	packageName := getEnv("BUILD_PACKAGE_NAME")
+
 	return walk.NewPathWalker().
 		Then(func(path string, info os.FileInfo) (err error) {
 
@@ -67,7 +71,8 @@ func (s *Tar) tar(archive, dir string) error {
 			}
 
 			modTime := info.ModTime()
-			name := path
+			name := strings.ReplaceAll(path, dir, packageName)
+			fmt.Println(name)
 
 			header := &tar.Header{
 				Name:       name,
