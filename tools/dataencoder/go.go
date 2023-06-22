@@ -82,6 +82,11 @@ func (s *Go) buildTool(goos, goarch, goarm, tool string) error {
 	dst := filepath.Join(*s.Encoder.Dest, goos, goarch+goarm, "bin", tool)
 	label("GO BUILD", dst)
 
+	// Windows needs a file extension, legacy of MSDos and CP/M before that
+	if goos == "windows" {
+		dst = dst + ".exe"
+	}
+
 	// The os environment then add our vars
 	env := append([]string{}, os.Environ()...)
 	env = append(env, "CGO_ENABLED=0",
