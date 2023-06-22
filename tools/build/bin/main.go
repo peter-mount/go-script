@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	_ "github.com/peter-mount/go-build/tools/build"
 	"github.com/peter-mount/go-kernel/v2"
-	_ "github.com/peter-mount/go-script/tools/dataencoder"
 	"os"
 )
 
