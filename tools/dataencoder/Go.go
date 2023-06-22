@@ -33,7 +33,7 @@ func (s *Go) run() error {
 		return s.build()
 
 	case "clean":
-		s.label("GO CLEAN", "-testcache")
+		label("GO CLEAN", "-testcache")
 		return s.cmd("go", "clean", "-testcache")
 
 	case "test":
@@ -44,7 +44,7 @@ func (s *Go) run() error {
 	}
 }
 
-func (s *Go) label(label, f string, a ...any) {
+func label(label, f string, a ...any) {
 	fmt.Printf("%-8s ", label)
 	fmt.Printf(f, a...)
 	fmt.Println()
@@ -80,7 +80,7 @@ func getEnv(k string) string {
 func (s *Go) buildTool(goos, goarch, goarm, tool string) error {
 	src := filepath.Join("tools", tool, "bin/main.go")
 	dst := filepath.Join(*s.Encoder.Dest, goos, goarch+goarm, "bin", tool)
-	s.label("GO BUILD", dst)
+	label("GO BUILD", dst)
 
 	// The os environment then add our vars
 	env := append([]string{}, os.Environ()...)
@@ -136,7 +136,8 @@ func (s *Go) buildTool(goos, goarch, goarm, tool string) error {
 func (s *Go) test() error {
 	var buf bytes.Buffer
 
-	f, err := os.Create(filepath.Join(*s.Encoder.Dest, "go-test.txt"))
+	testOut := filepath.Join(*s.Encoder.Dest, "go-test.txt")
+	f, err := os.Create(testOut)
 	if err != nil {
 		return err
 	}
@@ -151,6 +152,8 @@ func (s *Go) test() error {
 	if log.IsVerbose() {
 		log.Println(cmd.String())
 	}
+
+	label("GO TEST", testOut)
 
 	err = cmd.Run()
 	if exit, ok := err.(*exec.ExitError); ok {
