@@ -8,11 +8,16 @@ import (
 type Builder interface {
 	Blank() Builder
 	Block() Builder
-	Comment(f string, a ...any) Builder
-	Command(f string, a ...any) Builder
-	Include(f string, a ...any) Builder
-	Line(f string, a ...any) Builder
+	Comment(string, ...any) Builder
+	Command(string, ...any) Builder
+	Include(string, ...any) Builder
+	Line(string, ...any) Builder
 	Rule(string, ...string) Builder
+	Phony(...string) Builder
+
+	Echo(string, string, ...any) Builder
+	Mkdir(...string) Builder
+	RM(...string) Builder
 
 	End() Builder
 	Build() string
@@ -26,6 +31,7 @@ type Builder interface {
 	IsLine() bool
 	IsRule() bool
 	IsEmptyRule() bool
+	NumTargets() int
 }
 
 type builder struct {
@@ -106,10 +112,27 @@ func (b *builder) Include(f string, a ...any) Builder {
 	return b.Command("include "+f, a...)
 }
 
+func (b *builder) Phony(dependencies ...string) Builder {
+	return b.Rule(".PHONY", dependencies...)
+}
+
 func (b *builder) Line(f string, a ...any) Builder {
 	c := &builder{parent: b, line: fmt.Sprintf(f, a...)}
 	b.children = append(b.children, c)
 	return b
+}
+
+func (b *builder) Echo(n string, f string, a ...any) Builder {
+	return b.Line(fmt.Sprintf(`@echo "%-8s %s";\`, n, fmt.Sprintf(f, a...)))
+}
+
+func (b *builder) Mkdir(dirs ...string) Builder {
+	return b.Line("@mkdir -p %s", strings.Join(dirs, " "))
+}
+
+func (b *builder) RM(dirs ...string) Builder {
+	return b.Echo("RM", strings.Join(dirs, " ")).
+		Line("rm -rf %s", strings.Join(dirs, " "))
 }
 
 func (b *builder) IsLine() bool {
@@ -144,6 +167,13 @@ func (b *builder) IsRule() bool {
 
 func (b *builder) IsEmptyRule() bool {
 	return b.IsRule() && b.line == ""
+}
+
+func (b *builder) NumTargets() int {
+	if b.IsRule() {
+		return len(strings.Split(b.line, " "))
+	}
+	return 0
 }
 
 func (b *builder) AddDependency(dependencies ...string) Builder {

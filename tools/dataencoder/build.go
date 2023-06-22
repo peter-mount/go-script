@@ -7,21 +7,19 @@ import (
 	"github.com/peter-mount/go-kernel/v2/util/walk"
 	"github.com/peter-mount/go-script/tools/dataencoder/jenkinsfile"
 	"github.com/peter-mount/go-script/tools/dataencoder/makefile"
+	"github.com/peter-mount/go-script/tools/dataencoder/meta"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 )
 
 type Build struct {
 	Encoder      *Encoder `kernel:"inject"`
 	Dest         *string  `kernel:"flag,build,generate build files"`
 	Platforms    *string  `kernel:"flag,build-platform,platform(s) to build"`
-	PackageName  *string  `kernel:"flag,package,package name"`
 	Dist         *string  `kernel:"flag,dist,distribution destination"`
-	Prefix       *string  `kernel:"flag,prefix,Prefix to archive"`
 	libProviders []LibProvider
 }
 
@@ -35,6 +33,11 @@ func (s *Build) AddLibProvider(p LibProvider) {
 
 func (s *Build) Run() error {
 	if *s.Dest != "" {
+		meta, err := meta.New()
+		if err != nil {
+			return err
+		}
+
 		arch, err := s.getDist()
 		if err != nil {
 			return err
@@ -45,7 +48,7 @@ func (s *Build) Run() error {
 			return err
 		}
 
-		err = s.generate(tools, arch)
+		err = s.generate(tools, arch, meta)
 		if err != nil {
 			return err
 		}
@@ -127,14 +130,15 @@ func (s *Build) getTools() ([]string, error) {
 	return tools, nil
 }
 
-func (s *Build) generate(tools []string, arches []Arch) error {
+func (s *Build) generate(tools []string, arches []Arch, meta *meta.Meta) error {
 
 	builder := makefile.New()
-	builder.Comment("Generated Makefile %s", time.Now().Format(time.RFC3339)).
-		Line("").
-		Include("Makefile.include").
-		Include("Go.include").
-		Line("")
+	builder.Comment("Generated Makefile %s", meta.Time).
+		Phony("all clean test")
+
+	s.init(builder)
+	s.clean(builder)
+	s.test(builder)
 
 	root := s.allRule(arches, builder)
 
@@ -144,14 +148,14 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 		target := targetGroups.Get(arch.Target())
 
 		for _, tool := range tools {
-			s.goBuild(arch, target, tool)
+			s.goBuild(arch, target, tool, meta)
 		}
 
 		for _, p := range s.libProviders {
-			s.libProvider(arch, target, p)
+			s.libProvider(arch, target, p, meta)
 		}
 
-		s.tar(arch, target)
+		s.tar(arch, target, meta)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(*s.Dest), 0755); err != nil {
@@ -199,7 +203,7 @@ func (s *Build) targetGroups(arches []Arch, builder makefile.Builder) makefile.M
 					Comment("==================").
 					Comment(goos).
 					Comment("==================").
-					Rule(goos)
+					Rule(goos, "init")
 			})
 		}
 
@@ -212,7 +216,7 @@ func (s *Build) targetGroups(arches []Arch, builder makefile.Builder) makefile.M
 					Comment("------------------").
 					Comment("%s %s", arch.GOOS, arch.Arch()).
 					Comment("------------------").
-					Rule(target)
+					Rule(target, "init")
 			})
 		}
 	}
@@ -220,52 +224,74 @@ func (s *Build) targetGroups(arches []Arch, builder makefile.Builder) makefile.M
 	return targetGroups
 }
 
+func (s *Build) init(builder makefile.Builder) {
+	builder.Rule("init").
+		Mkdir(*s.Encoder.Dest, *s.Dist)
+}
+
+func (s *Build) clean(builder makefile.Builder) {
+	builder.Rule("clean").
+		Echo("GO CLEAN", "").
+		Line("go clean -testcache").
+		RM(*s.Encoder.Dest, *s.Dist)
+}
+
+func (s *Build) test(builder makefile.Builder) {
+	out := filepath.Join(*s.Encoder.Dest, "go-text.txt")
+	builder.Rule("test", "init").
+		Mkdir(filepath.Dir(out)).
+		Echo("GO TEST", out).
+		Line("go test ./... >%s 2>&1 || cat %s", out, out)
+}
+
 // Build a tool in go
-func (s *Build) goBuild(arch Arch, target makefile.Builder, tool string) {
+func (s *Build) goBuild(arch Arch, target makefile.Builder, tool string, meta *meta.Meta) {
 	dest := arch.Tool(*s.Encoder.Dest, tool)
 
 	target.Rule(dest).
-		Line(`@echo "%-8s %s";\`, "GO-BUILD", dest).
+		Mkdir(filepath.Dir(dest)).
+		Echo("GO BUILD", dest).
 		Line(
 			"CGO_ENABLED=0 GOOS=%s GOARCH=%s GOARM=%s go build"+
-				` -ldflags="-X '%s.Version=%s (%s %s %s) $(shell id -u -n) $(shell date))'"`+
+				` -ldflags="-X '%s.Version=%s (%s %s %s %s %s)'"`+
 				" -o %s %s",
-			arch.GOOS,
-			arch.GOARCH,
-			arch.GOARM,
-			"PACKAGE_PREFIX",
+			// platform go is to build against
+			arch.GOOS, arch.GOARCH, arch.GOARM,
+			// Version string
+			meta.PackagePrefix,
 			filepath.Base(dest),
-			"version", arch.GOOS, arch.Arch(),
+			meta.Version,
+			arch.GOOS, arch.Arch(),
+			meta.Uid,
+			meta.Time,
+			// Output and start source .go file
 			dest,
 			filepath.Join("tools", tool, "bin/main.go"),
 		)
 }
 
 // Add rules for a LibProvider
-func (s *Build) libProvider(arch Arch, target makefile.Builder, f LibProvider) {
+func (s *Build) libProvider(arch Arch, target makefile.Builder, f LibProvider, meta *meta.Meta) {
 	dest, args := f(arch.BaseDir(*s.Encoder.Dest))
 	target.Rule(dest).
-		Line(`@echo "%-8s %s";\`,
-			"GENERATE",
-			strings.Join(strings.Split(dest, "/")[1:], " "),
-		).
-		Line("%s -d %s %s",
-			filepath.Join(*s.Encoder.Dest, "dataencoder"),
-			dest,
-			strings.Join(args, " "),
-		)
+		Echo("GENERATE", strings.Join(strings.Split(dest, "/")[1:], " ")).
+		Line("%s -d %s %s", meta.ToolName, dest, strings.Join(args, " "))
 }
 
 // Add rule for a tar distribution
-func (s *Build) tar(arch Arch, target makefile.Builder) {
-	archive := filepath.Join(*s.Dist, fmt.Sprintf("%s-%s_%s%s.tgz", *s.Prefix, arch.GOOS, arch.GOARCH, arch.GOARM))
+func (s *Build) tar(arch Arch, target makefile.Builder, meta *meta.Meta) {
+	archive := filepath.Join(
+		*s.Dist,
+		fmt.Sprintf("%s_%s_%s_%s%s.tgz", meta.PackageName, meta.Version, arch.GOOS, arch.GOARCH, arch.GOARM),
+	)
+
 	target.Rule(archive).
-		Line("@mkdir -p %s", *s.Dist).
-		Line(`@echo "%-8s %s";\`, "TAR", archive).
+		Mkdir(*s.Dist).
+		Echo("TAR", archive).
 		Line(
 			"tar -P --transform \"s|^%s|%s|\" -czpf %s %s",
 			arch.BaseDir(*s.Encoder.Dest),
-			*s.PackageName,
+			meta.PackageName,
 			archive,
 			arch.BaseDir(*s.Encoder.Dest),
 		)
