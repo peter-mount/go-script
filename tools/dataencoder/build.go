@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/peter-mount/go-kernel/v2/util/walk"
 	"github.com/peter-mount/go-script/tools/dataencoder/jenkinsfile"
+	"github.com/peter-mount/go-script/tools/dataencoder/makefile"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -128,14 +129,12 @@ func (b *Build) getTools() ([]string, error) {
 
 func (s *Build) generate(tools []string, arches []Arch) error {
 
-	var a []string
-	a = append(a,
-		"# Generated Makefile "+time.Now().Format(time.RFC3339),
-		"",
-		"include Makefile.include",
-		"include Go.include",
-		"",
-	)
+	builder := makefile.New()
+	builder.Comment("Generated Makefile %s", time.Now().Format(time.RFC3339)).
+		Line("").
+		Include("Makefile.include").
+		Include("Go.include").
+		Line("")
 
 	var archListTargets []string
 
@@ -154,9 +153,10 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 			archListTargets = append(archListTargets, arch.Target())
 		}
 	}
-	a = append(a, "all: "+strings.Join(archListTargets, " "), "")
 
-	var archList, toolList []string
+	builder.Rule("all", archListTargets...)
+
+	//var archList, toolList []string
 	libList := make(map[string][]string)
 
 	los := ""
@@ -164,20 +164,19 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 	for _, arch := range arches {
 		if los != arch.GOOS {
 			if len(losdep) > 0 {
-				a = append(a, los+": "+strings.Join(losdep, " "), "")
+				builder.Rule(los, losdep...)
 			}
 			los = arch.GOOS
 			losdep = nil
 		}
 		losdep = append(losdep, arch.Target())
 	}
-	a = append(a, los+": "+strings.Join(losdep, " "), "")
+
+	builder.Rule(los, losdep...)
 
 	for _, arch := range arches {
-		archList = append(archList,
-			"",
-			"# "+arch.Platform(),
-		)
+		builder.Line("").
+			Comment(arch.Platform())
 
 		archListTargets = nil
 		for _, tool := range tools {
@@ -187,15 +186,22 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 		// Now rules for each tool
 		for _, tool := range tools {
 			dest := arch.Tool(*s.Encoder.Dest, tool)
-			toolList = append(toolList,
-				"",
-				dest+":",
-				fmt.Sprintf(
-					"\t$(call GO-BUILD,%s,%s,%s)",
-					arch.Platform(),
+
+			builder.Rule(dest).
+				Line(`@echo %-8s %s;\`, "GO-BUILD", arch.Platform()).
+				Line(
+					"CGO_ENABLED=0 GOOS=%s GOARCH=%s GOARM=%s go build"+
+						` -ldflags="-X '%s.Version=%s (%s %s %s) $(shell id -u -n) $(shell date))'"`+
+						" -o %s %s",
+					arch.GOOS,
+					arch.GOARCH,
+					arch.GOARM,
+					"PACKAGE_PREFIX",
+					filepath.Base(dest),
+					"version", arch.GOOS, arch.Arch(),
 					dest,
-					filepath.Join("tools", tool, "bin/main.go")),
-			)
+					filepath.Join("tools", tool, "bin/main.go"),
+				)
 		}
 
 		// Run LibProvider's
@@ -212,28 +218,26 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 
 		// Tar/Zip
 		archive := filepath.Join(*s.Dist, fmt.Sprintf("%s-%s_%s%s.tgz", *s.Prefix, arch.GOOS, arch.GOARCH, arch.GOARM))
-		toolList = append(toolList,
-			"",
-			archive+":",
-			"\t@mkdir -p "+*s.Dist,
-			fmt.Sprintf(
-				"\t$(call cmd,\"TAR\",%s);tar -P --transform \"s|^%s|%s|\" -czpf %s %s",
-				archive,
+		builder.Rule(archive).
+			Line("@mkdir -p %s", *s.Dist).
+			Line(`@echo %-8s %s;\`, "TAR", archive).
+			Line(
+				"tar -P --transform \"s|^%s|%s|\" -czpf %s %s",
 				arch.BaseDir(*s.Encoder.Dest),
 				*s.PackageName,
 				archive,
 				arch.BaseDir(*s.Encoder.Dest),
-			),
-		)
+			)
+
 		archListTargets = append(archListTargets, archive)
 
 		// Do archList last
-		archList = append(archList, arch.Target()+": "+strings.Join(archListTargets, " "))
+		builder.Rule(arch.Target(), archListTargets...)
 	}
 
-	a = append(a, archList...)
-	a = append(a, toolList...)
-
+	/*	a = append(a, archList...)
+		a = append(a, toolList...)
+	*/
 	var keys []string
 	for k, _ := range libList {
 		keys = append(keys, k)
@@ -241,14 +245,17 @@ func (s *Build) generate(tools []string, arches []Arch) error {
 	sort.SliceStable(keys, func(i, j int) bool { return keys[i] < keys[j] })
 
 	for _, k := range keys {
-		a = append(a, "", k+":")
-		a = append(a, libList[k]...)
+		r := builder.Rule(k)
+		for _, l := range libList[k] {
+			r.Line(l)
+		}
 	}
 
 	if err := os.MkdirAll(filepath.Dir(*s.Dest), 0755); err != nil {
 		return err
 	}
-	return os.WriteFile(*s.Dest, []byte(strings.Join(a, "\n")), 0644)
+
+	return os.WriteFile(*s.Dest, []byte(builder.Build()), 0644)
 }
 
 func (s *Build) build(arch Arch, libList map[string][]string, f LibProvider) {
