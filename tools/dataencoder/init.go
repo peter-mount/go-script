@@ -9,5 +9,6 @@ func init() {
 		&Build{},
 		&Go{},
 		&Tar{},
+		&Zip{},
 	)
 }

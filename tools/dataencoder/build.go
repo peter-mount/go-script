@@ -160,7 +160,11 @@ func (s *Build) generate(tools []string, arches []Arch, meta *meta.Meta) error {
 			s.libProvider(arch, target, p, meta)
 		}
 
-		s.tar(arch, target, meta)
+		if arch.IsWindows() {
+			s.zip(arch, target, meta)
+		} else {
+			s.tar(arch, target, meta)
+		}
 	}
 
 	if err := os.MkdirAll(filepath.Dir(*s.Dest), 0755); err != nil {
@@ -286,6 +290,19 @@ func (s *Build) tar(arch Arch, target makefile.Builder, meta *meta.Meta) {
 		Mkdir(*s.Dist)
 
 	s.callBuilder(rule, "tar", archive, arch.BaseDir(*s.Encoder.Dest))
+}
+
+// Add rule for a zip distribution
+func (s *Build) zip(arch Arch, target makefile.Builder, meta *meta.Meta) {
+	archive := filepath.Join(
+		*s.Dist,
+		fmt.Sprintf("%s_%s_%s_%s%s.zip", meta.PackageName, meta.Version, arch.GOOS, arch.GOARCH, arch.GOARM),
+	)
+
+	rule := target.Rule(archive).
+		Mkdir(*s.Dist)
+
+	s.callBuilder(rule, "zip", archive, arch.BaseDir(*s.Encoder.Dest))
 }
 
 func (s *Build) platformIndex(arches []Arch) error {

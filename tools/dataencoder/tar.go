@@ -35,7 +35,7 @@ func (s *Tar) Start() error {
 }
 
 func (s *Tar) tar(archive, dir string) error {
-	label("TAR", "%s %s", archive, dir)
+	label("DIST TAR", "%s %s", archive, dir)
 
 	f, err := os.Create(archive)
 	if err != nil {
