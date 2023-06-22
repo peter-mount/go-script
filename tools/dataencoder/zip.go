@@ -4,7 +4,7 @@ import (
 	"archive/zip"
 	"errors"
 	"flag"
-	"fmt"
+	"github.com/peter-mount/go-kernel/v2/log"
 	"github.com/peter-mount/go-kernel/v2/util/walk"
 	"os"
 	"strings"
@@ -50,9 +50,12 @@ func (s *Zip) zip(archive, dir string) error {
 			}
 
 			name := strings.ReplaceAll(path, dir, packageName)
-			fmt.Println(name)
 			if info.IsDir() {
 				name = name + "/"
+			}
+
+			if log.IsVerbose() {
+				log.Println(name)
 			}
 
 			w, err := zw.Create(name)

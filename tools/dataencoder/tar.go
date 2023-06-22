@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"flag"
-	"fmt"
+	"github.com/peter-mount/go-kernel/v2/log"
 	"github.com/peter-mount/go-kernel/v2/util/walk"
 	"io"
 	"os"
@@ -72,7 +72,10 @@ func (s *Tar) tar(archive, dir string) error {
 
 			modTime := info.ModTime()
 			name := strings.ReplaceAll(path, dir, packageName)
-			fmt.Println(name)
+
+			if log.IsVerbose() {
+				log.Println(name)
+			}
 
 			header := &tar.Header{
 				Name:       name,
