@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/peter-mount/go-kernel/v2/util/walk"
+	"github.com/peter-mount/go-script/tools/dataencoder/jenkinsfile"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,78 +28,38 @@ type Build struct {
 // returns destPath and arguments to pass
 type LibProvider func(builds string) (string, []string)
 
-// Arch output from go tool dist list
-type Arch struct {
-	GOOS         string `json:"GOOS"`
-	GOARCH       string `json:"GOARCH"`
-	GgoSupported bool   `json:"GgoSupported"`
-	FirstClass   bool   `json:"FirstClass"`
-	GOARM        string `json:"-"`
-}
-
-func (a Arch) IsMobile() bool {
-	return a.GOOS == "android" || a.GOOS == "ios" || a.GOOS == "js"
-}
-
-func (a Arch) IsWindows() bool {
-	return a.GOOS == "windows"
-}
-
-func (a Arch) Platform() string {
-	return strings.Join([]string{a.GOOS, a.GOARCH, a.GOARM}, ":")
-}
-
-func (a Arch) Arch() string {
-	return a.GOARCH + a.GOARM
-}
-
-func (a Arch) Target() string {
-	return a.GOOS + "_" + a.Arch()
-}
-
-func (a Arch) BaseDir(builds string) string {
-	return filepath.Join(builds, a.GOOS, a.Arch())
-}
-
-func (a Arch) Tool(builds, tool string) string {
-	if a.GOOS == "windows" {
-		tool = tool + ".exe"
-	}
-	return filepath.Join(a.BaseDir(builds), "bin", tool)
-}
-
 func (b *Build) AddLibProvider(p LibProvider) {
 	b.libProviders = append(b.libProviders, p)
 }
 
-func (s *Build) Run() error {
-	if *s.Dest != "" {
-		arch, err := s.getDist()
+func (b *Build) Run() error {
+	if *b.Dest != "" {
+		arch, err := b.getDist()
 		if err != nil {
 			return err
 		}
 
-		tools, err := s.getTools()
+		tools, err := b.getTools()
 		if err != nil {
 			return err
 		}
 
-		err = s.generate(tools, arch)
+		err = b.generate(tools, arch)
 		if err != nil {
 			return err
 		}
 
-		err = s.platformIndex(arch)
+		err = b.platformIndex(arch)
 		if err != nil {
 			return err
 		}
 
-		return s.jenkinsfile(arch)
+		return b.jenkinsfile(arch)
 	}
 	return nil
 }
 
-func (s *Build) getDist() ([]Arch, error) {
+func (b *Build) getDist() ([]Arch, error) {
 	var buf bytes.Buffer
 	cmd := exec.Command("go", "tool", "dist", "list", "-json")
 	cmd.Stdout = &buf
@@ -140,7 +101,7 @@ func (s *Build) getDist() ([]Arch, error) {
 	return a, nil
 }
 
-func (s *Build) getTools() ([]string, error) {
+func (b *Build) getTools() ([]string, error) {
 	var tools []string
 
 	if err := walk.NewPathWalker().
@@ -335,103 +296,73 @@ func (s *Build) platformIndex(arches []Arch) error {
 	return os.WriteFile("platforms.md", []byte(strings.Join(a, "\n")), 0644)
 }
 
-func (s *Build) jenkinsfile(arches []Arch) error {
+func (b *Build) jenkinsfile(arches []Arch) error {
 
-	var a []string
+	builder := jenkinsfile.New()
 
-	// Build properties
-	a = append(a,
-		"properties([",
-		"  buildDiscarder(",
-		"    logRotator(",
-		"      artifactDaysToKeepStr: '',",
-		"      artifactNumToKeepStr: '',",
-		"      daysToKeepStr: '',",
-		"      numToKeepStr: '10'",
-		"    )",
-		"  ),",
-		"  disableConcurrentBuilds(),",
-		"  disableResume(),",
-		"  pipelineTriggers([",
-		"    cron('H H * * *')",
-		"  ])",
-		"])",
-	)
+	builder.Begin("properties([").
+		Array().
+		Begin("buildDiscarder(").
+		Begin("logRotator(").
+		Array().
+		Property("artifactDaysToKeepStr", "").
+		Property("artifactNumToKeepStr", "").
+		Property("daysToKeepStr", "").
+		Property("numToKeepStr", 10).
+		End().End().
+		Simple("disableConcurrentBuilds").
+		Simple("disableResume").
+		Begin("pipelineTriggers([").
+		Simple("cron", `"H H * * *"`)
 
-	a = append(a, "node(\"go\") {")
-	a = append(a, "  stage( 'Checkout' ) {",
-		"    checkout scm",
-		//"    git 'https://github.com/peter-mount/piweather.center'",
-		"  }",
-		"  stage( 'Init' ) {",
-		"    sh 'make clean init test'",
-		"  }")
+	node := builder.Node("go")
+
+	node.Stage("Checkout").
+		Line("checkout scm")
+
+	node.Stage("Init").
+		Sh("make clean init test")
 
 	// Map of stages -> arch -> steps
-	stages := make(map[string]map[string]*Stage)
+	stages := make(map[string]*OsStage)
 	for _, arch := range arches {
 		stage := stages[arch.GOOS]
 		if stage == nil {
-			stage = make(map[string]*Stage)
+			stage = &OsStage{
+				arch:     arch,
+				builder:  node.Stage(arch.GOOS).Parallel(),
+				children: make(map[string]*ArchStage),
+			}
 		}
-		stage1 := stage[arch.Arch()]
+		stage1 := stage.children[arch.Arch()]
 		if stage1 == nil {
-			stage1 = &Stage{arch: arch}
+			stage1 = &ArchStage{
+				arch:    arch,
+				builder: stage.builder.Stage(arch.Arch()),
+			}
 		}
-		stage1.steps = append(stage1.steps, "        sh 'make -f Makefile.gen "+arch.Target()+"'")
-		stage[arch.Arch()] = stage1
+		stage1.builder.Sh("make -f Makefile.gen " + arch.Target())
+		stage.children[arch.Arch()] = stage1
 		stages[arch.GOOS] = stage
 	}
 
-	// Sort keys
-	var stagesKeys []string
-	for stagesKey, _ := range stages {
-		stagesKeys = append(stagesKeys, stagesKey)
-	}
-	sort.SliceStable(stagesKeys, func(i, j int) bool { return stagesKeys[i] < stagesKeys[j] })
-
-	for _, stagesKey := range stagesKeys {
-		var stageKeys []string
-		for stageKey, _ := range stages[stagesKey] {
-			stageKeys = append(stageKeys, stageKey)
+	// Sort stages
+	for _, s1 := range stages {
+		s1.builder.Sort()
+		for _, s2 := range s1.children {
+			s2.builder.Sort()
 		}
-		sort.SliceStable(stageKeys, func(i, j int) bool { return stageKeys[i] < stageKeys[j] })
-
-		a = append(a, "  stage( '"+stagesKey+"' ) {")
-
-		switch len(stageKeys) {
-		case 0:
-			fmt.Println("Warning! No stages in", stagesKey)
-		case 1:
-			a = append(a, stages[stagesKey][stageKeys[0]].steps...)
-		default:
-			a = append(a, "    parallel(")
-
-			var c []string
-			for _, stageKey := range stageKeys {
-				var b []string
-				b = append(b, "      "+stageKey+": {")
-				b = append(b, stages[stagesKey][stageKey].steps...)
-				b = append(b, "      }")
-				c = append(c, strings.Join(b, "\n"))
-			}
-			a = append(a, strings.Join(c, ",\n"), "    )")
-		}
-
-		a = append(a, "  }")
-
 	}
 
-	// End node
-	a = append(a, "}")
-
-	// Ensure we have a blank line at end
-	a = append(a, "")
-
-	return os.WriteFile("Jenkinsfile", []byte(strings.Join(a, "\n")), 0644)
+	return os.WriteFile("Jenkinsfile", []byte(builder.Build()), 0644)
 }
 
-type Stage struct {
-	arch  Arch
-	steps []string
+type OsStage struct {
+	arch     Arch
+	builder  jenkinsfile.Builder
+	children map[string]*ArchStage
+}
+type ArchStage struct {
+	arch    Arch
+	builder jenkinsfile.Builder
 }
