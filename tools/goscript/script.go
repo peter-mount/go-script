@@ -1,7 +1,10 @@
 package goscript
 
 import (
+	"errors"
 	"flag"
+	"github.com/peter-mount/go-build/version"
+	"github.com/peter-mount/go-kernel/v2/log"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
 	"os"
@@ -13,6 +16,10 @@ type Script struct {
 }
 
 func (b *Script) Run() error {
+	if log.IsVerbose() {
+		log.Println(version.Version)
+	}
+
 	p := parser.New()
 
 	// if ../include exists then add it to the path
@@ -28,7 +35,13 @@ func (b *Script) Run() error {
 		}
 	}
 
-	for _, fileName := range flag.Args() {
+	args := flag.Args()
+
+	if len(args) == 0 {
+		return errors.New("no scripts provided")
+	}
+
+	for _, fileName := range args {
 		s, err := p.ParseFile(fileName)
 		if err != nil {
 			return err
