@@ -5,6 +5,8 @@ import (
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
+	"runtime"
+	"strings"
 )
 
 // getReference resolves a reference of a value.
@@ -213,5 +215,15 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 		//}
 	}
 
-	return nil, Errorf(op.Pos, "%T has no function %q", v, op.Name)
+	var n []string
+	for i := 0; i < tv.NumMethod(); i++ {
+		method := tv.Method(i)
+		name := runtime.FuncForPC(method.Pointer()).Name()
+		n = append(n, name)
+	}
+
+	return nil, Errorf(op.Pos,
+		"%T has no function %q: Available %s",
+		v, op.Name,
+		strings.Join(n, ", "))
 }
