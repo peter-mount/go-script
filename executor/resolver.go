@@ -2,10 +2,8 @@ package executor
 
 import (
 	"context"
-	"fmt"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
-	"os"
 	"reflect"
 )
 
@@ -208,8 +206,10 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 				return
 			}
 
-		default:
-			_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, ti.Kind(), op.Name)
+			// Uncomment if you get method resolution failures against a custom type.
+			// e.g. above this helped in including lookups against a float64 custom type
+			//default:
+			//	_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, ti.Kind(), op.Name)
 		}
 	}
 
