@@ -201,7 +201,7 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 	// This allows for "func(m *type) name()" and "func(m type) name()"
 	for _, ti := range []reflect.Value{tv, reflect.Indirect(tv)} {
 		switch ti.Kind() {
-		case reflect.Struct:
+		case reflect.Struct, reflect.Float64, reflect.Int:
 			tf := tv.MethodByName(op.Name)
 			if tf.IsValid() {
 				ret, err = e.callReflectFunc(op, tf, ctx)
