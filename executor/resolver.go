@@ -199,7 +199,12 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 	tv := reflect.ValueOf(v)
 	// Loop so we check tv, then if that doesn't match *tv
 	// This allows for "func(m *type) name()" and "func(m type) name()"
-	for _, ti := range []reflect.Value{tv, reflect.Indirect(tv), tv.Addr()} {
+	r := []reflect.Value{tv, reflect.Indirect(tv)}
+	if tv.CanAddr() {
+		r = append(r, tv.Addr())
+	}
+
+	for _, ti := range r {
 		//switch ti.Kind() {
 		//case reflect.Struct, reflect.Float64, reflect.Int:
 		tf := ti.MethodByName(op.Name)
@@ -216,7 +221,7 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 	}
 
 	var n []string
-	for _, ti := range []reflect.Value{tv, reflect.Indirect(tv)} {
+	for _, ti := range r {
 		for i := 0; i < ti.NumMethod(); i++ {
 			method := ti.Method(i)
 			name := runtime.FuncForPC(method.Pointer()).Name()
