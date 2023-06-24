@@ -5,8 +5,6 @@ import (
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
-	"runtime"
-	"strings"
 )
 
 // getReference resolves a reference of a value.
@@ -197,6 +195,7 @@ func (e *executor) resolveArrayIndex(index, v interface{}, dimension *script.Exp
 func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx context.Context) (ret interface{}, err error) {
 
 	tv := reflect.ValueOf(v)
+
 	// Loop so we check tv, then if that doesn't match *tv
 	// This allows for "func(m *type) name()" and "func(m type) name()"
 	r := []reflect.Value{tv, reflect.Indirect(tv)}
@@ -205,32 +204,12 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 	}
 
 	for _, ti := range r {
-		//switch ti.Kind() {
-		//case reflect.Struct, reflect.Float64, reflect.Int:
 		tf := ti.MethodByName(op.Name)
 		if tf.IsValid() {
 			ret, err = e.callReflectFunc(op, tf, ctx)
 			return
 		}
-
-		// Uncomment if you get method resolution failures against a custom type.
-		// e.g. above this helped in including lookups against a float64 custom type
-		//default:
-		//	_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, ti.Kind(), op.Name)
-		//}
 	}
 
-	var n []string
-	for _, ti := range r {
-		for i := 0; i < ti.NumMethod(); i++ {
-			method := ti.Method(i)
-			name := runtime.FuncForPC(method.Pointer()).Name()
-			n = append(n, name)
-		}
-	}
-
-	return nil, Errorf(op.Pos,
-		"%T has no function %q: Available %s",
-		v, op.Name,
-		strings.Join(n, ", "))
+	return nil, Errorf(op.Pos, "%T has no function %q", v, op.Name)
 }
