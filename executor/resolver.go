@@ -216,10 +216,12 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 	}
 
 	var n []string
-	for i := 0; i < tv.NumMethod(); i++ {
-		method := tv.Method(i)
-		name := runtime.FuncForPC(method).Name()
-		n = append(n, name)
+	for _, ti := range []reflect.Value{tv, reflect.Indirect(tv)} {
+		for i := 0; i < ti.NumMethod(); i++ {
+			method := ti.Method(i)
+			name := runtime.FuncForPC(method.Pointer()).Name()
+			n = append(n, name)
+		}
 	}
 
 	return nil, Errorf(op.Pos,
