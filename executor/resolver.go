@@ -198,19 +198,19 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 	// Loop so we check tv, then if that doesn't match *tv
 	// This allows for "func(m *type) name()" and "func(m type) name()"
 	for _, ti := range []reflect.Value{tv, reflect.Indirect(tv)} {
-		switch ti.Kind() {
-		case reflect.Struct, reflect.Float64, reflect.Int:
-			tf := tv.MethodByName(op.Name)
-			if tf.IsValid() {
-				ret, err = e.callReflectFunc(op, tf, ctx)
-				return
-			}
-
-			// Uncomment if you get method resolution failures against a custom type.
-			// e.g. above this helped in including lookups against a float64 custom type
-			//default:
-			//	_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, ti.Kind(), op.Name)
+		//switch ti.Kind() {
+		//case reflect.Struct, reflect.Float64, reflect.Int:
+		tf := ti.MethodByName(op.Name)
+		if tf.IsValid() {
+			ret, err = e.callReflectFunc(op, tf, ctx)
+			return
 		}
+
+		// Uncomment if you get method resolution failures against a custom type.
+		// e.g. above this helped in including lookups against a float64 custom type
+		//default:
+		//	_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, ti.Kind(), op.Name)
+		//}
 	}
 
 	return nil, Errorf(op.Pos, "%T has no function %q", v, op.Name)
