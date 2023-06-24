@@ -218,7 +218,7 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 	var n []string
 	for i := 0; i < tv.NumMethod(); i++ {
 		method := tv.Method(i)
-		name := runtime.FuncForPC(method.Pointer()).Name()
+		name := runtime.FuncForPC(method).Name()
 		n = append(n, name)
 	}
 
