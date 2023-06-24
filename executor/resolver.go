@@ -209,7 +209,7 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 			}
 
 		default:
-			_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, tv, op.Name)
+			_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, ti, op.Name)
 		}
 	}
 
