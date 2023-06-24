@@ -2,8 +2,10 @@ package executor
 
 import (
 	"context"
+	"fmt"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
+	"os"
 	"reflect"
 )
 
@@ -205,6 +207,9 @@ func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx conte
 				ret, err = e.callReflectFunc(op, tf, ctx)
 				return
 			}
+
+		default:
+			_, _ = fmt.Fprintf(os.Stderr, "resolveFunction: %T %v %q\n", v, tv, op.Name)
 		}
 	}
 
