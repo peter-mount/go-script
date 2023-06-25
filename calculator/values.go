@@ -57,6 +57,12 @@ func GetFloatRaw(v interface{}) (float64, bool) {
 		if f, ok := v.(float32); ok {
 			return float64(f), true
 		}
+
+		// Issue #4 Check for types which can convert to float
+		tv := reflect.ValueOf(v)
+		if tv.CanFloat() {
+			return tv.Float(), true
+		}
 	}
 	return 0, false
 }
@@ -90,7 +96,8 @@ func GetFloat(v interface{}) (float64, error) {
 			return 0, nil
 		}
 	}
-	return 0, fmt.Errorf("not float %q", v)
+
+	return 0, fmt.Errorf("not float %v", v)
 }
 
 // GetIntRaw returns v as an int if v is a form of integer.
@@ -106,6 +113,12 @@ func GetIntRaw(v interface{}) (int, bool) {
 		}
 		if i, ok := v.(int64); ok {
 			return int(i), true
+		}
+
+		// Issue #4 Check for types which can convert to int
+		tv := reflect.ValueOf(v)
+		if tv.CanInt() {
+			return int(tv.Int()), true
 		}
 	}
 	return 0, false
