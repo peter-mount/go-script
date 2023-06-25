@@ -208,8 +208,6 @@ func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []re
 
 	for i := 0; i < tf.NumOut(); i++ {
 		tOut := tf.Out(i)
-		tk := tOut.Kind()
-
 		rv := retVal[i]
 
 		if tOut.Implements(errorInterface) {
@@ -220,35 +218,7 @@ func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []re
 				return nil, v.(error)
 			}
 		} else {
-			var v interface{}
-
-			switch tk {
-
-			case reflect.Float64, reflect.Float32:
-				v = rv.Float()
-
-			case reflect.Int, reflect.Int64,
-				reflect.Int8, reflect.Int16, reflect.Int32:
-				v = rv.Int()
-
-			case reflect.Uint, reflect.Uint64,
-				reflect.Uint8, reflect.Uint16, reflect.Uint32:
-				v = rv.Int()
-
-			case reflect.Array, reflect.Map, reflect.Struct:
-				v = rv.Interface()
-
-			case reflect.String:
-				v = rv.String()
-
-			case reflect.Bool:
-				v = rv.Bool()
-
-			default:
-				v = rv.Interface()
-			}
-
-			ret = append(ret, v)
+			ret = append(ret, rv.Interface())
 		}
 	}
 

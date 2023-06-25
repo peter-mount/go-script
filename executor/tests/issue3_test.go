@@ -15,6 +15,10 @@ func (s Issue3) NonPointerFunction() bool { return true }
 // PointerFunction should work but does not if Issue3 is not passed as a pointer
 func (s *Issue3) PointerFunction() bool { return true }
 
+type Julday float64
+
+func (j Julday) SomeFunction() bool { return true }
+
 // Test issue 3 https://github.com/peter-mount/go-script/issues/3
 func Test_issue_3(t *testing.T) {
 
@@ -33,6 +37,8 @@ func Test_issue_3(t *testing.T) {
 		// it's pointer methods are not visible and there is no possible way
 		// to get a pointer to it.
 		{Value: Issue3{Value: 42}, Function: "PointerFunction", Valid: false},
+		// Adding this as there is a related bug #4 but this test confirms it's not reflection
+		{Value: Julday(1.5), Function: "SomeFunction", Valid: true},
 	}
 
 	for _, test := range tests {
