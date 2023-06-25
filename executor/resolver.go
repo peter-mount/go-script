@@ -194,21 +194,12 @@ func (e *executor) resolveArrayIndex(index, v interface{}, dimension *script.Exp
 
 func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx context.Context) (ret interface{}, err error) {
 
-	tv := reflect.ValueOf(v)
+	ti := reflect.ValueOf(v)
 
-	// Loop so we check tv, then if that doesn't match *tv
-	// This allows for "func(m *type) name()" and "func(m type) name()"
-	r := []reflect.Value{tv, reflect.Indirect(tv)}
-	if tv.CanAddr() {
-		r = append(r, tv.Addr())
-	}
-
-	for _, ti := range r {
-		tf := ti.MethodByName(op.Name)
-		if tf.IsValid() {
-			ret, err = e.callReflectFunc(op, tf, ctx)
-			return
-		}
+	tf := ti.MethodByName(op.Name)
+	if tf.IsValid() {
+		ret, err = e.callReflectFunc(op, tf, ctx)
+		return
 	}
 
 	return nil, Errorf(op.Pos, "%T has no function %q", v, op.Name)
