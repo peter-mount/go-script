@@ -169,9 +169,9 @@ func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, ct
 	}
 
 	if op.Value != "_" {
-		if !e.state.Set(op.Value, val) {
+		if !e.state.Set(op.Value, val.Interface()) {
 			e.state.Declare(op.Value)
-			_ = e.state.Set(op.Value, val)
+			_ = e.state.Set(op.Value, val.Interface())
 		}
 	}
 
