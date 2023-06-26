@@ -162,9 +162,9 @@ func (e *executor) forRange(ctx context.Context) error {
 
 func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
 	if op.Key != "_" {
-		if !e.state.Set(op.Key, key) {
+		if !e.state.Set(op.Key, key.Interface()) {
 			e.state.Declare(op.Key)
-			_ = e.state.Set(op.Key, key)
+			_ = e.state.Set(op.Key, key.Interface())
 		}
 	}
 
