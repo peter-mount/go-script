@@ -1,0 +1,130 @@
+---
+type: "manual"
+title: "For"
+titleClass: section
+linkTitle: "For"
+description: "For loop"
+tags:
+  - go-script
+---
+<p>
+    <code>for</code> provides the main means of performing loops.
+    The other loop construct is the <code>while</code> statement.
+</p>
+
+<div class="marginNote">
+    If a <code>break</code> statement is executed whilst within the <code>for</code> statement then the loop is terminated.
+    However the <code>break</code> will only terminate the immediate <code>for</code> loop it is in.
+</div>
+
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>for</strong> <em>init</em> <strong>;</strong> <em>condition</em> <strong>;</strong> <em>increment</em> <em>statement</em>
+<strong>for</strong> <em>index</em> <strong>,</strong> <em>value</em> <strong>:= range</strong> <em>expression</em> <em>statement</em>
+<strong>for</strong> <em>index</em> <strong>,</strong> <em>value</em> <strong>= range</strong> <em>expression</em> <em>statement</em>
+</pre>
+
+<h2 class="subsection">C style for statement</h2>
+
+<p>
+    The first form is the traditional C style <code>for</code> statement.
+    Here it consists of 3 parameters followed by the <em>statement</em> to execute.
+</p>
+<p>
+    The <em>init</em> expression allows you to initialise the loop, usually by setting a variable to it's staring value.
+</p>
+
+<div class="marginNote">
+    The expression is true when the result of the expression is either a boolean true, a non 0 numerical value
+    or one of the following strings: "true", "t", "yes" or "y"
+</div>
+<p>
+    Next is the <em>condition</em> expression which determines if the <em>statement</em> is to be executed.
+    If this condition returns false then the loop is terminated.
+</p>
+
+<p>
+    Finally, there's the <em>increment</em> expression which is called after the <em>statement</em> has executed.
+    It usually increments (or decrements) the variable created in the <em>init</em> expression
+</p>
+
+<h3 class="paragraph">Examples</h3>
+
+<p>The following code will print out the numbers 1 to 10:</p>
+<div class="marginNote">
+    You cannot use <code>i++</code> here as the <code>++</code> and <code>--</code> operators from C are not implemented.
+</div>
+<div class="sourceCode">for i:=1; i<=10; i=i+1 {
+    fmt.Println(a)
+}
+</div>
+
+<h2 class="subsection">Go style for range statement</h2>
+
+<div class="marginNote">When iterating over a map the <em>index</em> variable will hold the key rather than the index within the loop.</div>
+<p>
+    As with <code>Go</code>, you can loop over an Array or a Map.
+    In this form you provide two variable names to hold the <em>index</em> and <em>value</em> of each entry as the loop iterates over the source value.
+</p>
+
+<p>
+    Like in <code>Go</code>, you can use <code>_</code> to indicate you don't care for the value.
+    This is preferable as it doesn't use any additional memory creating a variable you are not going to use.
+    However, unlike <code>Go</code>, you have to declare both fields. You cannot leave out the <em>index</em> parameter.
+</p>
+
+<p>
+    The <code>:=</code> declares that the two variables are to be created within the scope of the <code>for</code> loop, regardless of if they already
+    exist. When this form is used and either of those variables already exist outside the loop, the external variables are untouched.
+</p>
+<p>
+    However, if the <code>=</code> form is used, then if either of the variables exist outside the loop then they will be overwritten by the for loop.
+    If they do not exist then they will only exist from within the loop.
+</p>
+
+<h3 class="paragraph">Examples</h3>
+<p>To iterate over an array:</p>
+<div class="sourceCode">array := newArray()
+array=append(array, 1, 2, 3, 4)
+
+// Print both index and value
+for i,v := range array {
+    fmt.Printf("%d = %d\n", i, v)
+}
+
+// Example of ignoring the index and processing just the values
+for _, v := range array {
+    fmt.Println( v)
+}
+</div>
+
+<p>To iterate over a map:</p>
+<div class="sourceCode">m := map( "a":1, "b":2, "c": 3.1415926 )
+
+// Example of printing both key and value
+for k, v := range m {
+    fmt.Printf("%s = %d\n", k, v)
+}
+
+// Example of ignoring the keys
+for _, v := range m {
+    fmt.Println( v )
+}
+
+// Example of ignoring the values
+for k, _ := range m {
+    fmt.Println( k )
+}
+</div>
+
+<p>
+    The next example is unusual but perfectly valid.
+    Here we use <code>_</code> for both fields.
+    This has the effect of running the body once per entry within the array or map,
+    however the body doesn't use the values at all.
+</p>
+<div class="sourceCode">m := map( "a":1, "b":2, "c": 3.1415926 )
+
+for _, _ := range m {
+    fmt.Println( "Entry found" )
+}
+</div>

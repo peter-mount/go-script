@@ -1,0 +1,121 @@
+---
+type: "manual"
+title: "Try"
+titleClass: section
+linkTitle: "Try"
+description: "Handle errors, execute code even if an error occurs, close resources"
+tags:
+  - go-script
+---
+<p>
+    <code>try</code> is based on the similarly named construct within <code>Java</code>.
+    It allows for handling errors, executing code on exit and to close resources like files automatically.
+</p>
+
+<div class="marginNote">
+    If a <code>break</code> or <code>return</code> statement is executed whilst within the <code>try</code> statement
+    then the <code>finally</code> statement will still be executed and any resources will be closed before they are
+    passed to the containing scope.
+</div>
+
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>try</strong> <em>statement</em> <strong>catch(</strong> <em>variable</em> <strong>)</strong> <em>statement</em> <strong>finally</strong> <em>statement</em>
+<strong>try</strong> <em>statement</em> <strong>catch(</strong> <em>variable</em> <strong>)</strong> <em>statement</em>
+<strong>try</strong> <em>statement</em> <strong>finally</strong> <em>statement</em>
+<strong>try</strong> <strong>(</strong> <em>resourceList</em> <strong>)</strong> <em>statement</em> <strong>catch(</strong> <em>variable</em> <strong>)</strong> <em>statement</em> <strong>finally</strong> <em>statement</em>
+<strong>try</strong> <strong>(</strong> <em>resourceList</em> <strong>)</strong> <em>statement</em> <strong>catch(</strong> <em>variable</em> <strong>)</strong> <em>statement</em>
+<strong>try</strong> <strong>(</strong> <em>resourceList</em> <strong>)</strong> <em>statement</em> <strong>finally</strong> <em>statement</em>
+<strong>try</strong> <strong>(</strong> <em>resourceList</em> <strong>)</strong> <em>statement</em>
+</pre>
+
+<p>
+    When the <code>try</code> statement is encountered, the following steps are performed:
+</p>
+<div class="marginNote">
+    Although you can declare multiple resources within a <em>resourceList</em>, there is currently a bug where they are closed in the wrong order.
+    Until that bug is fixed you are advised to only declare a single resource per <code>try</code> statement.
+    If you need multiple resources, you will need to nest the <code>try</code> statements.
+</div>
+<ol>
+    <li>
+        If a <em>resourceList</em> is declared then each expression within that list is evaluated in order.
+        If the result implements the <code>CreateCloser</code> interface then the <code>Create()</code> function is called.
+    </li>
+    <li>
+        The <em>statement</em> is executed.
+    </li>
+    <li>
+        Any resources declared in the <em>resourceList</em> that implement the <code>Closer</code> or <code>CreateCloser</code> interfaces will have their
+        <code>Close()</code> function at this point.
+    </li>
+    <li>
+        If an error occurred in the <em>statement</em> and the <code>catch</code> clause is present then the named variable is created and set to the returned error.
+        This error will not be passed on to the outer scope unless the <code>throw</code> function is called to re-throw it.
+    </li>
+    <li>
+        If the <code>finally</code> clause is present it will be called.
+        Even if an error occurred at any point during the statement, this will always be called.
+    </li>
+</ol>
+<div class="marginNote">
+    The <code>catch</code> and <code>finally</code> clauses cannot access any resources declared within the <em>resourceList</em>.
+</div>
+
+<h3 class="paragraph">Examples</h3>
+<div class="sourceCode">// create a file. The file will be closed when try completes
+try( f := os.Create( "test.txt" ) ) {
+    f.WriteString( "Hello World!" )
+}
+
+// Catch an error
+try {
+    // This forces an error
+    throw( "forced error" )
+} catch( err ) {
+    fmt.Println( "Caught", err )
+}
+
+// Finally clause - DO NOT USE THIS, use resources above
+// it's just an example. Not only can this leave an open file handle
+// the f variable is visible outside the try so you could accidentally
+// access it after you have closed the resource.
+f := os.Create( "test.txt" )
+try {
+    f.WriteString( "Hello World!" )
+} finally {
+    f.Close()
+}
+</div>
+
+<h3 class="paragraph">Advanced example</h3>
+<p>
+    The <code>CreateCloser</code> interface allows for an additional pattern where you have an object created once but when referenced in a <code>try</code> statement
+    you save state before the <em>statement</em> executes and restore the state afterwards.
+</p>
+<p>
+    An example of this is in <code>go-anim</code> where a graphical context is created. When some action is done but must not change the state, then we use
+    <code>try</code> to preserve the state.
+</p>
+<div class="sourceCode">// create a context for 4K resolution
+ctx:= animGraphic.New4k()
+
+// Now perform an action. When the try exits,
+// ctx will be in the same state as before
+try( ctx ) {
+    gc := ctx.Gc()
+    gc.SetLineWidth(10)
+    gc.SetStrokeColor(stroke)
+    gc.SetFillColor(stroke)
+    gc.BeginPath()
+    gc.ArcTo(cx,cy,radius,radius,0,2*math.Pi)
+    gc.Stroke()
+}
+</div>
+<p>
+    This works because we look for the relevant interfaces on the result of the <em>resourceList</em> expression which is perfectly valid to be a variable reference.
+    In this case ctx implements <code>CreateCloser</code> so it's <code>Create()</code> function is called before the statement and <code>Close()</code> afterwards.
+    In its implementation, those methods save and restore it's state.
+</p>
+<p>
+    How this works is described in the chapter explaining how to extend the language.
+</p>

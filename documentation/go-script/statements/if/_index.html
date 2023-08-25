@@ -1,0 +1,39 @@
+---
+type: "manual"
+title: "If"
+titleClass: section
+linkTitle: "If"
+description: "Conditional execution"
+tags:
+  - go-script
+---
+<p>
+    <code>if</code> is a statement that allows for code to be executed based on the result of an expression.
+</p>
+
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>if</strong> <em>expression</em> <em>trueStatement</em>
+<strong>if</strong> <em>expression</em> <em>trueStatement</em> <strong>else</strong> <em>falseStatement</em></pre>
+
+<div class="marginNote">
+    The expression is true when the result of the expression is either a boolean true, a non 0 numerical value
+    or one of the following strings: "true", "t", "yes" or "y"
+</div>
+<p>
+    When the <code>if</code> statement is encountered, the expression is evaluated and if the result is true
+    then the <em>trueStatement</em> is executed.
+    If the result is false and the <code>else</code> clause is present then the <em>falseStatement</em> is executed.
+</p>
+<p>
+    As all statements, multiple statements can be presented when wrapped within a <code>{ }</code> pair.
+</p>
+<p>For example:</p>
+<div class="sourceCode">if a > b fmt.Println("a > b")
+
+if a > b { fmt.Println("a > b") }
+
+if a>b {
+    fmt.Println("a > b")
+} else {
+    fmt.Println("a <= b")
+}</div>

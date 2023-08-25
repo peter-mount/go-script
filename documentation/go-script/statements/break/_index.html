@@ -1,0 +1,27 @@
+---
+type: "manual"
+title: "Break"
+titleClass: section
+linkTitle: "Break"
+description: "Break out of the current context"
+tags:
+  - go-script
+---
+<p>
+    <code>break</code> is a statement that will break out of the current context, which is either
+    the current <code>for</code> loop or the current function.
+</p>
+
+<div class="marginNote">
+    Internally, <code>break</code> is implemented as an error. However, it is not possible to catch this error within a <code>try&nbsp;catch</code> statement.
+</div>
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>break</strong></pre>
+
+<h3 class="paragraph">Examples</h3>
+
+<div class="sourceCode">for i:=1; i<=10; i=i+1 {
+    fmt.Println(a)
+    if i==5 break
+}
+</div>

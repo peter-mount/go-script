@@ -1,0 +1,54 @@
+---
+type: "manual"
+title: "Return"
+titleClass: section
+linkTitle: "Return"
+description: "Return from the current function"
+tags:
+  - go-script
+---
+<p>
+    <code>return</code> is a statement that will immediately exit the current function, optionally returning a single value to the caller.
+</p>
+
+<div class="marginNote">
+    Internally, <code>return</code> is implemented as an error. However, it is not possible to catch this error within a <code>try&nbsp;catch</code> statement.
+</div>
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>return</strong>
+<strong>return</strong> <em>expression</em></pre>
+
+<h3 class="paragraph">Examples</h3>
+
+<div class="sourceCode">main() {
+    // No return value
+    example1()
+
+    // Call a function and print it's result
+    fmt.Println( example2() )
+
+    // Call the same function ignoring the result
+    example2()
+}
+
+// example1 returns nothing
+example1() {
+    for a := 1; a < 10; a = a + 1 {
+        if a == 5 {
+            return
+        }
+    }
+}
+
+// example2 returns 5
+example2() {
+    for a := 1; a < 10; a = a + 1 {
+        if a == 5 {
+           return a
+        }
+    }
+
+    // never reached
+    return -1
+}
+</div>

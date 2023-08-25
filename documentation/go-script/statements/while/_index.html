@@ -1,0 +1,37 @@
+---
+type: "manual"
+title: "While"
+titleClass: section
+linkTitle: "While"
+description: "Loop while an expression is true"
+tags:
+  - go-script
+---
+<p>
+    <code>while</code> allows for a statement to be executed whilst an expression returns true.
+</p>
+
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>while</strong> <em>expression</em> <em>statement</em></pre>
+
+<div class="marginNote">
+    The expression is true when the result of the expression is either a boolean true, a non 0 numerical value
+    or one of the following strings: "true", "t", "yes" or "y"
+</div>
+<p>
+    When the <code>while</code> statement is encountered, the expression is evaluated and, whilst the result is true
+    will execute the <em>statement</em>.
+</p>
+<p>
+    If the <em>expression</em> never returns true then the <em>statement</em> will never be executed.
+</p>
+
+<h3 class="paragraph">Examples</h3>
+<p>The following code will print out the numbers 10 down to 3:</p>
+<div class="sourceCode">a:=10
+b:=3
+while a > b {
+    fmt.Println(a)
+    a = a - 1
+}
+</div>
