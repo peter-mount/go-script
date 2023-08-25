@@ -1,0 +1,26 @@
+---
+type: "manual"
+title: "Include"
+titleClass: section
+linkTitle: "Include"
+description: "Include another script"
+tags:
+  - go-script
+---
+<p>
+    <code>include</code> is a statement that is executed when a script is parsed and
+    allows you to include another script within your own.
+</p>
+<div class="marginNote">
+    Included scripts are normally located in the <code>../include</code> directory
+    as seen from the location of the application binary.
+</div>
+
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>include</strong> "<em>path/script</em>"</pre>
+
+<p>
+    When importing another script, all of its public functions are then accessible by the script when it is executed.
+    Because of this, public function names must be unique.
+    Private names are local to the individual script they are written in so do not have this limitation.
+</p>

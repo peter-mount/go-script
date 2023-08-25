@@ -1,0 +1,77 @@
+---
+type: "manual"
+title: "Functions"
+titleClass: section
+linkTitle: "Functions"
+description: "Declare or call a function"
+weight: 10
+tags:
+  - go-script
+---
+<p>
+    In <em>go-script</em> a function declares a reusable block of code which takes
+    a fixed number of parameters and can optionally return a value.
+</p>
+
+<h2 class="subsection">Declaring a function</h2>
+
+<p>
+    In a script you simply declare a function by specifying its name, any parameters
+    within parentheses and a block of statements.
+</p>
+<div class="sourceCode">myfunction() {
+    // code goes here
+}
+</div>
+
+<div class="marginNote">
+    These variables are only accessible from within the body of the function.<br/>
+    They cannot be accessed outside the function, nor from any function that is called by this function.
+</div>
+<p>
+    Parameters are placed within the parentheses.
+    Because the language is not type safe you only need to declare the variable names
+    they will be referenced by within the function.
+</p>
+<div class="sourceCode">myfunction( param1, param2 ) {
+    // code goes here
+}
+</div>
+
+<h3 class="paragraph">Returning values</h3>
+<p>
+    A function can return a single value via the <code>return</code> statement.
+</p>
+<div class="sourceCode">myfunction( param1, param2 ) {
+    return param1
+}
+</div>
+
+<p>
+    Because <code>return</code> only allows a single value, to return more than one value you need to use either an array or a map.
+</p>
+
+<h2 class="subsubsection">Local functions</h2>
+<p>
+    Function names are global in scope, so if you include another script via the <code>include</code> statement then it's functions
+    are available to your script.
+</p>
+<p>
+    To allow for a script to create functions only it will be able to call we have the concept of local functions.
+    These are functions whose name begins with a <code>_</code> character.
+    These functions are only callable from within the script they are defined in.
+</p>
+
+<h2 class="subsection">The main function</h2>
+<p>
+    If you want your script to be executable from the command line you need to declare the <code>main()</code> function.
+</p>
+<p>
+    It takes no parameters and is not expected to have a value returned from it.
+    With this function present you can call the script from your application.
+</p>
+<p>
+    <code>main()</code> is special in that it is local to the script it was defined in.
+    This allows for scripts to have their own <code>main()</code> function which will be ignored if those scripts
+    are then included from another script.
+</p>

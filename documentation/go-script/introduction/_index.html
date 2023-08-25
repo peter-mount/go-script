@@ -1,0 +1,61 @@
+---
+type: "manual"
+title: "Introduction"
+titleClass: chapter
+linkTitle: "Introduction"
+weight: 1
+description: "Basics of a script"
+---
+<p>
+    go-script is a simple, but extensible scripting language based primarily on C with
+    some concepts taken from Go, Java and JavaScript as well as its own concepts.
+</p>
+
+<p>
+    Some of the basic concepts used are listed below.
+    These concepts will be described in full in later sections:
+</p>
+
+<ul>
+    <li>General structure of a script is based loosely on C</li>
+    <li>
+        Scripts are not type safe, variables, function parameters and return types
+        can be any valid go type.
+    </li>
+    <li>
+        Functions are declared simply by defining their name, named arguments required
+        and the function's body. No return type is specified
+    </li>
+    <li>
+        The <code>main()</code> function defines the entry point for the script.
+    </li>
+    <li>
+        Scripts can include other scripts with the <code>include</code> statement.
+        It is safe to include a script twice as it will only be read once.
+    </li>
+    <li>
+        Scripts can declare a function as local to itself by starting the function name
+        with <code>_</code>. Any such function is only accessible from inside that script.
+        This is useful when writing library scripts where only the public entry points
+        are accessible.
+    </li>
+    <li>
+        Variables are scoped, so they are only accessible within the block they are declared
+        within or inner scopes.
+        Functions cannot access variables declared outside of it's body.
+    </li>
+    <li>
+        Error handling is done similar to Java using a try statement.
+        The try statement works in a similar way to Java and can even be used to ensure
+        a resource is closed once the try completes.
+    </li>
+    <li>
+        For loops are based on both C and Go semantics.
+    </li>
+    <li>
+        Extensions to the language are done via packages, which are Go structs which
+        expose either public fields or functions.
+        The parent application declares these and registers them so scripts can access
+        them like any other function but using the registered prefix.
+    </li>
+</ul>
