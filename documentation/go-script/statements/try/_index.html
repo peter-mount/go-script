@@ -31,11 +31,6 @@ tags:
 <p>
     When the <code>try</code> statement is encountered, the following steps are performed:
 </p>
-<div class="marginNote">
-    Although you can declare multiple resources within a <em>resourceList</em>, there is currently a bug where they are closed in the wrong order.
-    Until that bug is fixed you are advised to only declare a single resource per <code>try</code> statement.
-    If you need multiple resources, you will need to nest the <code>try</code> statements.
-</div>
 <ol>
     <li>
         If a <em>resourceList</em> is declared then each expression within that list is evaluated in order.
@@ -46,7 +41,7 @@ tags:
     </li>
     <li>
         Any resources declared in the <em>resourceList</em> that implement the <code>Closer</code> or <code>CreateCloser</code> interfaces will have their
-        <code>Close()</code> function at this point.
+        <code>Close()</code> function called in reverse order, so the latter ones declared are closed first.
     </li>
     <li>
         If an error occurred in the <em>statement</em> and the <code>catch</code> clause is present then the named variable is created and set to the returned error.
@@ -57,9 +52,55 @@ tags:
         Even if an error occurred at any point during the statement, this will always be called.
     </li>
 </ol>
+
+<h4 class="paragraph">Resources</h4>
+<p>
+    When provided, the <em>resourceList</em> defines a <code>;</code> delimited list of expressions that define a resource that will be accessible from within the
+    <code>try</code> statement.
+</p>
+<div class="marginNote">
+    Although you can declare multiple resources within a <em>resourceList</em>, there is currently a bug where they are closed in the wrong order.
+    Until that bug is fixed you are advised to only declare a single resource per <code>try</code> statement.
+    If you need multiple resources, you will need to nest the <code>try</code> statements.
+</div>
+<p>
+    This list is processed in sequence.
+    If the result of each expression implements the <code>CreateCloser</code> interface then it will have it's <code>Create()</code> function called.
+</p>
+<p>
+    If the result implements either of the <code>CreateCloser</code> or <code>Closer</code> interfaces, it then ensures that the <code>Close()</code> function is called
+    after the main <em>statement</em> has been executed.
+</p>
+<p>
+    These are called in reverse order so that the later resources are closed first, useful if those resources use the earlier ones, e.g. create a file, then add gzip compression
+    against that file.
+</p>
+
+<h4 class="paragraph">Catch</h4>
+<p>
+    The <code>catch</code> clause allows for errors to be caught by the script. Without it, any error will be passed through the calling stack until it is either caught or
+    cause the script to terminate.
+</p>
 <div class="marginNote">
     The <code>catch</code> and <code>finally</code> clauses cannot access any resources declared within the <em>resourceList</em>.
 </div>
+<p>
+    You have to provide a variable name to store the error.
+    This variable is only visible from within the statement associated with the <code>catch</code> clause.
+    If you don't care about the error, just want to catch it, you can use <code>_</code> for the variable name.
+    When you do this, no variable will be created and the error will not be visible to the statement.
+</p>
+<p>
+    This statement will not have access to any variables defined within the main <em>statement</em>, including resources.
+</p>
+
+<h4 class="paragraph">Finally</h4>
+<p>
+    When present, the <code>finally</code> <em>statement</em> will be executed when the <code>try</code> statement terminates, regardless to if an error occurs.
+</p>
+<p>
+    This statement will not have access to any variables defined within the main <em>statement</em>, including resources.
+</p>
 
 <h3 class="paragraph">Examples</h3>
 <div class="sourceCode">// create a file. The file will be closed when try completes
