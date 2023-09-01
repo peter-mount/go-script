@@ -184,8 +184,8 @@ func (v *visualizer) Primary(s *script.Primary) {
 		v.cellStart("true", "")
 	case s.False:
 		v.cellStart("false", "")
-	case s.Ident != "":
-		v.cellStart("ident", s.Ident)
+	case s.Ident != nil && s.Ident.Ident != "":
+		v.cellStart("ident", s.Ident.Ident)
 	case s.Integer != nil:
 		v.cellStart("int ", strconv.Itoa(*s.Integer))
 	case s.Float != nil:

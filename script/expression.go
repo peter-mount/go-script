@@ -135,20 +135,19 @@ func UnaryFromContext(ctx context.Context) *Unary {
 type Primary struct {
 	Pos lexer.Position
 
-	Float         *float64      `parser:"( @Number"`
-	Integer       *int          `parser:"| @Int"`
-	KeyValue      *KeyValue     `parser:"| @@"`
-	String        *string       `parser:"| @String"`
-	CallFunc      *CallFunc     `parser:"| @@"`
-	Null          bool          `parser:"| @'null'"`
-	Nil           bool          `parser:"| @'nil'"`
-	True          bool          `parser:"| @'true'"`
-	False         bool          `parser:"| @'false'"`
-	Ident         string        `parser:"| @Ident"`
-	ArrayIndex    []*Expression `parser:"  [ ('[' @@ ']')+ ]"`
-	SubExpression *Expression   `parser:"| '(' @@ ')' "`
-	PointOp       string        `parser:") [ @Period"`
-	Pointer       *Primary      `parser:"    @@]"`
+	Float         *float64    `parser:"( @Number"`
+	Integer       *int        `parser:"| @Int"`
+	KeyValue      *KeyValue   `parser:"| @@"`
+	String        *string     `parser:"| @String"`
+	CallFunc      *CallFunc   `parser:"| @@"`
+	Null          bool        `parser:"| @'null'"`
+	Nil           bool        `parser:"| @'nil'"`
+	True          bool        `parser:"| @'true'"`
+	False         bool        `parser:"| @'false'"`
+	Ident         *Ident      `parser:"| @@""`
+	SubExpression *Expression `parser:"| '(' @@ ')' "`
+	PointOp       string      `parser:") [ @Period"`
+	Pointer       *Primary    `parser:"    @@]"`
 }
 
 func (op *Primary) WithContext(ctx context.Context) context.Context {
@@ -159,11 +158,11 @@ func PrimaryFromContext(ctx context.Context) *Primary {
 	return ctx.Value(primaryKey).(*Primary)
 }
 
-type ArrayIndex struct {
+type Ident struct {
 	Pos lexer.Position
 
 	Ident string        `parser:"@Ident"`
-	Index []*Expression `parser:"('[' @@ ']')+"`
+	Index []*Expression `parser:"[ ('[' @@ ']')+ ]"`
 }
 
 // KeyValue is "string": expression

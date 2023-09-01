@@ -34,8 +34,8 @@ func (e *executor) getReferenceImpl(op *script.Primary, v interface{}, ctx conte
 	// These are not valid at this point.
 	switch {
 
-	case op.Ident != "":
-		ref, err = e.resolveReference(op, op.Ident, v)
+	case op.Ident != nil && op.Ident.Ident != "":
+		ref, err = e.resolveReference(op, op.Ident.Ident, v)
 		if err == nil {
 			// Handle arrays
 			ref, err = e.resolveArray(op, ref)
@@ -112,12 +112,12 @@ func (e *executor) resolveReference(op *script.Primary, name string, v interface
 
 func (e *executor) resolveArray(op *script.Primary, v interface{}) (interface{}, error) {
 	// Nothing to do
-	if len(op.ArrayIndex) == 0 {
+	if op.Ident == nil || len(op.Ident.Index) == 0 {
 		return v, nil
 	}
 
 	// Run through each dimension and set v to the result of each lookup
-	for _, dimension := range op.ArrayIndex {
+	for _, dimension := range op.Ident.Index {
 		err := e.expression(dimension.WithContext(e.context))
 		if err != nil {
 			return nil, Error(dimension.Pos, err)

@@ -44,11 +44,11 @@ func (e *executor) assignment(ctx context.Context) error {
 			}
 		}
 
-		if primary == nil || primary.Ident == "" {
+		if primary == nil || primary.Ident == nil || primary.Ident.Ident == "" {
 			return Errorf(op.Pos, "Assignment without target")
 		}
 
-		name := primary.Ident
+		name := primary.Ident.Ident
 
 		if primary.Pointer == nil {
 			// POVS = plain old variable setter
@@ -272,7 +272,7 @@ func (e *executor) primary(ctx context.Context) error {
 	case op.False:
 		e.calculator.Push(false)
 
-	case op.Ident != "":
+	case op.Ident != nil && op.Ident.Ident != "":
 		v, err := e.resolveIdent(op, ctx)
 		if err != nil {
 			return Error(op.Pos, err)
@@ -301,7 +301,7 @@ func (e *executor) primary(ctx context.Context) error {
 }
 
 func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interface{}, error) {
-	v, exists := e.state.Get(op.Ident)
+	v, exists := e.state.Get(op.Ident.Ident)
 	if !exists {
 		return nil, Errorf(op.Pos, "%q undefined", op.Ident)
 	}

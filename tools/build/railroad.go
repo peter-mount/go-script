@@ -191,18 +191,16 @@ func (r *Railroad) countProductions(productions map[string]*production, n ebnf.N
 }
 
 func (r *Railroad) parse() (*ebnf.EBNF, error) {
-	//f, err := os.Open(*r.Railroad)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//defer f.Close()
-	//return ebnf.Parse(f)
 	b, err := os.ReadFile(*r.Railroad)
 	if err != nil {
 		return nil, err
 	}
 	s := string(b)
-	s = strings.ReplaceAll(s, ")+?)", ")+)")
+
+	// For some reason Participle outputs +? in it's ebnf but this breaks
+	// conversion to railroad. So change +? to *
+	s = strings.ReplaceAll(s, ")+?", ")*")
+
 	return ebnf.ParseString(s)
 }
 
