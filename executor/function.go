@@ -51,15 +51,17 @@ func (e *executor) ProcessParameters(cf *script.CallFunc, ctx context.Context) (
 
 	// Process parameters
 	var args []interface{}
-	for _, p := range cf.Args {
-		v, ok, err := e.calculator.Calculate(e.assignment, p.Right.WithContext(ctx))
-		if err != nil {
-			return nil, Error(p.Pos, err)
+	if cf.Parameters != nil {
+		for _, p := range cf.Parameters.Args {
+			v, ok, err := e.calculator.Calculate(e.assignment, p.Right.WithContext(ctx))
+			if err != nil {
+				return nil, Error(p.Pos, err)
+			}
+			if !ok {
+				return nil, Errorf(p.Pos, "No result from argument")
+			}
+			args = append(args, v)
 		}
-		if !ok {
-			return nil, Errorf(p.Pos, "No result from argument")
-		}
-		args = append(args, v)
 	}
 
 	return args, nil
@@ -141,7 +143,7 @@ func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 
 	// '...' so if the last value in args so if it's a slice expand it
 	// Unlike go this is supported for any function call not just variadic
-	if cf.Variadic {
+	if cf.Parameters != nil && cf.Parameters.Variadic {
 		if len(args) == 0 {
 			return nil, Errorf(cf.Pos, "'...' with no arguments")
 		}
@@ -172,7 +174,7 @@ func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 		if argN < argC {
 			ret, err = e.castArg(ret, argV, tf.In(argN))
 			if err != nil {
-				return nil, Error(cf.Args[argN].Pos, err)
+				return nil, Error(cf.Parameters.Args[argN].Pos, err)
 			}
 		}
 	}
@@ -187,7 +189,7 @@ func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 		for i := len(ret); i < len(args); i++ {
 			ret, err = e.castArg(ret, args[i], variadicType)
 			if err != nil {
-				return nil, Error(cf.Args[variadicIndex].Pos, err)
+				return nil, Error(cf.Parameters.Args[variadicIndex].Pos, err)
 			}
 		}
 	}

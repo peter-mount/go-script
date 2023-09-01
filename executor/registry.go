@@ -142,7 +142,13 @@ func FuncDelegate(f any) Function {
 	return func(e Executor, call *script.CallFunc, ctx context.Context) error {
 
 		// Validate argument count
-		argC, numIn := len(call.Args), fT.NumIn()
+		argC := 0
+		if call.Parameters != nil {
+			argC = len(call.Parameters.Args)
+		}
+
+		numIn := fT.NumIn()
+
 		if fT.IsVariadic() && argC < (numIn-1) {
 			return Errorf(call.Pos, "%n requires at least %d parameters", call.Name, numIn)
 		}

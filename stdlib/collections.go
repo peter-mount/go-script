@@ -18,7 +18,7 @@ func _map(e executor.Executor, call *script.CallFunc, ctx context.Context) error
 	for i, v := range a {
 		kv, ok := calculator.GetKeyValue(v)
 		if !ok {
-			return executor.Errorf(call.Args[i].Pos, "expected Key:Value pair")
+			return executor.Errorf(call.Parameters.Args[i].Pos, "expected Key:Value pair")
 		}
 
 		m[kv.Key()] = kv.Value()

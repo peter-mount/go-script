@@ -11,7 +11,7 @@ func Args(e Executor, call *script.CallFunc, ctx context.Context) ([]interface{}
 	calc := e.Calculator()
 
 	var a []interface{}
-	for _, arg := range call.Args {
+	for _, arg := range call.Parameters.Args {
 		val, valReturned, err := calc.Calculate(func(ctx context.Context) error {
 			return visitor.VisitExpression(arg)
 		}, ctx)
@@ -51,7 +51,10 @@ func (f Function) RequireArgsRange(min, max int) Function {
 		min, max = max, min
 	}
 	return f.Then(func(e Executor, call *script.CallFunc, ctx context.Context) error {
-		l := len(call.Args)
+		l := 0
+		if call.Parameters != nil {
+			l = len(call.Parameters.Args)
+		}
 		switch {
 		case min == max && l != min:
 			return Errorf(call.Pos, "%s requires %d arguments")

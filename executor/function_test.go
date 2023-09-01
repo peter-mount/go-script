@@ -14,7 +14,9 @@ func Test_executor_callReflectFuncImpl(t *testing.T) {
 	e := &executor{}
 	cf := &script.CallFunc{
 		// 3 expressions for 3 args in test function
-		Args: []*script.Expression{{}, {}, {}},
+		Parameters: &script.ParameterList{
+			Args: []*script.Expression{{}, {}, {}},
+		},
 	}
 
 	tests := []struct {
@@ -56,7 +58,9 @@ func Test_executor_callReflectFuncImpl(t *testing.T) {
 		t.Run(fmt.Sprintf("%02d %v %v %v", ti, tt.want, tt.variadic, tt.wantErr),
 			func(t *testing.T) {
 				// Mark the call as Variadic - e.g. '...' after last argument
-				cf.Variadic = tt.variadic
+				if cf.Parameters != nil {
+					cf.Parameters.Variadic = tt.variadic
+				}
 
 				// Reset run test
 				run := false

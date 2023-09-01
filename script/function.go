@@ -64,9 +64,13 @@ type Break struct {
 type CallFunc struct {
 	Pos lexer.Position
 
-	Name     string        `parser:"@Ident"`
-	Args     []*Expression `parser:"'(' (@@ (',' @@)*)? "`
-	Variadic bool          `parser:" @('...')? ')'"`
+	Name       string         `parser:"@Ident"`
+	Parameters *ParameterList `parser:"'(' @@? ')'"`
+}
+
+type ParameterList struct {
+	Args     []*Expression `parser:"(@@ (',' @@)*) "`
+	Variadic bool          `parser:"    @('...')?"`
 }
 
 func (s *CallFunc) WithContext(ctx context.Context) context.Context {
