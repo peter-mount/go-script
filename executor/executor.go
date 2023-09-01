@@ -59,6 +59,7 @@ func New(s *script.Script) (Executor, error) {
 		If(e.ifStatement).
 		Multiplication(e.multiplication).
 		Primary(e.primary).
+		Repeat(e.repeatStatement).
 		Return(e.returnStatement).
 		Statement(e.statement).
 		Statements(e.statements).

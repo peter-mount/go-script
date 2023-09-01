@@ -71,6 +71,13 @@ main() {
         println( v.a )
         println( v.b )
 
+        a:=1
+        b:=10
+        repeat {
+          println("repeat",a,b)
+          a=a+1
+        } until a>b
+
     } catch( err ) {
         println(err)
     }

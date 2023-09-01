@@ -28,6 +28,7 @@ type Builder interface {
 	Logic(t task.Task) Builder
 	Multiplication(t task.Task) Builder
 	Primary(t task.Task) Builder
+	Repeat(t task.Task) Builder
 	Return(t task.Task) Builder
 	// Script adds a task to invoke for each Script object
 	Script(t task.Task) Builder
@@ -127,6 +128,11 @@ func (b *builder) Multiplication(t task.Task) Builder {
 
 func (b *builder) Primary(t task.Task) Builder {
 	b.primary = b.primary.Then(t)
+	return b
+}
+
+func (b *builder) Repeat(t task.Task) Builder {
+	b.repeatStatement = b.repeatStatement.Then(t)
 	return b
 }
 

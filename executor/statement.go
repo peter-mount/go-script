@@ -48,6 +48,9 @@ func (e *executor) statement(ctx context.Context) error {
 	case statement.IfStmt != nil:
 		return Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
 
+	case statement.RepeatStmt != nil:
+		return Error(statement.Pos, e.visitor.VisitRepeat(statement.RepeatStmt))
+
 	case statement.WhileStmt != nil:
 		return Error(statement.Pos, e.visitor.VisitWhile(statement.WhileStmt))
 

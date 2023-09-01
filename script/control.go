@@ -49,6 +49,25 @@ func ForRangeFromContext(ctx context.Context) *ForRange {
 	return nil
 }
 
+type Repeat struct {
+	Pos lexer.Position
+
+	Body      *Statement  `parser:"'repeat' @@"`
+	Condition *Expression `parser:"'until' @@"`
+}
+
+func (s *Repeat) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, repeatKey, s)
+}
+
+func RepeatFromContext(ctx context.Context) *Repeat {
+	v := ctx.Value(repeatKey)
+	if v != nil {
+		return v.(*Repeat)
+	}
+	return nil
+}
+
 type While struct {
 	Pos lexer.Position
 

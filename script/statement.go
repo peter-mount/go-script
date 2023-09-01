@@ -29,13 +29,15 @@ type Statement struct {
 	Parent *Statements // Parent when nested
 	Next   *Statement  // Next statement within Statements
 
-	IfStmt     *If         `parser:"  @@"`
-	Break      *Break      `parser:"| @@"`
-	ReturnStmt *Return     `parser:"| @@"`
-	WhileStmt  *While      `parser:"| @@"`
-	ForStmt    *For        `parser:"| @@"`
-	ForRange   *ForRange   `parser:"| @@"`
-	Try        *Try        `parser:"| @@"`
+	Break      *Break    `parser:"  @@"`
+	IfStmt     *If       `parser:"| @@"`
+	ForStmt    *For      `parser:"| @@"`
+	ForRange   *ForRange `parser:"| @@"`
+	RepeatStmt *Repeat   `parser:"| @@"`
+	ReturnStmt *Return   `parser:"| @@"`
+	WhileStmt  *While    `parser:"| @@"`
+	Try        *Try      `parser:"| @@"`
+
 	Block      *Statements `parser:"| @@"`
 	Expression *Expression `parser:"| @@"`
 	Empty      bool        `parser:"| @';'"`

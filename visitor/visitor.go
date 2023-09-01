@@ -20,6 +20,7 @@ type Visitor interface {
 	VisitIf(s *script.If) error
 	VisitMultiplication(s *script.Multiplication) error
 	VisitPrimary(s *script.Primary) error
+	VisitRepeat(s *script.Repeat) error
 	VisitReturn(s *script.Return) error
 	VisitScript(script *script.Script) error
 	VisitStatement(s *script.Statement) error
@@ -52,6 +53,7 @@ type visitorCommon struct {
 	logic            task.Task
 	multiplication   task.Task
 	primary          task.Task
+	repeatStatement  task.Task
 	returnStatement  task.Task
 	script           task.Task
 	statement        task.Task

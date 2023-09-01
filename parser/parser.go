@@ -176,6 +176,7 @@ func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
 		Statements(p.initStatements).
 		Statement(p.initStatement).
 		If(p.initIf).
+		Repeat(p.initRepeat).
 		While(p.initWhile).
 		WithContext(context.Background()).
 		VisitScript(s)
@@ -233,6 +234,12 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 			}
 		}
 
+		if statement.RepeatStmt != nil {
+			if err := p.initRepeat(statement.RepeatStmt.WithContext(ctx)); err != nil {
+				return err
+			}
+		}
+
 		if statement.WhileStmt != nil {
 			if err := p.initWhile(statement.WhileStmt.WithContext(ctx)); err != nil {
 				return err
@@ -267,6 +274,15 @@ func (p *defaultParser) initIf(ctx context.Context) error {
 		return err
 	}
 	if err := v.VisitStatement(s.Else); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *defaultParser) initRepeat(ctx context.Context) error {
+	s := script.RepeatFromContext(ctx)
+	v := visitor.FromContext(ctx)
+	if err := v.VisitStatement(s.Body); err != nil {
 		return err
 	}
 	return nil

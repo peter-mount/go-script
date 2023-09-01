@@ -38,19 +38,33 @@ func (e *executor) ifStatement(ctx context.Context) error {
 	return err
 }
 
+func (e *executor) repeatStatement(ctx context.Context) error {
+	s := script.RepeatFromContext(ctx)
+
+	// repeat body until cond is the same as for ;cond; body
+	return e.forLoop(s.Pos, nil, s.Condition, nil, s.Body, ctx, false)
+}
+
 func (e *executor) whileStatement(ctx context.Context) error {
 	s := script.WhileFromContext(ctx)
 
 	// while cond body is the same as for ;cond; body
-	return e.forLoop(s.Pos, nil, s.Condition, nil, s.Body, ctx)
+	return e.forLoop(s.Pos, nil, s.Condition, nil, s.Body, ctx, true)
 }
 
 func (e *executor) forStatement(ctx context.Context) error {
 	s := script.ForFromContext(ctx)
-	return e.forLoop(s.Pos, s.Init, s.Condition, s.Increment, s.Body, ctx)
+	return e.forLoop(s.Pos, s.Init, s.Condition, s.Increment, s.Body, ctx, true)
 }
 
-func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expression, body *script.Statement, ctx context.Context) error {
+// forLoop is the internals of loops.
+// p is the Position of the statement being implemented.
+// init is the optional init expression
+// condition is the optional condition expression
+// inc is the optional increment expression
+// body the Statement to execute inside the loop
+// conditionResult the result of condition to repeat the loop.
+func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expression, body *script.Statement, ctx context.Context, conditionResult bool) error {
 
 	// Run for in a new scope so variables declared there are not accessible outside
 	e.state.NewScope()
@@ -70,7 +84,7 @@ func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expres
 				return Error(p, err)
 			}
 
-			if !b {
+			if b == conditionResult {
 				return nil
 			}
 		}
