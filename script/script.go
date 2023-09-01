@@ -8,7 +8,8 @@ import (
 type Script struct {
 	Pos lexer.Position
 
-	TopDec   []*TopDec `parser:"@@*"`
+	Include  []*Include `parser:"( @@"`
+	FunDec   []*FuncDec `parser:"| @@)+"`
 	Includes map[string]interface{}
 }
 
@@ -18,13 +19,6 @@ func (s *Script) WithContext(ctx context.Context) context.Context {
 
 func ScriptFromContext(ctx context.Context) *Script {
 	return ctx.Value(scriptKey).(*Script)
-}
-
-type TopDec struct {
-	Pos lexer.Position
-
-	Include *Include `parser:"  @@"`
-	FunDec  *FuncDec `parser:"| @@"`
 }
 
 type Include struct {

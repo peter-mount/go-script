@@ -93,8 +93,8 @@ func (v *visitor) VisitScript(s *script.Script) error {
 			return err
 		}
 
-		for _, e := range s.TopDec {
-			if err := v.visitTopDec(e); err != nil {
+		for _, e := range s.FunDec {
+			if err := v.VisitFuncDec(e); err != nil {
 				return err
 			}
 		}

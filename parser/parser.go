@@ -98,13 +98,11 @@ func (p *defaultParser) parseFile(fileName string, opts ...participle.ParseOptio
 	return p.parser.Parse(fileName, f, opts...)
 }
 
-func (p *defaultParser) includeTopDec(s *script.Script, tds []*script.TopDec) error {
-	for _, td := range tds {
-		if td.Include != nil {
-			for _, path := range td.Include.Path {
-				if err := p.include(s, td.Pos, p.includePath, path); err != nil {
-					return err
-				}
+func (p *defaultParser) includeTopDec(s *script.Script, s1 *script.Script) error {
+	for _, inc := range s1.Include {
+		for _, path := range inc.Path {
+			if err := p.include(s, s1.Pos, p.includePath, path); err != nil {
+				return err
 			}
 		}
 	}
@@ -134,17 +132,17 @@ func (p *defaultParser) include(s *script.Script, pos lexer.Position, paths []st
 		return err
 	}
 
-	for _, td := range s1.TopDec {
-		// Add any function definitions but do not include main()
-		if td.FunDec != nil && td.FunDec.Name != "main" {
-			s.TopDec = append(s.TopDec, td)
+	// Add any function definitions but do not include main()
+	for _, td := range s1.FunDec {
+		if td.Name != "main" {
+			s.FunDec = append(s.FunDec, td)
 		}
+	}
 
-		// Handle any includes in this file
-		err = p.includeTopDec(s, s1.TopDec)
-		if err != nil {
-			return err
-		}
+	// Handle any includes in this file
+	err = p.includeTopDec(s, s1)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -169,7 +167,7 @@ func (p *defaultParser) findFile(paths []string, file string) (string, error) {
 }
 
 func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
-	err := p.includeTopDec(s, s.TopDec)
+	err := p.includeTopDec(s, s)
 	if err != nil {
 		return nil, err
 	}

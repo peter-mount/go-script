@@ -53,16 +53,8 @@ func (v *visualizer) cellEnd() {
 
 func (v *visualizer) Script(s *script.Script) {
 	v.cellStart("script", "")
-	for _, topDec := range s.TopDec {
-		v.TopDec(topDec)
-	}
-	v.cellEnd()
-}
-
-func (v *visualizer) TopDec(s *script.TopDec) {
-	v.cellStart("topDec", "")
-	if s.FunDec != nil {
-		v.FuncDec(s.FunDec)
+	for _, fd := range s.FunDec {
+		v.FuncDec(fd)
 	}
 	v.cellEnd()
 }
