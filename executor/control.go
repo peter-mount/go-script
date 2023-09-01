@@ -42,20 +42,20 @@ func (e *executor) ifStatement(ctx context.Context) error {
 func (e *executor) repeatStatement(ctx context.Context) error {
 	s := script.RepeatFromContext(ctx)
 
-	// repeat body until cond is the same as for ;cond; body
-	return e.forLoop(s.Pos, nil, s.Condition, nil, s.Body, ctx, false)
+	// repeat body until cond is the same as "for ; !cond ; body"
+	return e.forLoop(s.Pos, nil, nil, nil, s.Condition, s.Body, ctx, true)
 }
 
 func (e *executor) whileStatement(ctx context.Context) error {
 	s := script.WhileFromContext(ctx)
 
-	// while cond body is the same as for ;cond; body
-	return e.forLoop(s.Pos, nil, s.Condition, nil, s.Body, ctx, true)
+	// while cond body is the same as "for ; cond ; body"
+	return e.forLoop(s.Pos, nil, s.Condition, nil, nil, s.Body, ctx, true)
 }
 
 func (e *executor) forStatement(ctx context.Context) error {
 	s := script.ForFromContext(ctx)
-	return e.forLoop(s.Pos, s.Init, s.Condition, s.Increment, s.Body, ctx, true)
+	return e.forLoop(s.Pos, s.Init, s.Condition, s.Increment, nil, s.Body, ctx, true)
 }
 
 // forLoop is the internals of loops.
@@ -64,8 +64,9 @@ func (e *executor) forStatement(ctx context.Context) error {
 // condition is the optional condition expression
 // inc is the optional increment expression
 // body the Statement to execute inside the loop
+// conditionFirst true then condition tested before body executes, false then tested after body & inc
 // conditionResult the result of condition to repeat the loop.
-func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expression, body *script.Statement, ctx context.Context, conditionResult bool) error {
+func (e *executor) forLoop(p lexer.Position, init, conditionFirst, inc, conditionLast *script.Expression, body *script.Statement, ctx context.Context, conditionResult bool) error {
 
 	// Run for in a new scope so variables declared there are not accessible outside
 	e.state.NewScope()
@@ -79,13 +80,14 @@ func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expres
 	}
 
 	for {
-		if condition != nil {
-			b, err := e.condition(condition, ctx)
+		// conditionResult true then condition first
+		if conditionFirst != nil {
+			b, err := e.condition(conditionFirst, ctx)
 			if err != nil {
 				return Error(p, err)
 			}
 
-			if b == conditionResult {
+			if b != conditionResult {
 				return nil
 			}
 		}
@@ -108,6 +110,17 @@ func (e *executor) forLoop(p lexer.Position, init, condition, inc *script.Expres
 			}
 		}
 
+		// conditionResult false then condition last
+		if conditionLast != nil {
+			b, err := e.condition(conditionLast, ctx)
+			if err != nil {
+				return Error(p, err)
+			}
+
+			if b == conditionResult {
+				return nil
+			}
+		}
 	}
 }
 
@@ -171,7 +184,7 @@ func (e *executor) forRange(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
+func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, _ context.Context) error {
 	if state.IsValidVariable(op.Key) {
 		if !e.state.Set(op.Key, key.Interface()) {
 			e.state.Declare(op.Key)

@@ -71,24 +71,93 @@ main() {
         println( v.a )
         println( v.b )
 
+        println("**********************************")
+        println("Loop tests\n")
+
         ary := map( "a":1, "b":2, "c":3, "d":4 )
-        for i,v:=range ary fmt.Printf("i=%q v=%d\n",i,v)
-        for _,v:=range ary fmt.Printf("key _ v=%d\n",v)
 
-        for i:=0;i<10;i=i+1 fmt.Printf("for i=%d\n")
+        fmt.Println("for k,v = range")
+        c:=0
+        for k,v:=range ary {
+            fmt.Printf(" %q=%d",k,v)
+            c=c+1
+        }
+        result( c==4 )
 
-        a:=1
-        b:=10
-        repeat {
-          fmt.Printf("repeat %d until %d",a,b)
-          a=a+1
-        } until a>b
+        fmt.Println("for k,v = range")
+        c:=0
+        for _,v:=range ary {
+            fmt.Printf(" _=%d",v)
+            c=c+1
+        }
+        result( c==4 )
+
+        // These should just work
+        testFor(0,10,1,10)
+        testRepeat(1,10,10)
+        testWhile(1,10,9)
+
+        // These should not go into an infinite loop
+        // as start > end. Repeat should run once but
+        // while should not run
+
+        // a>b on start but should still run once
+        testRepeat(11,10,1)
+        // a>b on start so should never run
+        testFor(11,10,1,0)
+        testWhile(11,10, 0)
 
     } catch( err ) {
+        println(" FAIL")
         println(err)
     }
 }
 
+testFor(a, b, s, count) {
+    c:=0
+    fmt.Printf("for i=%d; i<%d; i=i+%d\n",a,b,s)
+    for i:=a; i<b; i=i+s {
+        fmt.Printf(" %d",a)
+        a=a+1
+        c=c+1
+
+        // Catch if overrunning
+        if (a-b)>10 throw( "for broken")
+    }
+    result( c == count)
+}
+
+testRepeat(a, b, count) {
+    c:=0
+    fmt.Printf("a=%d; repeat a=a+1 until a>%d\n",a,b)
+    repeat {
+        fmt.Printf(" %d",a)
+        a=a+1
+        c=c+1
+
+        // Catch if overrunning
+        if (a-b)>10 throw( "repeat broken")
+    } until a>b
+    result( c == count)
+}
+
+testWhile(a, b, count) {
+    c:=0
+    fmt.Printf("a=%d; while a<%d a=a+1\n",a,b)
+    while a<b {
+        fmt.Printf(" %d",a)
+        a=a+1
+        c=c+1
+
+        // Catch if overrunning
+        if (a-b)>10 throw( "while broken")
+    }
+    result( c == count)
+}
+
+result(c) {
+    if c fmt.Println(" PASS\n") else fmt.Println(" FAIL\n")
+}
 test() {
     a = 2
     b = 84
