@@ -42,3 +42,6 @@ test: init
 
 build: test
 	@${MAKE} --no-print-directory -f Makefile.gen all
+
+docs: init
+	@${MAKE} --no-print-directory -f Makefile.gen docs

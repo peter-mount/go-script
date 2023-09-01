@@ -19,6 +19,7 @@ type Parser interface {
 	ParseString(fileName, src string, opts ...participle.ParseOption) (*script.Script, error)
 	ParseFile(fileName string, opts ...participle.ParseOption) (*script.Script, error)
 	IncludePath(s string) error
+	EBNF() string
 }
 
 type defaultParser struct {
@@ -32,6 +33,10 @@ func New() Parser {
 		lexer:  scriptLexer,
 		parser: scriptParser,
 	}
+}
+
+func (p *defaultParser) EBNF() string {
+	return p.parser.String()
 }
 
 func (p *defaultParser) IncludePath(s string) error {
