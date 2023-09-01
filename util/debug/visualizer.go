@@ -70,11 +70,11 @@ func (v *visualizer) TopDec(s *script.TopDec) {
 func (v *visualizer) FuncDec(s *script.FuncDec) {
 	var p []string
 	for _, param := range s.Parameters {
-		p = append(p, param.Ident)
+		p = append(p, param)
 	}
 	v.cellStart("FuncDec "+s.Name, strings.Join(p, ", "))
 	if s.FunBody != nil && s.FunBody.Statements != nil {
-		v.Statements(s.FunBody.Statements)
+		v.Statements(s.FunBody)
 	}
 	v.cellEnd()
 }

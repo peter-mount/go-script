@@ -79,11 +79,11 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	}
 
 	for i, p := range f.Parameters {
-		e.state.Declare(p.Ident)
-		e.state.Set(p.Ident, args[i])
+		e.state.Declare(p)
+		e.state.Set(p, args[i])
 	}
 
-	return Error(f.Pos, e.visitor.VisitStatements(f.FunBody.Statements))
+	return Error(f.Pos, e.visitor.VisitStatements(f.FunBody))
 }
 
 // callReflectFunc invokes a function within go from a script

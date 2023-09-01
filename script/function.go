@@ -8,9 +8,9 @@ import (
 type FuncDec struct {
 	Pos lexer.Position
 
-	Name       string       `parser:"@Ident"`
-	Parameters []*Parameter `parser:"'(' ((@@ (',' @@)*) | 'void' )? ')'"`
-	FunBody    *FuncBody    `parser:"(';' | '{' @@ '}')"`
+	Name       string      `parser:"@Ident"`
+	Parameters []string    `parser:"'(' (@Ident (',' @Ident)*)? ')'"`
+	FunBody    *Statements `parser:"@@"`
 }
 
 func (s *FuncDec) WithContext(ctx context.Context) context.Context {
@@ -19,26 +19,6 @@ func (s *FuncDec) WithContext(ctx context.Context) context.Context {
 
 func FuncDecFromContext(ctx context.Context) *FuncDec {
 	return ctx.Value(funcDecKey).(*FuncDec)
-}
-
-type FuncBody struct {
-	Pos lexer.Position
-
-	Statements *Statements `parser:"@@"`
-}
-
-func (s *FuncBody) WithContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, funcBodyKey, s)
-}
-
-func FuncBodyFromContext(ctx context.Context) *FuncBody {
-	return ctx.Value(funcBodyKey).(*FuncBody)
-}
-
-type Parameter struct {
-	Pos lexer.Position
-
-	Ident string `parser:"@Ident"`
 }
 
 type ReturnStmt struct {

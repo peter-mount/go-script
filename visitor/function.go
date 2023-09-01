@@ -21,17 +21,13 @@ func (v *visitor) VisitFuncDec(s *script.FuncDec) error {
 		}
 
 		if s.FunBody != nil {
-			if err := v.VisitStatements(s.FunBody.Statements); err != nil {
+			if err := v.VisitStatements(s.FunBody); err != nil {
 				return err
 			}
 		}
 
 		return nil
 	})
-}
-
-func (v *visitor) VisitFuncBody(s *script.FuncBody) error {
-	return v.visitTask(s.WithContext, v.funcBody)
 }
 
 func (v *visitor) VisitCallFunc(s *script.CallFunc) error {

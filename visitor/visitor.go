@@ -16,7 +16,6 @@ type Visitor interface {
 	VisitFor(s *script.ForStmt) error
 	VisitForRange(s *script.ForRange) error
 	VisitFuncDec(s *script.FuncDec) error
-	VisitFuncBody(body *script.FuncBody) error
 	VisitLogic(s *script.Logic) error
 	VisitIf(s *script.IfStmt) error
 	VisitMultiplication(s *script.Multiplication) error

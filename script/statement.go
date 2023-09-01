@@ -9,7 +9,7 @@ type Statements struct {
 	Pos    lexer.Position
 	Parent *Statements // Parent when nested
 
-	Statements []*Statement `parser:"@@*"`
+	Statements []*Statement `parser:"'{' @@* '}'"`
 }
 
 func (s *Statements) WithContext(ctx context.Context) context.Context {
@@ -36,7 +36,7 @@ type Statement struct {
 	ForStmt    *ForStmt    `parser:"| @@"`
 	ForRange   *ForRange   `parser:"| @@"`
 	Try        *Try        `parser:"| @@"`
-	Block      *Statements `parser:"| '{' @@ '}'"`
+	Block      *Statements `parser:"| @@"`
 	Expression *Expression `parser:"| @@"`
 	Empty      bool        `parser:"| @';'"`
 }
