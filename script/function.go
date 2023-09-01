@@ -21,18 +21,18 @@ func FuncDecFromContext(ctx context.Context) *FuncDec {
 	return ctx.Value(funcDecKey).(*FuncDec)
 }
 
-type ReturnStmt struct {
+type Return struct {
 	Pos lexer.Position
 
 	Result *Expression `parser:"'return' @@?"`
 }
 
-func (s *ReturnStmt) WithContext(ctx context.Context) context.Context {
+func (s *Return) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, returnKey, s)
 }
 
-func ReturnFromContext(ctx context.Context) *ReturnStmt {
-	return ctx.Value(returnKey).(*ReturnStmt)
+func ReturnFromContext(ctx context.Context) *Return {
+	return ctx.Value(returnKey).(*Return)
 }
 
 type Break struct {

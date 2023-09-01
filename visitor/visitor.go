@@ -13,20 +13,20 @@ type Visitor interface {
 	VisitComparison(s *script.Comparison) error
 	VisitEquality(s *script.Equality) error
 	VisitExpression(s *script.Expression) error
-	VisitFor(s *script.ForStmt) error
+	VisitFor(s *script.For) error
 	VisitForRange(s *script.ForRange) error
 	VisitFuncDec(s *script.FuncDec) error
 	VisitLogic(s *script.Logic) error
-	VisitIf(s *script.IfStmt) error
+	VisitIf(s *script.If) error
 	VisitMultiplication(s *script.Multiplication) error
 	VisitPrimary(s *script.Primary) error
-	VisitReturn(s *script.ReturnStmt) error
+	VisitReturn(s *script.Return) error
 	VisitScript(script *script.Script) error
 	VisitStatement(s *script.Statement) error
 	VisitStatements(s *script.Statements) error
 	VisitTry(s *script.Try) error
 	VisitUnary(s *script.Unary) error
-	VisitWhile(s *script.WhileStmt) error
+	VisitWhile(s *script.While) error
 }
 
 func FromContext(ctx context.Context) Visitor {

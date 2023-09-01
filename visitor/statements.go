@@ -41,7 +41,7 @@ func (v *visitor) VisitStatement(s *script.Statement) error {
 	})
 }
 
-func (v *visitor) VisitFor(s *script.ForStmt) error {
+func (v *visitor) VisitFor(s *script.For) error {
 	return v.visitTask(s.WithContext, v.forStatement)
 }
 
@@ -49,11 +49,11 @@ func (v *visitor) VisitForRange(s *script.ForRange) error {
 	return v.visitTask(s.WithContext, v.forRange)
 }
 
-func (v *visitor) VisitIf(s *script.IfStmt) error {
+func (v *visitor) VisitIf(s *script.If) error {
 	return v.visitTask(s.WithContext, v.ifStatement)
 }
 
-func (v *visitor) VisitReturn(s *script.ReturnStmt) error {
+func (v *visitor) VisitReturn(s *script.Return) error {
 	return v.visitTask(s.WithContext, v.returnStatement)
 }
 
@@ -61,6 +61,6 @@ func (v *visitor) VisitTry(s *script.Try) error {
 	return v.visitTask(s.WithContext, v.try)
 }
 
-func (v *visitor) VisitWhile(s *script.WhileStmt) error {
+func (v *visitor) VisitWhile(s *script.While) error {
 	return v.visitTask(s.WithContext, v.whileStatement)
 }

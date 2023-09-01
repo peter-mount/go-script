@@ -5,7 +5,7 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
-type ForStmt struct {
+type For struct {
 	Pos lexer.Position
 
 	Init      *Expression `parser:"'for' (@@)? ';'"`
@@ -14,14 +14,14 @@ type ForStmt struct {
 	Body      *Statement  `parser:"@@"`
 }
 
-func (s *ForStmt) WithContext(ctx context.Context) context.Context {
+func (s *For) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, forKey, s)
 }
 
-func ForFromContext(ctx context.Context) *ForStmt {
+func ForFromContext(ctx context.Context) *For {
 	v := ctx.Value(forKey)
 	if v != nil {
-		return v.(*ForStmt)
+		return v.(*For)
 	}
 	return nil
 }
@@ -49,26 +49,26 @@ func ForRangeFromContext(ctx context.Context) *ForRange {
 	return nil
 }
 
-type WhileStmt struct {
+type While struct {
 	Pos lexer.Position
 
 	Condition *Expression `parser:"'while' @@"`
 	Body      *Statement  `parser:"@@"`
 }
 
-func (s *WhileStmt) WithContext(ctx context.Context) context.Context {
+func (s *While) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, whileKey, s)
 }
 
-func WhileFromContext(ctx context.Context) *WhileStmt {
+func WhileFromContext(ctx context.Context) *While {
 	v := ctx.Value(whileKey)
 	if v != nil {
-		return v.(*WhileStmt)
+		return v.(*While)
 	}
 	return nil
 }
 
-type IfStmt struct {
+type If struct {
 	Pos lexer.Position
 
 	Condition *Expression `parser:"'if' @@"`
@@ -76,14 +76,14 @@ type IfStmt struct {
 	Else      *Statement  `parser:"('else' @@)?"`
 }
 
-func (s *IfStmt) WithContext(ctx context.Context) context.Context {
+func (s *If) WithContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, ifKey, s)
 }
 
-func IfFromContext(ctx context.Context) *IfStmt {
+func IfFromContext(ctx context.Context) *If {
 	v := ctx.Value(ifKey)
 	if v != nil {
-		return v.(*IfStmt)
+		return v.(*If)
 	}
 	return nil
 }
