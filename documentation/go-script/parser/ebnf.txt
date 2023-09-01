@@ -23,4 +23,7 @@ ReturnStmt = "return" Expression? .
 WhileStmt = "while" Expression Statement .
 ForStmt = "for" Expression? ";" Expression? ";" Expression? Statement .
 ForRange = "for" <ident> "," <ident> ":"? "=" "range" Expression Statement .
-Try = "try" ("(" (Expression (";" Expression)*) ")")? Statement ("catch" "(" <ident> ")" Statement)? ("finally" Statement)? .
+Try = "try" ResourceList? Statement Catch? Finally? .
+ResourceList = "(" Expression (";" Expression)* ")" .
+Catch = "catch" "(" <ident> ")" Statement .
+Finally = "finally" Statement .

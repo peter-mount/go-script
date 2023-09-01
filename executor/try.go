@@ -22,7 +22,7 @@ func (e *executor) try(ctx context.Context) (err error) {
 
 	if op.Finally != nil {
 		defer func() {
-			err1 := e.visitor.VisitStatement(op.Finally)
+			err1 := e.visitor.VisitStatement(op.Finally.Statement)
 			if err1 != nil {
 				err = err1
 			}
@@ -40,11 +40,11 @@ func (e *executor) try(ctx context.Context) (err error) {
 		// If catch then consume the error and pass it to the catch block
 		if op.Catch != nil {
 			// Set var unless "_" - always declared so always local
-			if op.CatchIdent != "_" {
-				e.state.Declare(op.CatchIdent)
-				e.state.Set(op.CatchIdent, err.Error())
+			if op.Catch.CatchIdent != "_" {
+				e.state.Declare(op.Catch.CatchIdent)
+				e.state.Set(op.Catch.CatchIdent, err.Error())
 			}
-			err = Error(op.Pos, e.visitor.VisitStatement(op.Catch))
+			err = Error(op.Pos, e.visitor.VisitStatement(op.Catch.Statement))
 		}
 	}
 
@@ -78,30 +78,32 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	}
 
 	// Configure andy try-with-resources
-	for _, init := range op.Init {
-		// Wrap visit to expression, so we don't leak return values on the stack
-		val, ok, err1 := e.calculator.Calculate(func(_ context.Context) error {
-			return Error(init.Pos, e.visitor.VisitExpression(init))
-		}, ctx)
-		if err1 != nil {
-			return err1
-		}
+	if op.Init != nil {
+		for _, init := range op.Init.Resources {
+			// Wrap visit to expression, so we don't leak return values on the stack
+			val, ok, err1 := e.calculator.Calculate(func(_ context.Context) error {
+				return Error(init.Pos, e.visitor.VisitExpression(init))
+			}, ctx)
+			if err1 != nil {
+				return err1
+			}
 
-		if ok {
-			if cl, ok := val.(CreateCloser); ok {
-				// CreateCloser will allow us to have a cope created by Create but closed when the try block completes
-				err1 := cl.Create()
-				if err1 != nil {
-					return err1
+			if ok {
+				if cl, ok := val.(CreateCloser); ok {
+					// CreateCloser will allow us to have a cope created by Create but closed when the try block completes
+					err1 := cl.Create()
+					if err1 != nil {
+						return err1
+					}
+
+					action = action.Defer(func(_ context.Context) error {
+						return cl.Close()
+					})
+				} else if cl, ok := val.(io.Closer); ok {
+					action = action.Defer(func(_ context.Context) error {
+						return cl.Close()
+					})
 				}
-
-				action = action.Defer(func(_ context.Context) error {
-					return cl.Close()
-				})
-			} else if cl, ok := val.(io.Closer); ok {
-				action = action.Defer(func(_ context.Context) error {
-					return cl.Close()
-				})
 			}
 		}
 	}

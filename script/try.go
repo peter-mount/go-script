@@ -21,11 +21,23 @@ import (
 type Try struct {
 	Pos lexer.Position
 
-	Init       []*Expression `parser:"'try' [ '(' ( @@ (';' @@)* ) ')' ]"` // init block
-	Body       *Statement    `parser:"@@"`                                 // body
-	CatchIdent string        `parser:"('catch' '(' @Ident ')'"`            // catch var
-	Catch      *Statement    `parser:" @@)?"`                              // catch block
-	Finally    *Statement    `parser:"('finally' @@)?"`                    // finally block
+	Init    *ResourceList `parser:"'try' @@?"` // init block
+	Body    *Statement    `parser:"@@"`        // body
+	Catch   *Catch        `parser:"@@?"`       // catch block
+	Finally *Finally      `parser:"@@?"`       // finally block
+}
+
+type ResourceList struct {
+	Resources []*Expression `parser:"'(' @@ (';' @@)* ')'"` // init block
+}
+
+type Catch struct {
+	CatchIdent string     `parser:"'catch' '(' @Ident ')'"` // catch var
+	Statement  *Statement `parser:" @@"`                    // catch block
+}
+
+type Finally struct {
+	Statement *Statement `parser:"'finally' @@"` // finally block
 }
 
 func (s *Try) WithContext(ctx context.Context) context.Context {

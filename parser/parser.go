@@ -307,9 +307,11 @@ func (p *defaultParser) initTry(ctx context.Context) error {
 
 	// try-resources ensure only assignments and enforce declare mode
 	// as those variables can only be accessed from within the body
-	for _, init := range s.Init {
-		if init.Right != nil && init.Right.Right != nil {
-			init.Right.Declare = true
+	if s.Init != nil {
+		for _, init := range s.Init.Resources {
+			if init.Right != nil && init.Right.Right != nil {
+				init.Right.Declare = true
+			}
 		}
 	}
 
@@ -320,13 +322,13 @@ func (p *defaultParser) initTry(ctx context.Context) error {
 	}
 
 	if s.Catch != nil {
-		if err := v.VisitStatement(s.Catch); err != nil {
+		if err := v.VisitStatement(s.Catch.Statement); err != nil {
 			return err
 		}
 	}
 
 	if s.Finally != nil {
-		if err := v.VisitStatement(s.Finally); err != nil {
+		if err := v.VisitStatement(s.Finally.Statement); err != nil {
 			return err
 		}
 	}
