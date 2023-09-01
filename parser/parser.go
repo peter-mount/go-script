@@ -234,14 +234,14 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 			}
 		}
 
-		if statement.RepeatStmt != nil {
-			if err := p.initRepeat(statement.RepeatStmt.WithContext(ctx)); err != nil {
+		if statement.Repeat != nil {
+			if err := p.initRepeat(statement.Repeat.WithContext(ctx)); err != nil {
 				return err
 			}
 		}
 
-		if statement.WhileStmt != nil {
-			if err := p.initWhile(statement.WhileStmt.WithContext(ctx)); err != nil {
+		if statement.While != nil {
+			if err := p.initWhile(statement.While.WithContext(ctx)); err != nil {
 				return err
 			}
 		}
@@ -252,8 +252,8 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 			}
 		}
 
-		if statement.ForStmt != nil {
-			if err := p.initFor(statement.ForStmt.WithContext(ctx)); err != nil {
+		if statement.For != nil {
+			if err := p.initFor(statement.For.WithContext(ctx)); err != nil {
 				return err
 			}
 		}

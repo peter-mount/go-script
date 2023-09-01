@@ -29,15 +29,22 @@ type Statement struct {
 	Parent *Statements // Parent when nested
 	Next   *Statement  // Next statement within Statements
 
-	Break      *Break    `parser:"  @@"`
-	IfStmt     *If       `parser:"| @@"`
-	ForStmt    *For      `parser:"| @@"`
-	ForRange   *ForRange `parser:"| @@"`
-	RepeatStmt *Repeat   `parser:"| @@"`
-	ReturnStmt *Return   `parser:"| @@"`
-	WhileStmt  *While    `parser:"| @@"`
-	Try        *Try      `parser:"| @@"`
+	Break    *Break    `parser:"  @@"`
+	IfStmt   *If       `parser:"| @@"`
+	For      *For      `parser:"| @@"`
+	ForRange *ForRange `parser:"| @@"`
+	Repeat   *Repeat   `parser:"| @@"`
+	Return   *Return   `parser:"| @@"`
+	While    *While    `parser:"| @@"`
 
+	// Try is after the main block as it's a bit more complex,
+	// so it's better to place it here after the statements
+	// when in the railroad diagrams.
+	//
+	// Otherwise, this could be in the above block
+	Try *Try `parser:"| @@"`
+
+	// These must be at the end
 	Block      *Statements `parser:"| @@"`
 	Expression *Expression `parser:"| @@"`
 	Empty      bool        `parser:"| @';'"`

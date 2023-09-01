@@ -93,5 +93,11 @@ func (v *variables) Set(n string, val interface{}) bool {
 }
 
 func (v *variables) Declare(n string) {
-	v.vars[n] = nil
+	if IsValidVariable(n) {
+		v.vars[n] = nil
+	}
+}
+
+func IsValidVariable(n string) bool {
+	return n != "" && n != "_"
 }

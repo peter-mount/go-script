@@ -32,7 +32,10 @@ func (e *executor) statement(ctx context.Context) error {
 	statement := script.StatementFromContext(ctx)
 
 	switch {
-	case statement.Empty:
+	// Do nothing for these.
+	// Empty is the no-op statement.
+	// Block has its own visitor
+	case statement.Empty, statement.Block != nil:
 		return nil
 
 	case statement.Expression != nil:
@@ -42,8 +45,8 @@ func (e *executor) statement(ctx context.Context) error {
 		}, ctx)
 		return err
 
-	case statement.ForStmt != nil:
-		return Error(statement.Pos, e.visitor.VisitFor(statement.ForStmt))
+	case statement.For != nil:
+		return Error(statement.Pos, e.visitor.VisitFor(statement.For))
 
 	case statement.ForRange != nil:
 		return Error(statement.Pos, e.visitor.VisitForRange(statement.ForRange))
@@ -51,14 +54,14 @@ func (e *executor) statement(ctx context.Context) error {
 	case statement.IfStmt != nil:
 		return Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
 
-	case statement.RepeatStmt != nil:
-		return Error(statement.Pos, e.visitor.VisitRepeat(statement.RepeatStmt))
+	case statement.Repeat != nil:
+		return Error(statement.Pos, e.visitor.VisitRepeat(statement.Repeat))
 
-	case statement.WhileStmt != nil:
-		return Error(statement.Pos, e.visitor.VisitWhile(statement.WhileStmt))
+	case statement.While != nil:
+		return Error(statement.Pos, e.visitor.VisitWhile(statement.While))
 
-	case statement.ReturnStmt != nil:
-		return Error(statement.Pos, e.visitor.VisitReturn(statement.ReturnStmt))
+	case statement.Return != nil:
+		return Error(statement.Pos, e.visitor.VisitReturn(statement.Return))
 
 	case statement.Break != nil:
 		return Break()

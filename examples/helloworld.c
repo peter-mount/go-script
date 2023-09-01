@@ -71,10 +71,16 @@ main() {
         println( v.a )
         println( v.b )
 
+        ary := map( "a":1, "b":2, "c":3, "d":4 )
+        for i,v:=range ary fmt.Printf("i=%q v=%d\n",i,v)
+        for _,v:=range ary fmt.Printf("key _ v=%d\n",v)
+
+        for i:=0;i<10;i=i+1 fmt.Printf("for i=%d\n")
+
         a:=1
         b:=10
         repeat {
-          println("repeat",a,b)
+          fmt.Printf("repeat %d until %d",a,b)
           a=a+1
         } until a>b
 

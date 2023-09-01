@@ -5,6 +5,7 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/script"
+	"github.com/peter-mount/go-script/state"
 	"reflect"
 )
 
@@ -119,12 +120,8 @@ func (e *executor) forRange(ctx context.Context) error {
 
 	// Declare in scope if := used
 	if op.Declare {
-		if op.Key != "_" {
-			e.state.Declare(op.Key)
-		}
-		if op.Value != "_" {
-			e.state.Declare(op.Value)
-		}
+		e.state.Declare(op.Key)
+		e.state.Declare(op.Value)
 	}
 
 	// Evaluate expression
@@ -175,14 +172,14 @@ func (e *executor) forRange(ctx context.Context) error {
 }
 
 func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
-	if op.Key != "_" {
+	if state.IsValidVariable(op.Key) {
 		if !e.state.Set(op.Key, key.Interface()) {
 			e.state.Declare(op.Key)
 			_ = e.state.Set(op.Key, key.Interface())
 		}
 	}
 
-	if op.Value != "_" {
+	if state.IsValidVariable(op.Value) {
 		if !e.state.Set(op.Value, val.Interface()) {
 			e.state.Declare(op.Value)
 			_ = e.state.Set(op.Value, val.Interface())
