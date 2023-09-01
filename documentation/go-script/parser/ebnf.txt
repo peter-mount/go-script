@@ -1,12 +1,10 @@
-Script = TopDec* .
-TopDec = Include | FuncDec .
+Script = (Include | FuncDec)+ .
 Include = "include" (<string> ("," <string>)*) .
-FuncDec = <ident> "(" ((Parameter ("," Parameter)*) | "void")? ")" (";" | ("{" FuncBody "}")) .
-Parameter = <ident> .
-FuncBody = Statements .
-Statements = Statement* .
-Statement = IfStmt | Break | ReturnStmt | WhileStmt | ForStmt | ForRange | Try | ("{" Statements "}") | Expression | ";" .
-IfStmt = "if" Expression Statement ("else" Statement)? .
+FuncDec = <ident> "(" (<ident> ("," <ident>)*)? ")" Statements .
+Statements = "{" Statement* "}" .
+Statement = Break | If | For | ForRange | Repeat | Return | While | Try | Statements | Expression | ";" .
+Break = "break" .
+If = "if" Expression Statement ("else" Statement)? .
 Expression = Assignment .
 Assignment = Logic (":"? "=" Equality)? .
 Logic = Equality ((("&" "&") | ("|" "|")) Logic)? .
@@ -15,14 +13,16 @@ Comparison = Addition (((">" "=") | ">" | ("<" "=") | "<") Comparison)? .
 Addition = Multiplication (("+" | "-") Addition)? .
 Multiplication = Unary (("*" | "/" | "%") Multiplication)? .
 Unary = (("!" | "-") Unary) | Primary .
-Primary = (<number> | <int> | KeyValue | <string> | CallFunc | "null" | "nil" | "true" | "false" | (<ident> ("[" Expression "]")+?) | ("(" Expression ")")) (<period> Primary)? .
+Primary = (<number> | <int> | KeyValue | <string> | CallFunc | "null" | "nil" | "true" | "false" | ("(" Expression ")") | (Ident (<period> Primary)?)) .
 KeyValue = <string> ":" Expression .
-CallFunc = <ident> "(" (Expression ("," Expression)*)? "..."? ")" .
-Break = "break" .
-ReturnStmt = "return" Expression? .
-WhileStmt = "while" Expression Statement .
-ForStmt = "for" Expression? ";" Expression? ";" Expression? Statement .
+CallFunc = <ident> "(" ParameterList? ")" .
+ParameterList = (Expression ("," Expression)*) "..."? .
+Ident = <ident> ("[" Expression "]")+? .
+For = "for" Expression? ";" Expression? ";" Expression? Statement .
 ForRange = "for" <ident> "," <ident> ":"? "=" "range" Expression Statement .
+Repeat = "repeat" Statement "until" Expression .
+Return = "return" Expression? .
+While = "while" Expression Statement .
 Try = "try" ResourceList? Statement Catch? Finally? .
 ResourceList = "(" Expression (";" Expression)* ")" .
 Catch = "catch" "(" <ident> ")" Statement .

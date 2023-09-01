@@ -8,15 +8,13 @@ weight: 1
 description: "Extended Backus-Naur Form of the scripting language"
 ---
 <p>This is the Extended Backus-Naur Form (EBNF) description of the scripting language:</p>
-<div class="sourceCode">Script = TopDec* .
-TopDec = Include | FuncDec .
+<div class="sourceCode">Script = (Include | FuncDec)+ .
 Include = &#34;include&#34; (&lt;string&gt; (&#34;,&#34; &lt;string&gt;)*) .
-FuncDec = &lt;ident&gt; &#34;(&#34; ((Parameter (&#34;,&#34; Parameter)*) | &#34;void&#34;)? &#34;)&#34; (&#34;;&#34; | (&#34;{&#34; FuncBody &#34;}&#34;)) .
-Parameter = &lt;ident&gt; .
-FuncBody = Statements .
-Statements = Statement* .
-Statement = IfStmt | Break | ReturnStmt | WhileStmt | ForStmt | ForRange | Try | (&#34;{&#34; Statements &#34;}&#34;) | Expression | &#34;;&#34; .
-IfStmt = &#34;if&#34; Expression Statement (&#34;else&#34; Statement)? .
+FuncDec = &lt;ident&gt; &#34;(&#34; (&lt;ident&gt; (&#34;,&#34; &lt;ident&gt;)*)? &#34;)&#34; Statements .
+Statements = &#34;{&#34; Statement* &#34;}&#34; .
+Statement = Break | If | For | ForRange | Repeat | Return | While | Try | Statements | Expression | &#34;;&#34; .
+Break = &#34;break&#34; .
+If = &#34;if&#34; Expression Statement (&#34;else&#34; Statement)? .
 Expression = Assignment .
 Assignment = Logic (&#34;:&#34;? &#34;=&#34; Equality)? .
 Logic = Equality (((&#34;&amp;&#34; &#34;&amp;&#34;) | (&#34;|&#34; &#34;|&#34;)) Logic)? .
@@ -25,14 +23,16 @@ Comparison = Addition (((&#34;&gt;&#34; &#34;=&#34;) | &#34;&gt;&#34; | (&#34;&l
 Addition = Multiplication ((&#34;+&#34; | &#34;-&#34;) Addition)? .
 Multiplication = Unary ((&#34;*&#34; | &#34;/&#34; | &#34;%&#34;) Multiplication)? .
 Unary = ((&#34;!&#34; | &#34;-&#34;) Unary) | Primary .
-Primary = (&lt;number&gt; | &lt;int&gt; | KeyValue | &lt;string&gt; | CallFunc | &#34;null&#34; | &#34;nil&#34; | &#34;true&#34; | &#34;false&#34; | (&lt;ident&gt; (&#34;[&#34; Expression &#34;]&#34;)+?) | (&#34;(&#34; Expression &#34;)&#34;)) (&lt;period&gt; Primary)? .
+Primary = (&lt;number&gt; | &lt;int&gt; | KeyValue | &lt;string&gt; | CallFunc | &#34;null&#34; | &#34;nil&#34; | &#34;true&#34; | &#34;false&#34; | (&#34;(&#34; Expression &#34;)&#34;) | (Ident (&lt;period&gt; Primary)?)) .
 KeyValue = &lt;string&gt; &#34;:&#34; Expression .
-CallFunc = &lt;ident&gt; &#34;(&#34; (Expression (&#34;,&#34; Expression)*)? &#34;...&#34;? &#34;)&#34; .
-Break = &#34;break&#34; .
-ReturnStmt = &#34;return&#34; Expression? .
-WhileStmt = &#34;while&#34; Expression Statement .
-ForStmt = &#34;for&#34; Expression? &#34;;&#34; Expression? &#34;;&#34; Expression? Statement .
+CallFunc = &lt;ident&gt; &#34;(&#34; ParameterList? &#34;)&#34; .
+ParameterList = (Expression (&#34;,&#34; Expression)*) &#34;...&#34;? .
+Ident = &lt;ident&gt; (&#34;[&#34; Expression &#34;]&#34;)+? .
+For = &#34;for&#34; Expression? &#34;;&#34; Expression? &#34;;&#34; Expression? Statement .
 ForRange = &#34;for&#34; &lt;ident&gt; &#34;,&#34; &lt;ident&gt; &#34;:&#34;? &#34;=&#34; &#34;range&#34; Expression Statement .
+Repeat = &#34;repeat&#34; Statement &#34;until&#34; Expression .
+Return = &#34;return&#34; Expression? .
+While = &#34;while&#34; Expression Statement .
 Try = &#34;try&#34; ResourceList? Statement Catch? Finally? .
 ResourceList = &#34;(&#34; Expression (&#34;;&#34; Expression)* &#34;)&#34; .
 Catch = &#34;catch&#34; &#34;(&#34; &lt;ident&gt; &#34;)&#34; Statement .
