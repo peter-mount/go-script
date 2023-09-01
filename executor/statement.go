@@ -32,6 +32,9 @@ func (e *executor) statement(ctx context.Context) error {
 	statement := script.StatementFromContext(ctx)
 
 	switch {
+	case statement.Empty:
+		return nil
+
 	case statement.Expression != nil:
 		// Wrap visit to expression, so we don't leak return values on the stack
 		_, _, err := e.calculator.Calculate(func(_ context.Context) error {
@@ -62,7 +65,9 @@ func (e *executor) statement(ctx context.Context) error {
 
 	case statement.Try != nil:
 		return Error(statement.Pos, e.visitor.VisitTry(statement.Try))
-	}
 
-	return nil
+	default:
+		// This will fail if we add a new statement, but it's not yet implemented.
+		return Errorf(statement.Pos, "unimplemented statement reached")
+	}
 }
