@@ -144,10 +144,11 @@ type Primary struct {
 	Nil           bool        `parser:"| @'nil'"`
 	True          bool        `parser:"| @'true'"`
 	False         bool        `parser:"| @'false'"`
-	Ident         *Ident      `parser:"| @@""`
 	SubExpression *Expression `parser:"| '(' @@ ')' "`
-	PointOp       string      `parser:") [ @Period"`
-	Pointer       *Primary    `parser:"    @@]"`
+	// These entries can use . notation after them
+	Ident   *Ident   `parser:"| @@"`
+	PointOp string   `parser:"  [ @Period"`
+	Pointer *Primary `parser:"  @@] )"`
 }
 
 func (op *Primary) WithContext(ctx context.Context) context.Context {

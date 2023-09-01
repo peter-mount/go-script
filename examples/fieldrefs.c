@@ -3,6 +3,15 @@
 // Hello world
 main() {
     // Reading tests
+    testMap := map(
+        "a": 12,
+        "b": map(
+            "c": 3,
+            "d": map(
+                "C": "wibble"
+            )
+        )
+    )
     println( "testMap" )
     println( testMap.a )
     println( testMap.b.c )
