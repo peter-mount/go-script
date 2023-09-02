@@ -136,19 +136,18 @@ type Primary struct {
 	Pos lexer.Position
 
 	Float         *float64    `parser:"( @Number"`
-	Integer       *int        `parser:"| @Int"`
-	KeyValue      *KeyValue   `parser:"| @@"`
-	String        *string     `parser:"| @String"`
-	CallFunc      *CallFunc   `parser:"| @@"`
-	Null          bool        `parser:"| @'null'"`
-	Nil           bool        `parser:"| @'nil'"`
-	True          bool        `parser:"| @'true'"`
-	False         bool        `parser:"| @'false'"`
-	SubExpression *Expression `parser:"| '(' @@ ')' "`
-	// These entries can use . notation after them
-	Ident   *Ident   `parser:"| @@"`
-	PointOp string   `parser:"  [ @Period"`
-	Pointer *Primary `parser:"  @@] )"`
+	Integer       *int        `parser:"  | @Int"`
+	KeyValue      *KeyValue   `parser:"  | @@"`
+	String        *string     `parser:"  | @String"`
+	Null          bool        `parser:"  | @'null'"`
+	Nil           bool        `parser:"  | @'nil'"`
+	True          bool        `parser:"  | @'true'"`
+	False         bool        `parser:"  | @'false'"`
+	SubExpression *Expression `parser:"  | '(' @@ ')' "`
+	CallFunc      *CallFunc   `parser:"  | ( @@"`
+	Ident         *Ident      `parser:"  |   @@ "`
+	PointOp       string      `parser:"    ) [ @Period"`
+	Pointer       *Primary    `parser:"      @@] )"`
 }
 
 func (op *Primary) WithContext(ctx context.Context) context.Context {
