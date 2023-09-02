@@ -1,0 +1,41 @@
+---
+type: "manual"
+title: "Repeat"
+titleClass: section
+linkTitle: "Repeat"
+description: "repeat a loop until an expression is true"
+tags:
+  - go-script
+---
+<p>
+    <code>repeat</code> allows for a statement to be executed until an <em>expression</em> returns true.
+</p>
+<p>
+    Unlike <code>while</code>, <code>repeat</code> will always execute the <em>statement</em> at least once
+    as the <em>expression</em> is only evaluated after the <em>statement</em> has been executed.
+</p>
+
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>repeat</strong> <em>statement</em> <strong>until</strong> <em>expression</em></pre>
+
+<div class="marginNote">
+    The expression is true when the result of the expression is either a boolean true, a non 0 numerical value
+    or one of the following strings: "true", "t", "yes" or "y"
+</div>
+<p>
+    When the <code>repeat</code> statement is encountered, the <em>statement</em> is evaluated followed by the <em>expression</em>.
+    If the <em>expression</em> returns true then the <em>statement</em> is repeated.
+</p>
+<p>
+    The <em>statement</em> is always executed once.
+</p>
+
+<h3 class="paragraph">Examples</h3>
+<p>The following code will print out the numbers 10 down to 3:</p>
+<div class="sourceCode">a:=10
+b:=3
+repeat {
+    fmt.Println(a)
+    a = a - 1
+} until a < b
+</div>
