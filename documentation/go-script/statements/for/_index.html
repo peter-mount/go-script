@@ -62,7 +62,7 @@ tags:
 
 <div class="marginNote">When iterating over a map the <em>index</em> variable will hold the key rather than the index within the loop.</div>
 <p>
-    As with <code>Go</code>, you can loop over an Array or a Map.
+    As with <code>Go</code>, you can loop over an Array, Map, Iterator or Iterable value.
     In this form you provide two variable names to hold the <em>index</em> and <em>value</em> of each entry as the loop iterates over the source value.
 </p>
 
@@ -80,6 +80,46 @@ tags:
     However, if the <code>=</code> form is used, then if either of the variables exist outside the loop then they will be overwritten by the for loop.
     If they do not exist then they will only exist from within the loop.
 </p>
+
+<h3 class="paragraph">Arrays</h3>
+<p>
+    As in GO, when an array is passed to the statement, the loop will run with the <em>index</em> and <em>value</em> of each element
+    passed it.
+</p>
+
+<h3 class="paragraph">Maps</h3>
+<p>
+    As in GO, when a map is passed to the statement, the loop will run with the <em>key</em> and <em>value</em> of each element
+    passed to it.
+    The <em>key</em>, <em>value</em> pairs passed to the loop will be in the natural order of the map.
+</p>
+
+<h3 class="paragraph">Iterator</h3>
+<p>
+    If the value implements the <code>Iterator</code> interface then the loop will run whilst the
+    <code>HasNext()</code> function returns true.
+</p>
+<p>
+    The <em>value</em> passed to the loop will be the value returned by the <code>Next()</code> function.
+    The <em>index</em> passed will be a counter starting from 0.
+</p>
+
+<div class="sourceCode">type Iterator interface {
+    HasNext() bool
+    Next() interface{}
+}
+</div>
+
+<h3 class="paragraph">Iterable</h3>
+<p>
+    If the value implements the <code>Iterable</code> interface then an iterator will be obtained
+    from the <code>Iterator()</code> function and it will then be used as above for <code>Iterator</code>.
+</p>
+
+<div class="sourceCode">type Iterable interface {
+    Iterator() Iterator
+}
+</div>
 
 <h3 class="paragraph">Examples</h3>
 <p>To iterate over an array:</p>

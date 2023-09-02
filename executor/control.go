@@ -148,6 +148,30 @@ func (e *executor) forRange(ctx context.Context) error {
 		return Error(op.Pos, err)
 	}
 
+	// Check for supported interfaces
+	if r != nil {
+		// If Iterable then convert to an Interator
+		if it, ok := r.(Iterable); ok {
+			r = it.Iterator()
+		}
+
+		// If an Iterator then run through until HasNext() returns false
+		if it, ok := r.(Iterator); ok {
+			for i := 0; it.HasNext(); i++ {
+				if err := e.forRangeEntryImpl(i, it.Next(), op, ctx); err != nil {
+					// Consume break and exit the loop
+					if IsBreak(err) {
+						return nil
+					}
+
+					return Error(op.Pos, err)
+				}
+			}
+			return nil
+		}
+	}
+
+	// Handle default go constructs
 	tv := reflect.ValueOf(r)
 	ti := reflect.Indirect(tv)
 	switch ti.Kind() {
@@ -184,18 +208,22 @@ func (e *executor) forRange(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, _ context.Context) error {
+func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
+	return e.forRangeEntryImpl(key.Interface(), val.Interface(), op, ctx)
+}
+
+func (e *executor) forRangeEntryImpl(key, val interface{}, op *script.ForRange, _ context.Context) error {
 	if state.IsValidVariable(op.Key) {
-		if !e.state.Set(op.Key, key.Interface()) {
+		if !e.state.Set(op.Key, key) {
 			e.state.Declare(op.Key)
-			_ = e.state.Set(op.Key, key.Interface())
+			_ = e.state.Set(op.Key, key)
 		}
 	}
 
 	if state.IsValidVariable(op.Value) {
-		if !e.state.Set(op.Value, val.Interface()) {
+		if !e.state.Set(op.Value, val) {
 			e.state.Declare(op.Value)
-			_ = e.state.Set(op.Value, val.Interface())
+			_ = e.state.Set(op.Value, val)
 		}
 	}
 
@@ -207,4 +235,13 @@ func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, _ 
 	}
 
 	return nil
+}
+
+type Iterable interface {
+	Iterator() Iterator
+}
+
+type Iterator interface {
+	HasNext() bool
+	Next() interface{}
 }
