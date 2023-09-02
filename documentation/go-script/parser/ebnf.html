@@ -23,7 +23,7 @@ Comparison = Addition (((&#34;&gt;&#34; &#34;=&#34;) | &#34;&gt;&#34; | (&#34;&l
 Addition = Multiplication ((&#34;+&#34; | &#34;-&#34;) Addition)? .
 Multiplication = Unary ((&#34;*&#34; | &#34;/&#34; | &#34;%&#34;) Multiplication)? .
 Unary = ((&#34;!&#34; | &#34;-&#34;) Unary) | Primary .
-Primary = (&lt;number&gt; | &lt;int&gt; | KeyValue | &lt;string&gt; | CallFunc | &#34;null&#34; | &#34;nil&#34; | &#34;true&#34; | &#34;false&#34; | (&#34;(&#34; Expression &#34;)&#34;) | (Ident (&lt;period&gt; Primary)?)) .
+Primary = (&lt;number&gt; | &lt;int&gt; | KeyValue | &lt;string&gt; | &#34;null&#34; | &#34;nil&#34; | &#34;true&#34; | &#34;false&#34; | (&#34;(&#34; Expression &#34;)&#34;) | ((CallFunc | Ident) (&lt;period&gt; Primary)?)) .
 KeyValue = &lt;string&gt; &#34;:&#34; Expression .
 CallFunc = &lt;ident&gt; &#34;(&#34; ParameterList? &#34;)&#34; .
 ParameterList = (Expression (&#34;,&#34; Expression)*) &#34;...&#34;? .

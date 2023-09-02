@@ -64,14 +64,6 @@ main() {
         }
 
         println("**********************************")
-
-        test()
-
-        v:=test2()
-        println( v.a )
-        println( v.b )
-
-        println("**********************************")
         println("Loop tests\n")
 
         ary := map( "a":1, "b":2, "c":3, "d":4 )
@@ -106,6 +98,26 @@ main() {
         // a>b on start so should never run
         testFor(11,10,1,0)
         testWhile(11,10, 0)
+
+        println("**********************************")
+        println("Function tests\n")
+
+        println("test1()")
+        try {
+            test1()
+        } catch( err ) {
+            result(false)
+            println(err)
+        }
+
+        println("v:=test2(); v.a == 1")
+        try {
+            v:=test2()
+            result( v.a == 1)
+        } catch( err ) {
+            result(false)
+            println(err)
+        }
 
     } catch( err ) {
         println(" FAIL")
@@ -158,10 +170,12 @@ testWhile(a, b, count) {
 result(c) {
     if c fmt.Println(" PASS\n") else fmt.Println(" FAIL\n")
 }
-test() {
+
+test1() {
     a = 2
     b = 84
-    fmt.Printf(" %d / %d = %d\n", b, a, b/a )
+    //fmt.Printf(" %d / %d = %d\n", b, a, b/a )
+    result( (b/a) == 42 )
 }
 
 test2() {
