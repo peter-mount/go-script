@@ -6,7 +6,7 @@ var (
 	monoOperations = map[string]MonoCalculation{
 		"!": NewMonoOpDef().
 			Int(func(a int) (interface{}, error) { return a == 0, nil }).
-			Float(func(a float64) (interface{}, error) { return math.Abs(a) <= 1e9, nil }).
+			Float(func(a float64) (interface{}, error) { return math.Abs(a) <= 1e-9, nil }).
 			Bool(func(a bool) (interface{}, error) { return !a, nil }).
 			Build(),
 		"-": NewMonoOpDef().
