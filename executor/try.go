@@ -58,60 +58,66 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	e.state.NewScope()
 	defer e.state.EndScope()
 
+	// The deferable tasks to perform when we exit.
+	//
+	// we defer it here so that this task is always executed even if we don't get to
+	// execute the action - e.g. creating a resource fails whilst building the list
+	// means we still close any preceding resource in the resourceList
+	var deferables task.Task
+	defer func() {
+		_ = deferables.Do(ctx)
+	}()
+
+	// The action to perform
 	var action task.Task
 
-	if op.Body != nil {
-		action = action.Then(func(_ context.Context) error {
-			err := Error(op.Pos, e.visitor.VisitStatement(op.Body))
-			if err != nil {
-				if IsReturn(err) {
-					return err
-				}
-				if IsBreak(err) {
-					return nil
-				}
-
-				return Error(op.Pos, err)
-			}
-			return nil
-		})
-	}
-
-	// Configure andy try-with-resources
+	// Configure any try-with-resources
 	if op.Init != nil {
 		for _, init := range op.Init.Resources {
 			// Wrap visit to expression, so we don't leak return values on the stack
-			val, ok, err1 := e.calculator.Calculate(func(_ context.Context) error {
+			val, ok, err := e.calculator.Calculate(func(_ context.Context) error {
 				return Error(init.Pos, e.visitor.VisitExpression(init))
 			}, ctx)
-			if err1 != nil {
-				return err1
+			if err != nil {
+				return err
 			}
 
 			if ok {
+				// -----------------------------------------------------------------
+				// NOTE: Always use deferables = task.Of(task).Defer(deferables) here so that
+				// if the task fails, the rest of the deferables tasks still execute
+				// -----------------------------------------------------------------
 				if cl, ok := val.(CreateCloser); ok {
-					// CreateCloser will allow us to have a cope created by Create but closed when the try block completes
-					err1 := cl.Create()
-					if err1 != nil {
-						return err1
+					if err := cl.Create(); err != nil {
+						return Error(init.Pos, err)
 					}
+				}
 
-					action = action.Defer(func(_ context.Context) error {
+				// Common to io.Closer and CreateCloser
+				if cl, ok := val.(io.Closer); ok {
+					// add Close() from io.Closer to deferables
+					deferables = task.Of(func(_ context.Context) error {
 						return cl.Close()
-					})
-				} else if cl, ok := val.(io.Closer); ok {
-					action = action.Defer(func(_ context.Context) error {
-						return cl.Close()
-					})
+					}).Then(deferables)
 				}
 			}
 		}
 	}
 
+	// Finally add the body to the action task
+	if op.Body != nil {
+		action = action.Then(func(_ context.Context) error {
+			return Error(op.Pos, e.visitor.VisitStatement(op.Body))
+		})
+	}
+
+	// Now execute the action. No need to add deferables as we have deferred its execution earlier
 	return action.Do(ctx)
 }
 
+// CreateCloser interface implemented by types that can be used as resources
 type CreateCloser interface {
 	io.Closer
+	// Create is called when the resource is referenced before the statement is executed
 	Create() error
 }

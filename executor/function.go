@@ -16,6 +16,7 @@ func (e *executor) callFunc(ctx context.Context) error {
 		return nil
 	}
 
+	// FIXME break and continue (when implemented) cannot be outside a loop
 	// Should not happen but capture breaks, so they don't leak out of the function
 	if IsBreak(err) {
 		return nil
