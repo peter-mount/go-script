@@ -98,7 +98,7 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 					// add Close() from io.Closer to deferables
 					deferables = task.Of(func(_ context.Context) error {
 						return cl.Close()
-					}).Then(deferables)
+					}).Defer(deferables)
 				}
 			}
 		}
