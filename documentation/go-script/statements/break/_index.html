@@ -3,13 +3,16 @@ type: "manual"
 title: "Break"
 titleClass: section
 linkTitle: "Break"
-description: "Break out of the current context"
+description: "Break out of the current loop"
 tags:
   - go-script
 ---
 <p>
-    <code>break</code> is a statement that will break out of the current context, which is either
-    the current <code>for</code> loop or the current function.
+    <code>break</code> is a statement that will break out of the current <code>for</code>, <code>repeat</code> or <code>while</code> loop.
+</p>
+
+<p>
+    A <code>break</code> outside of a loop will generate an error.
 </p>
 
 <div class="marginNote">
