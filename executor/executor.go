@@ -80,10 +80,10 @@ func (e *executor) Run() error {
 
 	err := e.functionImpl(main, nil)
 
-	// Pass err unless it's return or break.
+	// Pass err unless it's return, break or continue.
 	// break should happen lower down but this catches it, so it doesn't
 	// exit the function call
-	if err != nil && !(IsReturn(err) || IsBreak(err)) {
+	if err != nil && !(IsReturn(err) || IsBreak(err)) || IsContinue(err) {
 		return Error(e.script.Pos, err)
 	}
 

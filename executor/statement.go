@@ -63,8 +63,11 @@ func (e *executor) statement(ctx context.Context) error {
 	case statement.Return != nil:
 		return Error(statement.Pos, e.visitor.VisitReturn(statement.Return))
 
-	case statement.Break != nil:
+	case statement.Break:
 		return Break()
+
+	case statement.Continue:
+		return Continue()
 
 	case statement.Try != nil:
 		return Error(statement.Pos, e.visitor.VisitTry(statement.Try))

@@ -29,7 +29,8 @@ type Statement struct {
 	Parent *Statements // Parent when nested
 	Next   *Statement  // Next statement within Statements
 
-	Break    *Break    `parser:"  @@"`
+	Break    bool      `parser:"  @'break'"`
+	Continue bool      `parser:"| @'continue'"`
 	IfStmt   *If       `parser:"| @@"`
 	For      *For      `parser:"| @@"`
 	ForRange *ForRange `parser:"| @@"`

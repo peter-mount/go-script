@@ -100,7 +100,10 @@ func (e *executor) forLoop(p lexer.Position, init, conditionFirst, inc, conditio
 					return nil
 				}
 
-				return Error(p, err)
+				// Only exit if it's not continue
+				if !IsContinue(err) {
+					return Error(p, err)
+				}
 			}
 		}
 
@@ -164,7 +167,10 @@ func (e *executor) forRange(ctx context.Context) error {
 						return nil
 					}
 
-					return Error(op.Pos, err)
+					// Only exit if not continue
+					if !IsContinue(err) {
+						return Error(op.Pos, err)
+					}
 				}
 			}
 			return nil
@@ -184,7 +190,10 @@ func (e *executor) forRange(ctx context.Context) error {
 					return nil
 				}
 
-				return Error(op.Pos, err)
+				// Only exit if not continue
+				if !IsContinue(err) {
+					return Error(op.Pos, err)
+				}
 			}
 		}
 
@@ -197,7 +206,10 @@ func (e *executor) forRange(ctx context.Context) error {
 					return nil
 				}
 
-				return Error(op.Pos, err)
+				// Only exit if not continue
+				if !IsContinue(err) {
+					return Error(op.Pos, err)
+				}
 			}
 		}
 

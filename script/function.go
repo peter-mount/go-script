@@ -35,12 +35,6 @@ func ReturnFromContext(ctx context.Context) *Return {
 	return ctx.Value(returnKey).(*Return)
 }
 
-type Break struct {
-	Pos lexer.Position
-
-	Break bool `parser:"@'break'"`
-}
-
 type CallFunc struct {
 	Pos lexer.Position
 

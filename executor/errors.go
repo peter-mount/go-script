@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	// Dummy errors for handling break and return statements
+	// error used to implement break
 	breakError = errors.New("break")
-	//returnError = errors.New("return")
+	// error used to implement continue
+	continueError = errors.New("continue")
 )
 
 type posError struct {
@@ -34,7 +35,7 @@ func Error(pos lexer.Position, err error) error {
 	// If err is a PosError then return it as it has the position already.
 	// Also, if err is nil then return nil, so we can use it as a catch-all
 	// Break and return dummy errors also are unchanged
-	if err == nil || IsError(err) || IsBreak(err) || IsReturn(err) || IsNoFieldErr(err) {
+	if err == nil || IsError(err) || IsBreak(err) || IsContinue(err) || IsReturn(err) || IsNoFieldErr(err) {
 		return err
 	}
 	return Errorf(pos, err.Error())
@@ -97,6 +98,13 @@ func Break() error {
 
 // IsBreak returns true if err is from a break instruction being invoked.
 func IsBreak(err error) bool { return err == breakError }
+
+func Continue() error {
+	return continueError
+}
+
+// IsContinue returns true if err is from a continue instruction being invoked.
+func IsContinue(err error) bool { return err == continueError }
 
 func IsReturn(err error) bool {
 	_, ok := err.(*ReturnError)
