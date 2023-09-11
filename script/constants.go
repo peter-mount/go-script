@@ -5,6 +5,7 @@ const (
 	assignmentKey     = "go-script/assignment"
 	callFuncKey       = "go-script/callFunc"
 	comparisonKey     = "go-script/comparison"
+	doWhileKey        = "go-script/doWhile"
 	equalityKey       = "go-script/equality"
 	expressionKey     = "go-script/expression"
 	forKey            = "go-script/for"

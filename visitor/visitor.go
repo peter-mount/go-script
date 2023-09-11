@@ -11,6 +11,7 @@ type Visitor interface {
 	VisitAssignment(s *script.Assignment) error
 	VisitCallFunc(s *script.CallFunc) error
 	VisitComparison(s *script.Comparison) error
+	VisitDoWhile(s *script.DoWhile) error
 	VisitEquality(s *script.Equality) error
 	VisitExpression(s *script.Expression) error
 	VisitFor(s *script.For) error
@@ -53,6 +54,7 @@ type visitorCommon struct {
 	logic            task.Task
 	multiplication   task.Task
 	primary          task.Task
+	doWhile          task.Task
 	repeatStatement  task.Task
 	returnStatement  task.Task
 	script           task.Task

@@ -53,6 +53,10 @@ func (v *visitor) VisitIf(s *script.If) error {
 	return v.visitTask(s.WithContext, v.ifStatement)
 }
 
+func (v *visitor) VisitDoWhile(s *script.DoWhile) error {
+	return v.visitTask(s.WithContext, v.doWhile)
+}
+
 func (v *visitor) VisitRepeat(s *script.Repeat) error {
 	return v.visitTask(s.WithContext, v.repeatStatement)
 }

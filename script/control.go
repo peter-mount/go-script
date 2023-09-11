@@ -49,6 +49,25 @@ func ForRangeFromContext(ctx context.Context) *ForRange {
 	return nil
 }
 
+type DoWhile struct {
+	Pos lexer.Position
+
+	Body      *Statement  `parser:"'do' @@"`
+	Condition *Expression `parser:"'while' @@"`
+}
+
+func (s *DoWhile) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, doWhileKey, s)
+}
+
+func DoWhileFromContext(ctx context.Context) *DoWhile {
+	v := ctx.Value(doWhileKey)
+	if v != nil {
+		return v.(*DoWhile)
+	}
+	return nil
+}
+
 type Repeat struct {
 	Pos lexer.Position
 

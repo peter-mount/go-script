@@ -43,6 +43,13 @@ func (e *executor) repeatStatement(ctx context.Context) error {
 	s := script.RepeatFromContext(ctx)
 
 	// repeat body until cond is the same as "for ; !cond ; body"
+	return e.forLoop(s.Pos, nil, nil, nil, s.Condition, s.Body, ctx, false)
+}
+
+func (e *executor) doWhile(ctx context.Context) error {
+	s := script.DoWhileFromContext(ctx)
+
+	// repeat body until cond is the same as "for ; !cond ; body"
 	return e.forLoop(s.Pos, nil, nil, nil, s.Condition, s.Body, ctx, true)
 }
 
@@ -120,7 +127,7 @@ func (e *executor) forLoop(p lexer.Position, init, conditionFirst, inc, conditio
 				return Error(p, err)
 			}
 
-			if b == conditionResult {
+			if b != conditionResult {
 				return nil
 			}
 		}
@@ -184,7 +191,7 @@ func (e *executor) forRange(ctx context.Context) error {
 	case reflect.Map:
 		mi := ti.MapRange()
 		for mi.Next() {
-			if err := e.forRangeEntry(mi.Key(), mi.Value(), op, ctx); err != nil {
+			if err := e.forRangeEntryValue(mi.Key(), mi.Value(), op, ctx); err != nil {
 				// Consume break and exit the loop
 				if IsBreak(err) {
 					return nil
@@ -200,7 +207,7 @@ func (e *executor) forRange(ctx context.Context) error {
 	case reflect.Array, reflect.Slice, reflect.String:
 		l := ti.Len()
 		for i := 0; i < l; i++ {
-			if err := e.forRangeEntry(reflect.ValueOf(i), ti.Index(i), op, ctx); err != nil {
+			if err := e.forRangeEntryValue(reflect.ValueOf(i), ti.Index(i), op, ctx); err != nil {
 				// Consume break and exit the loop
 				if IsBreak(err) {
 					return nil
@@ -220,10 +227,12 @@ func (e *executor) forRange(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) forRangeEntry(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
+// forRangeEntryValue is used in iterating via reflection, e.g. for range
+func (e *executor) forRangeEntryValue(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
 	return e.forRangeEntryImpl(key.Interface(), val.Interface(), op, ctx)
 }
 
+// forRangeEntryImpl is used in for range either from forRangeEntryValue or an iterator
 func (e *executor) forRangeEntryImpl(key, val interface{}, op *script.ForRange, _ context.Context) error {
 	if state.IsValidVariable(op.Key) {
 		if !e.state.Set(op.Key, key) {

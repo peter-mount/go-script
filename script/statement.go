@@ -31,6 +31,7 @@ type Statement struct {
 
 	Break    bool      `parser:"  @'break'"`
 	Continue bool      `parser:"| @'continue'"`
+	DoWhile  *DoWhile  `parser:"| @@"`
 	IfStmt   *If       `parser:"| @@"`
 	For      *For      `parser:"| @@"`
 	ForRange *ForRange `parser:"| @@"`
