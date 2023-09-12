@@ -2,9 +2,8 @@ Script = (Include | FuncDec)+ .
 Include = "include" (<string> ("," <string>)*) .
 FuncDec = <ident> "(" (<ident> ("," <ident>)*)? ")" Statements .
 Statements = "{" Statement* "}" .
-Statement = Break | If | For | ForRange | Repeat | Return | While | Try | Statements | Expression | ";" .
-Break = "break" .
-If = "if" Expression Statement ("else" Statement)? .
+Statement = "break" | "continue" | DoWhile | If | For | ForRange | Repeat | Return | Switch | While | Try | Statements | Expression | ";" .
+DoWhile = "do" Statement "while" Expression .
 Expression = Assignment .
 Assignment = Logic (":"? "=" Equality)? .
 Logic = Equality ((("&" "&") | ("|" "|")) Logic)? .
@@ -18,10 +17,13 @@ KeyValue = <string> ":" Expression .
 CallFunc = <ident> "(" ParameterList? ")" .
 ParameterList = (Expression ("," Expression)*) "..."? .
 Ident = <ident> ("[" Expression "]")+? .
+If = "if" Expression Statement ("else" Statement)? .
 For = "for" Expression? ";" Expression? ";" Expression? Statement .
 ForRange = "for" <ident> "," <ident> ":"? "=" "range" Expression Statement .
 Repeat = "repeat" Statement "until" Expression .
 Return = "return" Expression? .
+Switch = "switch" Expression? "{" SwitchCase+ ("default" ":" Statement)? "}" .
+SwitchCase = "case" (<string> | Expression) ":" Statement .
 While = "while" Expression Statement .
 Try = "try" ResourceList? Statement Catch? Finally? .
 ResourceList = "(" Expression (";" Expression)* ")" .

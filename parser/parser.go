@@ -178,6 +178,7 @@ func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
 		If(p.initIf).
 		DoWhile(p.initDoWhile).
 		Repeat(p.initRepeat).
+		Switch(p.initSwitch).
 		While(p.initWhile).
 		WithContext(context.Background()).
 		VisitScript(s)
@@ -219,7 +220,7 @@ func (p *defaultParser) initStatements(ctx context.Context) error {
 //
 // This works as Statement is only ever contained within a Statements instance
 // so the parent is its parent.
-func (p *defaultParser) initStatement(ctx context.Context) error {
+func (p *defaultParser) initStatement(ctx context.Context) (err error) {
 	// The Statement being visited
 	statement := script.StatementFromContext(ctx)
 	if statement != nil {
@@ -229,43 +230,30 @@ func (p *defaultParser) initStatement(ctx context.Context) error {
 			statement.Parent = parent
 		}
 
-		if statement.IfStmt != nil {
-			if err := p.initIf(statement.IfStmt.WithContext(ctx)); err != nil {
-				return err
-			}
-		}
+		switch {
+		case statement.IfStmt != nil:
+			err = p.initIf(statement.IfStmt.WithContext(ctx))
 
-		if statement.Repeat != nil {
-			if err := p.initRepeat(statement.Repeat.WithContext(ctx)); err != nil {
-				return err
-			}
-		}
+		case statement.For != nil:
+			err = p.initFor(statement.For.WithContext(ctx))
 
-		if statement.While != nil {
-			if err := p.initWhile(statement.While.WithContext(ctx)); err != nil {
-				return err
-			}
-		}
+		case statement.ForRange != nil:
+			err = p.initForRange(statement.ForRange.WithContext(ctx))
 
-		if statement.ForRange != nil {
-			if err := p.initForRange(statement.ForRange.WithContext(ctx)); err != nil {
-				return err
-			}
-		}
+		case statement.Repeat != nil:
+			err = p.initRepeat(statement.Repeat.WithContext(ctx))
 
-		if statement.For != nil {
-			if err := p.initFor(statement.For.WithContext(ctx)); err != nil {
-				return err
-			}
-		}
+		case statement.Switch != nil:
+			err = p.initSwitch(statement.Switch.WithContext(ctx))
 
-		if statement.Try != nil {
-			if err := p.initTry(statement.Try.WithContext(ctx)); err != nil {
-				return err
-			}
+		case statement.Try != nil:
+			err = p.initTry(statement.Try.WithContext(ctx))
+
+		case statement.While != nil:
+			err = p.initWhile(statement.While.WithContext(ctx))
 		}
 	}
-	return nil
+	return
 }
 
 func (p *defaultParser) initIf(ctx context.Context) error {
@@ -295,6 +283,25 @@ func (p *defaultParser) initRepeat(ctx context.Context) error {
 	if err := v.VisitStatement(s.Body); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (p *defaultParser) initSwitch(ctx context.Context) error {
+	s := script.SwitchFromContext(ctx)
+	v := visitor.FromContext(ctx)
+
+	for _, c := range s.Case {
+		if err := v.VisitStatement(c.Statement); err != nil {
+			return err
+		}
+	}
+
+	if s.Default != nil {
+		if err := v.VisitStatement(s.Default); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

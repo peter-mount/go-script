@@ -12,9 +12,8 @@ description: "Extended Backus-Naur Form of the scripting language"
 Include = &#34;include&#34; (&lt;string&gt; (&#34;,&#34; &lt;string&gt;)*) .
 FuncDec = &lt;ident&gt; &#34;(&#34; (&lt;ident&gt; (&#34;,&#34; &lt;ident&gt;)*)? &#34;)&#34; Statements .
 Statements = &#34;{&#34; Statement* &#34;}&#34; .
-Statement = Break | If | For | ForRange | Repeat | Return | While | Try | Statements | Expression | &#34;;&#34; .
-Break = &#34;break&#34; .
-If = &#34;if&#34; Expression Statement (&#34;else&#34; Statement)? .
+Statement = &#34;break&#34; | &#34;continue&#34; | DoWhile | If | For | ForRange | Repeat | Return | Switch | While | Try | Statements | Expression | &#34;;&#34; .
+DoWhile = &#34;do&#34; Statement &#34;while&#34; Expression .
 Expression = Assignment .
 Assignment = Logic (&#34;:&#34;? &#34;=&#34; Equality)? .
 Logic = Equality (((&#34;&amp;&#34; &#34;&amp;&#34;) | (&#34;|&#34; &#34;|&#34;)) Logic)? .
@@ -28,10 +27,13 @@ KeyValue = &lt;string&gt; &#34;:&#34; Expression .
 CallFunc = &lt;ident&gt; &#34;(&#34; ParameterList? &#34;)&#34; .
 ParameterList = (Expression (&#34;,&#34; Expression)*) &#34;...&#34;? .
 Ident = &lt;ident&gt; (&#34;[&#34; Expression &#34;]&#34;)+? .
+If = &#34;if&#34; Expression Statement (&#34;else&#34; Statement)? .
 For = &#34;for&#34; Expression? &#34;;&#34; Expression? &#34;;&#34; Expression? Statement .
 ForRange = &#34;for&#34; &lt;ident&gt; &#34;,&#34; &lt;ident&gt; &#34;:&#34;? &#34;=&#34; &#34;range&#34; Expression Statement .
 Repeat = &#34;repeat&#34; Statement &#34;until&#34; Expression .
 Return = &#34;return&#34; Expression? .
+Switch = &#34;switch&#34; Expression? &#34;{&#34; SwitchCase+ (&#34;default&#34; &#34;:&#34; Statement)? &#34;}&#34; .
+SwitchCase = &#34;case&#34; (&lt;string&gt; | Expression) &#34;:&#34; Statement .
 While = &#34;while&#34; Expression Statement .
 Try = &#34;try&#34; ResourceList? Statement Catch? Finally? .
 ResourceList = &#34;(&#34; Expression (&#34;;&#34; Expression)* &#34;)&#34; .

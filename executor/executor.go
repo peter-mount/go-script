@@ -65,6 +65,7 @@ func New(s *script.Script) (Executor, error) {
 		Statement(e.statement).
 		Statements(e.statements).
 		StatementsNoNest().
+		Switch(e.switchStatement).
 		Try(e.try).
 		Unary(e.unary).
 		While(e.while).

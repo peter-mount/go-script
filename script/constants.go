@@ -20,6 +20,7 @@ const (
 	scriptKey         = "go-script/script"
 	statementsKey     = "go-script/statements"
 	statementKey      = "go-script/statement"
+	switchKey         = "go-script/switch"
 	tryKey            = "go-script/try"
 	unaryKey          = "go-script/unary"
 	whileKey          = "go-script/while"

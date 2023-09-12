@@ -16,12 +16,9 @@ func (e *executor) condition(expr *script.Expression, ctx context.Context, defau
 		return defaultResult, nil
 	}
 
-	v, ok, err := e.calculator.Calculate(e.expression, expr.WithContext(ctx))
+	v, err := e.calculator.MustCalculate(e.expression, expr.WithContext(ctx))
 	if err != nil {
-		return false, Error(expr.Pos, err)
-	}
-	if !ok {
-		return false, Errorf(expr.Pos, "No result from condition")
+		return false, err
 	}
 
 	b, err := calculator.GetBool(v)

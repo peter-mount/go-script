@@ -65,6 +65,10 @@ func (v *visitor) VisitReturn(s *script.Return) error {
 	return v.visitTask(s.WithContext, v.returnStatement)
 }
 
+func (v *visitor) VisitSwitch(s *script.Switch) error {
+	return v.visitTask(s.WithContext, v.switchStatement)
+}
+
 func (v *visitor) VisitTry(s *script.Try) error {
 	return v.visitTask(s.WithContext, v.try)
 }

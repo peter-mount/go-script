@@ -37,6 +37,7 @@ type Statement struct {
 	ForRange *ForRange `parser:"| @@"`
 	Repeat   *Repeat   `parser:"| @@"`
 	Return   *Return   `parser:"| @@"`
+	Switch   *Switch   `parser:"| @@"`
 	While    *While    `parser:"| @@"`
 
 	// Try is after the main block as it's a bit more complex,

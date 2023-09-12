@@ -3,6 +3,12 @@ package calculator
 import "math"
 
 var (
+	equality = NewBiOpDef().
+			Int(func(a, b int) (interface{}, error) { return a == b, nil }).
+			Float(func(a, b float64) (interface{}, error) { return math.Abs(a-b) < 1e-9, nil }).
+			String(func(a, b string) (interface{}, error) { return a == b, nil }).
+			Bool(func(a, b bool) (interface{}, error) { return a == b, nil }).
+			Build()
 	monoOperations = map[string]MonoCalculation{
 		"!": NewMonoOpDef().
 			Int(func(a int) (interface{}, error) { return a == 0, nil }).
@@ -17,12 +23,7 @@ var (
 	}
 
 	biOperations = map[string]BiCalculation{
-		"==": NewBiOpDef().
-			Int(func(a, b int) (interface{}, error) { return a == b, nil }).
-			Float(func(a, b float64) (interface{}, error) { return math.Abs(a-b) < 1e-9, nil }).
-			String(func(a, b string) (interface{}, error) { return a == b, nil }).
-			Bool(func(a, b bool) (interface{}, error) { return a == b, nil }).
-			Build(),
+		"==": equality,
 		"!=": NewBiOpDef().
 			Int(func(a, b int) (interface{}, error) { return a != b, nil }).
 			Float(func(a, b float64) (interface{}, error) { return math.Abs(a-b) >= 1e-9, nil }).
@@ -78,3 +79,11 @@ var (
 			Build(),
 	}
 )
+
+func Equals(a, b interface{}) (bool, error) {
+	c, err := equality.BiCalculate(a, b)
+	if err != nil {
+		return false, err
+	}
+	return GetBool(c)
+}

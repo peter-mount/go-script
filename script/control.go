@@ -125,3 +125,31 @@ func IfFromContext(ctx context.Context) *If {
 	}
 	return nil
 }
+
+type Switch struct {
+	Pos lexer.Position
+
+	Expression *Expression   `parser:"'switch' (@@)? '{'"`
+	Case       []*SwitchCase `parser:"(@@)+ "`
+	Default    *Statement    `parser:"('default' ':' @@ )? '}'"`
+}
+
+type SwitchCase struct {
+	Pos lexer.Position
+
+	String     *string     `parser:"'case' ( @String"` // For some reason we need to check String specifically
+	Expression *Expression `parser:"| @@) ':'"`        // otherwise the parser can't handle it in expression.
+	Statement  *Statement  `parser:"@@"`               // But it works as expression elsewhere... odd
+}
+
+func (s *Switch) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, switchKey, s)
+}
+
+func SwitchFromContext(ctx context.Context) *Switch {
+	v := ctx.Value(switchKey)
+	if v != nil {
+		return v.(*Switch)
+	}
+	return nil
+}

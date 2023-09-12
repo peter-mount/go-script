@@ -72,6 +72,9 @@ func (e *executor) statement(ctx context.Context) error {
 	case statement.Continue:
 		return Continue()
 
+	case statement.Switch != nil:
+		return Error(statement.Pos, e.visitor.VisitSwitch(statement.Switch))
+
 	case statement.Try != nil:
 		return Error(statement.Pos, e.visitor.VisitTry(statement.Try))
 

@@ -2,6 +2,7 @@ package calculator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/peter-mount/go-kernel/v2/util/task"
 	"strings"
@@ -62,6 +63,8 @@ type Calculator interface {
 	// The boolean returned is true if a value was returned, false if not, allowing for nil
 	// value to be returned from the calculation.
 	Calculate(t task.Task, ctx context.Context) (interface{}, bool, error)
+	// MustCalculate is the same as Calculate but an error is returned if no result was returned
+	MustCalculate(t task.Task, ctx context.Context) (interface{}, error)
 	// Exec is similar to Calculate but does not return a result.
 	Exec(t task.Task, ctx context.Context) error
 	// Process processes a series of Instruction's to perform a calculation
@@ -222,6 +225,16 @@ func (c *calculator) Op2(op string) error {
 
 	c.Push(v)
 	return nil
+}
+
+var noResult = errors.New("no result returned")
+
+func (c *calculator) MustCalculate(t task.Task, ctx context.Context) (interface{}, error) {
+	v, ok, err := c.Calculate(t, ctx)
+	if err == nil && !ok {
+		err = noResult
+	}
+	return v, err
 }
 
 func (c *calculator) Calculate(t task.Task, ctx context.Context) (interface{}, bool, error) {
