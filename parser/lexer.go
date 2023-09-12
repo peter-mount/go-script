@@ -23,6 +23,7 @@ var (
 		{"Period", `(\.)`},
 		{"NewLine", `[\n\r]+`},
 		{"Comma", `,`},
+		{"Query", `\?`},
 	})
 
 	scriptParser = participle.MustBuild[script.Script](

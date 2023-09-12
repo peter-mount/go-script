@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
-	"github.com/peter-mount/go-script/util/debug"
-	"os"
 	"reflect"
 	"testing"
 )
@@ -49,9 +47,6 @@ func Test_executor_Addition(t *testing.T) {
 					t.Error(err)
 					return
 				}
-
-				// Uncomment to create a html file for each test showing structure
-				_ = os.WriteFile(fmt.Sprintf("/tmp/test-%02d.html", tid), []byte(debug.Visualize(s)), 0644)
 
 				e, err := executor.New(s)
 				if err != nil {

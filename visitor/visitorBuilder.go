@@ -43,6 +43,7 @@ type Builder interface {
 	// content separately - e.g. Executor uses this.
 	StatementsNoNest() Builder
 	Switch(t task.Task) Builder
+	Ternary(t task.Task) Builder
 	Try(t task.Task) Builder
 	Unary(t task.Task) Builder
 	While(t task.Task) Builder
@@ -170,6 +171,11 @@ func (b *builder) Statement(t task.Task) Builder {
 
 func (b *builder) Switch(t task.Task) Builder {
 	b.switchStatement = b.switchStatement.Then(t)
+	return b
+}
+
+func (b *builder) Ternary(t task.Task) Builder {
+	b.ternary = b.ternary.Then(t)
 	return b
 }
 

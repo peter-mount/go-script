@@ -2,6 +2,10 @@ package visitor
 
 import "github.com/peter-mount/go-script/script"
 
+func (v *visitor) VisitTernary(s *script.Ternary) error {
+	return v.visitTask(s.WithContext, v.ternary)
+}
+
 func (v *visitor) VisitLogic(s *script.Logic) error {
 	return v.visitTask(s.WithContext, v.logic)
 }

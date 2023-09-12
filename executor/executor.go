@@ -66,6 +66,7 @@ func New(s *script.Script) (Executor, error) {
 		Statements(e.statements).
 		StatementsNoNest().
 		Switch(e.switchStatement).
+		Ternary(e.ternary).
 		Try(e.try).
 		Unary(e.unary).
 		While(e.while).

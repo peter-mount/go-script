@@ -30,13 +30,15 @@ func (e *executor) assignment(ctx context.Context) error {
 
 		var primary *script.Primary
 		// This is messy TODO clean up this mess
-		if log := op.Left; log != nil {
-			if eq := log.Left; eq != nil {
-				if comp := eq.Left; comp != nil {
-					if add := comp.Left; add != nil {
-						if mul := add.Left; mul != nil {
-							if unary := mul.Left; unary != nil {
-								primary = unary.Right
+		if ternary := op.Left; ternary != nil {
+			if log := ternary.Left; log != nil {
+				if eq := log.Left; eq != nil {
+					if comp := eq.Left; comp != nil {
+						if add := comp.Left; add != nil {
+							if mul := add.Left; mul != nil {
+								if unary := mul.Left; unary != nil {
+									primary = unary.Right
+								}
 							}
 						}
 					}
@@ -54,7 +56,7 @@ func (e *executor) assignment(ctx context.Context) error {
 			// POVS = plain old variable setter
 
 			// Process RHS to get value
-			err := e.visitor.VisitEquality(op.Right)
+			err := e.visitor.VisitTernary(op.Right)
 			if err != nil {
 				return Error(op.Pos, err)
 			}
@@ -94,7 +96,7 @@ func (e *executor) assignment(ctx context.Context) error {
 			vT := vV.Type()
 
 			// Process RHS to get value
-			err = e.visitor.VisitEquality(op.Right)
+			err = e.visitor.VisitTernary(op.Right)
 			if err != nil {
 				return Error(op.Pos, err)
 			}
@@ -123,8 +125,30 @@ func (e *executor) assignment(ctx context.Context) error {
 
 		return nil
 	} else {
-		return Error(op.Pos, e.visitor.VisitLogic(op.Left))
+		return Error(op.Pos, e.visitor.VisitTernary(op.Left))
 	}
+}
+
+func (e *executor) ternary(ctx context.Context) (err error) {
+	op := script.TernaryFromContext(ctx)
+
+	err = e.visitor.VisitLogic(op.Left)
+	if err == nil && op.True != nil && op.False != nil {
+		var v interface{}
+		v, err = e.calculator.Pop()
+		if err == nil {
+			var b bool
+			b, err = calculator.GetBool(v)
+			if err == nil {
+				if b {
+					err = e.visitor.VisitLogic(op.True)
+				} else {
+					err = e.visitor.VisitLogic(op.False)
+				}
+			}
+		}
+	}
+	return Error(op.Pos, err)
 }
 
 func (e *executor) logic(ctx context.Context) error {

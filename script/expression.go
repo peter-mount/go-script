@@ -22,10 +22,10 @@ func ExpressionFromContext(ctx context.Context) *Expression {
 type Assignment struct {
 	Pos lexer.Position
 
-	Left    *Logic    `parser:"@@"`        // Expression or ident/reference to value to set
-	Declare bool      `parser:"( @(':')?"` // := to declare in local scope, unset to use outer if already defined
-	Op      string    `parser:"  @'='"`    // assign value
-	Right   *Equality `parser:"  @@ )?"`   // Expression to define value
+	Left    *Ternary `parser:"@@"`        // Expression or ident/reference to value to set
+	Declare bool     `parser:"( @(':')?"` // := to declare in local scope, unset to use outer if already defined
+	Op      string   `parser:"  @'='"`    // assign value
+	Right   *Ternary `parser:"  @@ )?"`   // Expression to define value
 }
 
 func (op *Assignment) WithContext(ctx context.Context) context.Context {
@@ -34,6 +34,22 @@ func (op *Assignment) WithContext(ctx context.Context) context.Context {
 
 func AssignmentFromContext(ctx context.Context) *Assignment {
 	return ctx.Value(assignmentKey).(*Assignment)
+}
+
+type Ternary struct {
+	Pos lexer.Position
+
+	Left  *Logic `parser:"@@"`
+	True  *Logic `parser:"( '?' @@"`
+	False *Logic `parser:"  ':' @@ )?"`
+}
+
+func (op *Ternary) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ternaryKey, op)
+}
+
+func TernaryFromContext(ctx context.Context) *Ternary {
+	return ctx.Value(ternaryKey).(*Ternary)
 }
 
 type Logic struct {
