@@ -168,11 +168,6 @@ func (e *executor) forRange(ctx context.Context) error {
 
 	// Check for supported interfaces
 	if r != nil {
-		// If Iterable then convert to an Iterator
-		if it, ok := r.(Iterable); ok {
-			r = it.Iterator()
-		}
-
 		// If an Iterator then run through until HasNext() returns false
 		if it, ok := r.(Iterator); ok {
 			return e.forIterator(op, ctx, it)
@@ -255,10 +250,6 @@ func (e *executor) forRangeEntryImpl(key, val interface{}, op *script.ForRange, 
 	}
 
 	return Error(op.Pos, e.visitor.VisitStatement(op.Body))
-}
-
-type Iterable interface {
-	Iterator() Iterator
 }
 
 type Iterator interface {
