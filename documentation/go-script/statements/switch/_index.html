@@ -50,6 +50,11 @@ tags:
     which returns a <code>true</code> result will be executed.
 </p>
 
+<h3 class="paragraph">Multiple expressions per case</h3>
+<p>
+    If a <code>case</code> can match multiple expressions, you can indicate this by listing each <em>expression</em> as a <strong>,</strong> separated list.
+</p>
+
 <h3 class="paragraph">Default selection</h3>
 <p>
     A <code>switch</code> statement may include an optional <code>default</code> statement.
@@ -63,7 +68,7 @@ tags:
 <div class="sourceCode">a:=10
 switch a {
     case 1: fmt.Println(1)
-    case 2: fmt.Println(1)
+    case 2: fmt.Println(2)
     case 10: {
         fmt.Println("Found it!")
     }
@@ -81,5 +86,22 @@ switch {
     }
     default:
        fmt.Println("No case matched")
+}
+</div>
+
+<p>
+    Here we have a single <code>case</code> with three expressions: <em>10</em>, <em>11</em> and <em>12</em>.
+    When the variable a matches any of those then the same <code>statement</code> is executed.
+</p>
+<div class="sourceCode">for a:=10; a<13; a=a+1 {
+    switch a {
+        case 1: fmt.Println(1)
+        case 2: fmt.Println(2)
+        case 10, 11, 12: {
+            fmt.Println("Found it!")
+        }
+        default:
+           fmt.Println("No case matched")
+    }
 }
 </div>

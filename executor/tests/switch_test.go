@@ -23,6 +23,8 @@ func Test_switch(t *testing.T) {
 	case "A": result=65
 	case "B": result=66
 	case "C": result=67
+	case "D", 8, "E": result=99
+	case 9, "F": result=999
     default: result=42
   }
 }`
@@ -99,6 +101,37 @@ func Test_switch(t *testing.T) {
 			script:         script1,
 			initialResult:  3.1415926,
 			expectedResult: 42,
+		},
+		// multiple expressions in single case
+		{
+			name:           "multi-case D",
+			script:         script1,
+			initialResult:  "D",
+			expectedResult: 99,
+		},
+		{
+			name:           "multi-case 8",
+			script:         script1,
+			initialResult:  8,
+			expectedResult: 99,
+		},
+		{
+			name:           "multi-case E",
+			script:         script1,
+			initialResult:  "E",
+			expectedResult: 99,
+		},
+		{
+			name:           "multi-case F",
+			script:         script1,
+			initialResult:  "F",
+			expectedResult: 999,
+		},
+		{
+			name:           "multi-case 9",
+			script:         script1,
+			initialResult:  9,
+			expectedResult: 999,
 		},
 	}
 

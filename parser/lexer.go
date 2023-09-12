@@ -22,6 +22,7 @@ var (
 		{"String", `"(\\"|[^"])*"`},
 		{"Period", `(\.)`},
 		{"NewLine", `[\n\r]+`},
+		{"Comma", `,`},
 	})
 
 	scriptParser = participle.MustBuild[script.Script](

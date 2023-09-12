@@ -137,9 +137,15 @@ type Switch struct {
 type SwitchCase struct {
 	Pos lexer.Position
 
-	String     *string     `parser:"'case' ( @String"` // For some reason we need to check String specifically
-	Expression *Expression `parser:"| @@) ':'"`        // otherwise the parser can't handle it in expression.
-	Statement  *Statement  `parser:"@@"`               // But it works as expression elsewhere... odd
+	Expression []*SwitchCaseExpression `parser:"'case' (@@ (',' @@)*) ':'"`
+	Statement  *Statement              `parser:"@@"`
+}
+
+type SwitchCaseExpression struct {
+	Pos lexer.Position
+
+	String     *string     `parser:"(@String"`
+	Expression *Expression `parser:"| @@)"`
 }
 
 func (s *Switch) WithContext(ctx context.Context) context.Context {
