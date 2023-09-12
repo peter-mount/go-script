@@ -1,0 +1,85 @@
+---
+type: "manual"
+title: "Switch"
+titleClass: section
+linkTitle: "Switch"
+description: "execute based on multiple expressions"
+tags:
+  - go-script
+---
+<p>
+    <code>switch</code> allows for a statement to be executed if it's associated <em>expression</em> either
+    equals the initial expression or, if the initial expression is not set returns true.
+</p>
+
+<h3 class="paragraph">Syntax</h3>
+<pre><strong>switch</strong> <em>expression</em> <strong>{</strong>
+    <strong>case</strong> <em>expression</em> <strong>:</strong> <em>statement</em>
+    <strong>case</strong> <em>expression</em> <strong>:</strong> <em>statement</em>
+    <em>&hellip;</em>
+    <strong>default</strong><strong>:</strong> <em>statement</em>
+<strong>}</strong></pre>
+
+<pre><strong>switch</strong> <strong>{</strong>
+    <strong>case</strong> <em>expression</em> <strong>:</strong> <em>statement</em>
+    <strong>case</strong> <em>expression</em> <strong>:</strong> <em>statement</em>
+    <em>&hellip;</em>
+    <strong>default</strong><strong>:</strong> <em>statement</em>
+<strong>}</strong></pre>
+
+<h3 class="paragraph">Case selection</h3>
+<p>
+    A <code>switch</code> statement can contain multiple <code>case</code> entries, one for each possible match.
+    The order of each <code>case</code> is important as the first one to match will run.
+</p>
+<p>
+    Unlike in <code>C</code> but like <code>Go</code>, execution does not fall through to the next
+    <code>case</code> block. When a <code>case</code> is executed the <code>switch</code> statement terminates.
+</p>
+<p>
+    When the <code><strong>switch</strong> <em>expression</em> <strong>{ }</strong></code>
+    form is used, the <em>expression</em> is evaluated and the result of each <code>case</code> <em>expression</em>
+    must equal that value to be invoked.
+</p>
+<div class="marginNote">
+    The expression is true when the result of the expression is either a boolean true, a non 0 numerical value
+    or one of the following strings: "true", "t", "yes" or "y"
+</div>
+<p>
+    If the initial <em>expression</em> is not declared then the first <code>case</code> <em>expression</em>
+    which returns a <code>true</code> result will be executed.
+</p>
+
+<h3 class="paragraph">Default selection</h3>
+<p>
+    A <code>switch</code> statement may include an optional <code>default</code> statement.
+    If present and no <code>case</code> matches, then this code will instead be executed.
+    The <code>default</code> statement must be declared after all <code>case</code> clauses within the
+    <code>switch</code> statement.
+</p>
+
+<h3 class="paragraph">Examples</h3>
+<p>The following two examples are functionally identical:</p>
+<div class="sourceCode">a:=10
+switch a {
+    case 1: fmt.Println(1)
+    case 2: fmt.Println(1)
+    case 10: {
+        fmt.Println("Found it!")
+    }
+    default:
+       fmt.Println("No case matched")
+}
+</div>
+
+<div class="sourceCode">a:=10
+switch {
+    case a==1: fmt.Println(1)
+    case a==2: fmt.Println(1)
+    case a==10: {
+        fmt.Println("Found it!")
+    }
+    default:
+       fmt.Println("No case matched")
+}
+</div>
