@@ -153,12 +153,7 @@ func (e *executor) forRange(ctx context.Context) error {
 	}
 
 	// Evaluate expression
-	err := e.visitor.VisitExpression(op.Expression)
-	if err != nil {
-		return Error(op.Pos, err)
-	}
-
-	r, err := e.calculator.Pop()
+	r, err := e.calculator.MustCalculate(e.expression, op.Expression.WithContext(ctx))
 	if err != nil {
 		return Error(op.Pos, err)
 	}
@@ -189,7 +184,7 @@ func (e *executor) forRange(ctx context.Context) error {
 // forIterator will iterate for all values in an Iterator
 func (e *executor) forIterator(op *script.ForRange, ctx context.Context, it Iterator) error {
 	for i := 0; it.HasNext(); i++ {
-		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntryImpl(i, it.Next(), op, ctx))
+		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, it.Next(), op, ctx))
 		if exit {
 			return err
 		}
@@ -200,7 +195,7 @@ func (e *executor) forIterator(op *script.ForRange, ctx context.Context, it Iter
 // forMapIter will iterate over a MapIter
 func (e *executor) forMapIter(op *script.ForRange, ctx context.Context, mi *reflect.MapIter) error {
 	for mi.Next() {
-		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntryValue(mi.Key(), mi.Value(), op, ctx))
+		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(mi.Key().Interface(), mi.Value().Interface(), op, ctx))
 		if exit {
 			return err
 		}
@@ -213,7 +208,7 @@ func (e *executor) forMapIter(op *script.ForRange, ctx context.Context, mi *refl
 func (e *executor) forSlice(op *script.ForRange, ctx context.Context, ti reflect.Value) error {
 	l := ti.Len()
 	for i := 0; i < l; i++ {
-		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntryValue(reflect.ValueOf(i), ti.Index(i), op, ctx))
+		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, ti.Index(i).Interface(), op, ctx))
 		if exit {
 			return err
 		}
@@ -221,13 +216,8 @@ func (e *executor) forSlice(op *script.ForRange, ctx context.Context, ti reflect
 	return nil
 }
 
-// forRangeEntryValue is used in iterating via reflection, e.g. for range
-func (e *executor) forRangeEntryValue(key, val reflect.Value, op *script.ForRange, ctx context.Context) error {
-	return e.forRangeEntryImpl(key.Interface(), val.Interface(), op, ctx)
-}
-
 // forRangeEntryImpl is used in for range either from forRangeEntryValue or an iterator
-func (e *executor) forRangeEntryImpl(key, val interface{}, op *script.ForRange, _ context.Context) error {
+func (e *executor) forRangeEntry(key, val interface{}, op *script.ForRange, _ context.Context) error {
 	if op.Body == nil {
 		return nil
 	}
