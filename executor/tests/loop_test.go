@@ -32,6 +32,20 @@ func Test_loops(t *testing.T) {
 			expectedResult: 10,
 		},
 		{
+			// Increment result in body
+			name:           "for no-init-inc {}",
+			script:         `main() { for ;result<10; { result=result+1 } }`,
+			initialResult:  0,
+			expectedResult: 10,
+		},
+		{
+			// Increment result in body test in body
+			name:           "for no-init-inc break{}",
+			script:         `main() { for ;; { result=result+1 if result > 9 break } }`,
+			initialResult:  0,
+			expectedResult: 10,
+		},
+		{
 			// Increment result with empty ; statement
 			name:           "for no-init ;",
 			script:         `main() { for ;result<10;result=result+1; }`,

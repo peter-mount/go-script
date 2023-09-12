@@ -60,14 +60,14 @@ func New(s *script.Script) (Executor, error) {
 		Multiplication(e.multiplication).
 		Primary(e.primary).
 		DoWhile(e.doWhile).
-		Repeat(e.repeatStatement).
+		Repeat(e.repeatUntil).
 		Return(e.returnStatement).
 		Statement(e.statement).
 		Statements(e.statements).
 		StatementsNoNest().
 		Try(e.try).
 		Unary(e.unary).
-		While(e.whileStatement).
+		While(e.while).
 		WithContext(e.context)
 
 	return e, nil

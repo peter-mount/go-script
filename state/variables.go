@@ -69,11 +69,13 @@ func (v *variables) GlobalScope() Variables {
 }
 
 func (v *variables) Get(n string) (interface{}, bool) {
-	if r, exists := v.vars[n]; exists {
-		return r, true
-	}
-	if v.parent != nil {
-		return v.parent.Get(n)
+	if IsValidVariable(n) {
+		if r, exists := v.vars[n]; exists {
+			return r, true
+		}
+		if v.parent != nil {
+			return v.parent.Get(n)
+		}
 	}
 	return nil, false
 }
