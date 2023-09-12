@@ -23,7 +23,8 @@ ForRange = "for" <ident> "," <ident> ":"? "=" "range" Expression Statement .
 Repeat = "repeat" Statement "until" Expression .
 Return = "return" Expression? .
 Switch = "switch" Expression? "{" SwitchCase+ ("default" ":" Statement)? "}" .
-SwitchCase = "case" (<string> | Expression) ":" Statement .
+SwitchCase = "case" (SwitchCaseExpression ("," SwitchCaseExpression)*) ":" Statement .
+SwitchCaseExpression = (<string> | Expression) .
 While = "while" Expression Statement .
 Try = "try" ResourceList? Statement Catch? Finally? .
 ResourceList = "(" Expression (";" Expression)* ")" .
