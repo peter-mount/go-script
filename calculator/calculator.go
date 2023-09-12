@@ -58,6 +58,9 @@ type Calculator interface {
 	//
 	// Returns the top value of the stack at the end of the calculation,
 	// or nil if the stack was empty.
+	//
+	// The boolean returned is true if a value was returned, false if not, allowing for nil
+	// value to be returned from the calculation.
 	Calculate(t task.Task, ctx context.Context) (interface{}, bool, error)
 	// Exec is similar to Calculate but does not return a result.
 	Exec(t task.Task, ctx context.Context) error
