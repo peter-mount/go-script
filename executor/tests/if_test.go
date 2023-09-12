@@ -26,6 +26,66 @@ func Test_if(t *testing.T) {
 			expectedResult: false,
 		},
 		{
+			name:           "if 1",
+			script:         `main() { if 1 result=true else result=false }`,
+			expectedResult: true,
+		},
+		{
+			name:           "if 0",
+			script:         `main() { if 0 result=true else result=false }`,
+			expectedResult: false,
+		},
+		{
+			name:           "if 1.0",
+			script:         `main() { if 1.0 result=true else result=false }`,
+			expectedResult: true,
+		},
+		{
+			name:           "if 0.0",
+			script:         `main() { if 0.0 result=true else result=false }`,
+			expectedResult: false,
+		},
+		{
+			name:           `if "true"`,
+			script:         `main() { if "true" result=true else result=false }`,
+			expectedResult: true,
+		},
+		{
+			name:           `if "false"`,
+			script:         `main() { if "false" result=true else result=false }`,
+			expectedResult: false,
+		},
+		{
+			name:           `if "t"`,
+			script:         `main() { if "t" result=true else result=false }`,
+			expectedResult: true,
+		},
+		{
+			name:           `if "f"`,
+			script:         `main() { if "f" result=true else result=false }`,
+			expectedResult: false,
+		},
+		{
+			name:           `if "yes"`,
+			script:         `main() { if "yes" result=true else result=false }`,
+			expectedResult: true,
+		},
+		{
+			name:           `if "no"`,
+			script:         `main() { if "no" result=true else result=false }`,
+			expectedResult: false,
+		},
+		{
+			name:           `if "y"`,
+			script:         `main() { if "y" result=true else result=false }`,
+			expectedResult: true,
+		},
+		{
+			name:           `if "n"`,
+			script:         `main() { if "n" result=true else result=false }`,
+			expectedResult: false,
+		},
+		{
 			name:   "if a < b int",
 			script: `main() { if a < b result=true else result=false }`,
 			params: map[string]interface{}{
