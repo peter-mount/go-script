@@ -296,6 +296,9 @@ func (e *executor) primary(ctx context.Context) error {
 	case op.False:
 		e.calculator.Push(false)
 
+	case op.PreIncDec != nil:
+		return e.preIncDec(op.PreIncDec)
+
 	case op.PostIncDec != nil:
 		return e.postIncDec(op.PostIncDec)
 
@@ -351,6 +354,36 @@ func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interf
 	}
 
 	return v, nil
+}
+
+// preIncDec implements --i and ++i
+//
+// As per the C spec: --i is (i-=1) and ++i is (i+=1)
+func (e *executor) preIncDec(op *script.PreIncDec) (err error) {
+	// Get current value of variable
+	ident := op.Ident.Ident
+	value, exists := e.state.Get(ident)
+	if !exists {
+		return Errorf(op.Pos, "%q undefined", ident)
+	}
+
+	switch {
+	case op.Increment:
+		value, err = calculator.Add(value, 1)
+	case op.Decrement:
+		value, err = calculator.Subtract(value, 1)
+	default:
+		// Should never occur
+		err = Errorf(op.Pos, "Invalid postIncDec")
+	}
+
+	if err == nil {
+		// Save new value and use it
+		e.state.Set(ident, value)
+		e.calculator.Push(value)
+	}
+
+	return Error(op.Pos, err)
 }
 
 // postIncDec implements ident++ and ident--

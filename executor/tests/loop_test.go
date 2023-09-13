@@ -64,16 +64,30 @@ func Test_loops(t *testing.T) {
 		// FOR with post increment/decrement
 		// ===============
 		{
-			// Simple loop, result is value that failed the condition
 			name:           "for i++",
 			script:         `main() { for i:=1; i<10; i++ { result=i } }`,
 			initialResult:  -1,
 			expectedResult: 9,
 		},
 		{
-			// Simple loop, result is value that failed the condition
 			name:           "for i--",
 			script:         `main() { for i:=10; i>0; i-- { result=i } }`,
+			initialResult:  10,
+			expectedResult: 1,
+		},
+
+		// ===============
+		// FOR with pre increment/decrement
+		// ===============
+		{
+			name:           "for ++i",
+			script:         `main() { for i:=1; i<10; ++i { result=i } }`,
+			initialResult:  -1,
+			expectedResult: 9,
+		},
+		{
+			name:           "for --i",
+			script:         `main() { for i:=10; i>0; --i { result=i } }`,
 			initialResult:  10,
 			expectedResult: 1,
 		},

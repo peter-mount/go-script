@@ -160,6 +160,7 @@ type Primary struct {
 	True          bool        `parser:"  | @'true'"`
 	False         bool        `parser:"  | @'false'"`
 	SubExpression *Expression `parser:"  | '(' @@ ')' "`
+	PreIncDec     *PreIncDec  `parser:"  | @@"`
 	PostIncDec    *PostIncDec `parser:"  | @@"`
 	CallFunc      *CallFunc   `parser:"  | ( @@"`
 	Ident         *Ident      `parser:"  |   @@ "`
