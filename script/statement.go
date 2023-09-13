@@ -6,8 +6,7 @@ import (
 )
 
 type Statements struct {
-	Pos    lexer.Position
-	Parent *Statements // Parent when nested
+	Pos lexer.Position
 
 	Statements []*Statement `parser:"'{' @@* '}'"`
 }
@@ -25,9 +24,8 @@ func StatementsFromContext(ctx context.Context) *Statements {
 }
 
 type Statement struct {
-	Pos    lexer.Position
-	Parent *Statements // Parent when nested
-	Next   *Statement  // Next statement within Statements
+	Pos  lexer.Position
+	Next *Statement // Next statement within Statements block
 
 	Break    bool      `parser:"  @'break'"`
 	Continue bool      `parser:"| @'continue'"`

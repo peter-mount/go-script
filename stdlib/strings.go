@@ -3,6 +3,7 @@ package stdlib
 import (
 	"context"
 	"fmt"
+	error2 "github.com/peter-mount/go-script/error"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
@@ -22,11 +23,11 @@ func _len(e executor.Executor, call *script.CallFunc, ctx context.Context) (err 
 	// so convert that to a normal error
 	defer func() {
 		if err1 := recover(); err1 != nil {
-			err = executor.Errorf(call.Pos, "%v", err1)
+			err = error2.Errorf(call.Pos, "%v", err1)
 		}
 	}()
 
 	tv := reflect.ValueOf(arg[0])
 	ti := reflect.Indirect(tv)
-	return executor.NewReturn(ti.Len())
+	return error2.NewReturn(ti.Len())
 }

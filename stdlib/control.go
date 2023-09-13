@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peter-mount/go-script/calculator"
+	error2 "github.com/peter-mount/go-script/error"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 )
@@ -23,17 +24,17 @@ func _throw(e executor.Executor, call *script.CallFunc, ctx context.Context) err
 			} else if message, err1 := calculator.GetString(a[0]); err1 != nil {
 				err = err1
 			} else {
-				err = executor.Errorf(call.Pos, message)
+				err = error2.Errorf(call.Pos, message)
 			}
 
 		default:
 			if format, err1 := calculator.GetString(a[0]); err1 != nil {
 				err = err1
 			} else {
-				err = executor.Errorf(call.Pos, format, a[1:]...)
+				err = error2.Errorf(call.Pos, format, a[1:]...)
 			}
 		}
 	}
 
-	return executor.Error(call.Pos, err)
+	return error2.Error(call.Pos, err)
 }
