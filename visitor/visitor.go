@@ -7,29 +7,20 @@ import (
 )
 
 type Visitor interface {
-	VisitAddition(s *script.Addition) error
-	VisitAssignment(s *script.Assignment) error
 	VisitCallFunc(s *script.CallFunc) error
-	VisitComparison(s *script.Comparison) error
 	VisitDoWhile(s *script.DoWhile) error
-	VisitEquality(s *script.Equality) error
 	VisitExpression(s *script.Expression) error
 	VisitFor(s *script.For) error
 	VisitForRange(s *script.ForRange) error
 	VisitFuncDec(s *script.FuncDec) error
-	VisitLogic(s *script.Logic) error
 	VisitIf(s *script.If) error
-	VisitMultiplication(s *script.Multiplication) error
-	VisitPrimary(s *script.Primary) error
 	VisitRepeat(s *script.Repeat) error
 	VisitReturn(s *script.Return) error
 	VisitScript(script *script.Script) error
 	VisitStatement(s *script.Statement) error
 	VisitStatements(s *script.Statements) error
 	VisitSwitch(s *script.Switch) error
-	VisitTernary(s *script.Ternary) error
 	VisitTry(s *script.Try) error
-	VisitUnary(s *script.Unary) error
 	VisitWhile(s *script.While) error
 }
 
@@ -41,22 +32,14 @@ func FromContext(ctx context.Context) Visitor {
 // setup with 1 definition in visitorBuilder.WithContext with
 // go handling the copying, so we never miss an entry
 type visitorCommon struct {
-	addition         task.Task
-	assignment       task.Task
 	callFunc         task.Task
-	comparison       task.Task
-	equality         task.Task
+	doWhile          task.Task
 	expression       task.Task
-	expressionNoNest bool
 	forRange         task.Task
 	forStatement     task.Task
 	funcDec          task.Task
 	funcBody         task.Task
 	ifStatement      task.Task
-	logic            task.Task
-	multiplication   task.Task
-	primary          task.Task
-	doWhile          task.Task
 	repeatStatement  task.Task
 	returnStatement  task.Task
 	script           task.Task
@@ -64,9 +47,7 @@ type visitorCommon struct {
 	statements       task.Task
 	statementsNoNest bool
 	switchStatement  task.Task
-	ternary          task.Task
 	try              task.Task
-	unary            task.Task
 	whileStatement   task.Task
 }
 

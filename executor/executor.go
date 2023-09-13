@@ -46,29 +46,19 @@ func New(s *script.Script) (Executor, error) {
 	e.context = execState.WithContext(context.Background())
 
 	e.visitor = visitor.New().
-		Addition(e.addition).
-		Assignment(e.assignment).
 		CallFunc(e.callFunc).
-		Logic(e.logic).
-		Comparison(e.comparison).
-		Equality(e.equality).
+		DoWhile(e.doWhile).
 		Expression(e.expression).
-		ExpressionNoNest().
 		For(e.forStatement).
 		ForRange(e.forRange).
 		If(e.ifStatement).
-		Multiplication(e.multiplication).
-		Primary(e.primary).
-		DoWhile(e.doWhile).
 		Repeat(e.repeatUntil).
 		Return(e.returnStatement).
 		Statement(e.statement).
 		Statements(e.statements).
 		StatementsNoNest().
 		Switch(e.switchStatement).
-		Ternary(e.ternary).
 		Try(e.try).
-		Unary(e.unary).
 		While(e.while).
 		WithContext(e.context)
 
