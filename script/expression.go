@@ -136,7 +136,7 @@ type Unary struct {
 	Pos lexer.Position
 
 	Op    string   `parser:"  ( @( '!' | '-' )"`
-	Left  *Unary   `parser:"    @@ )"`
+	Left  *Primary `parser:"    @@ )"`
 	Right *Primary `parser:"| @@"`
 }
 
@@ -160,6 +160,7 @@ type Primary struct {
 	True          bool        `parser:"  | @'true'"`
 	False         bool        `parser:"  | @'false'"`
 	SubExpression *Expression `parser:"  | '(' @@ ')' "`
+	PostIncDec    *PostIncDec `parser:"  | @@"`
 	CallFunc      *CallFunc   `parser:"  | ( @@"`
 	Ident         *Ident      `parser:"  |   @@ "`
 	PointOp       string      `parser:"    ) [ @Period"`
@@ -187,4 +188,22 @@ type KeyValue struct {
 
 	Key   string      `parser:"@String"`
 	Value *Expression `parser:"':' @@"`
+}
+
+// PreIncDec implements ++ident, --ident
+type PreIncDec struct {
+	Pos lexer.Position
+
+	Decrement bool   `parser:"( @('-' '-')"`
+	Increment bool   `parser:"| @('+' '+') )"`
+	Ident     *Ident `parser:"@@"`
+}
+
+// PostIncDec implements ident++, ident--
+type PostIncDec struct {
+	Pos lexer.Position
+
+	Ident     *Ident `parser:"@@"`
+	Decrement bool   `parser:"( @('-' '-')"`
+	Increment bool   `parser:"| @('+' '+') )"`
 }

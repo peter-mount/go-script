@@ -255,7 +255,7 @@ func (e *executor) unary(ctx context.Context) error {
 	op := script.UnaryFromContext(ctx)
 
 	if op.Left != nil {
-		err := e.visitor.VisitUnary(op.Left)
+		err := e.visitor.VisitPrimary(op.Left)
 		if err == nil {
 			err = e.calculator.Op1(op.Op)
 		}
@@ -296,6 +296,9 @@ func (e *executor) primary(ctx context.Context) error {
 	case op.False:
 		e.calculator.Push(false)
 
+	case op.PostIncDec != nil:
+		return e.postIncDec(op.PostIncDec)
+
 	case op.Ident != nil && op.Ident.Ident != "":
 		v, err := e.resolveIdent(op, ctx)
 		if err != nil {
@@ -325,9 +328,10 @@ func (e *executor) primary(ctx context.Context) error {
 }
 
 func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interface{}, error) {
-	v, exists := e.state.Get(op.Ident.Ident)
+	ident := op.Ident.Ident
+	v, exists := e.state.Get(ident)
 	if !exists {
-		return nil, Errorf(op.Pos, "%q undefined", op.Ident)
+		return nil, Errorf(op.Pos, "%q undefined", ident)
 	}
 
 	// Handle arrays
@@ -347,4 +351,35 @@ func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interf
 	}
 
 	return v, nil
+}
+
+// postIncDec implements ident++ and ident--
+// where the current value of ident is returned but the variable
+// is then incremented or decremented afterwards.
+func (e *executor) postIncDec(op *script.PostIncDec) (err error) {
+	// Get current value of variable
+	ident := op.Ident.Ident
+	value, exists := e.state.Get(ident)
+	if !exists {
+		return Errorf(op.Pos, "%q undefined", ident)
+	}
+
+	newValue := value
+	switch {
+	case op.Increment:
+		newValue, err = calculator.Add(value, 1)
+	case op.Decrement:
+		newValue, err = calculator.Subtract(value, 1)
+	default:
+		// Should never occur
+		err = Errorf(op.Pos, "Invalid postIncDec")
+	}
+
+	if err == nil {
+		// Save new value but use the original value
+		e.state.Set(ident, newValue)
+		e.calculator.Push(value)
+	}
+
+	return Error(op.Pos, err)
 }
