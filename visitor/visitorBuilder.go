@@ -16,8 +16,6 @@ type Builder interface {
 	Expression(t task.Task) Builder
 	For(t task.Task) Builder
 	ForRange(t task.Task) Builder
-	// FuncBody adds a task to invoke for each FuncBody object
-	FuncBody(t task.Task) Builder
 	// FuncDec adds a task to invoke for each FuncDec object
 	FuncDec(t task.Task) Builder
 	If(t task.Task) Builder
@@ -71,11 +69,6 @@ func (b *builder) ForRange(t task.Task) Builder {
 
 func (b *builder) FuncDec(t task.Task) Builder {
 	b.funcDec = b.funcDec.Then(t)
-	return b
-}
-
-func (b *builder) FuncBody(t task.Task) Builder {
-	b.funcBody = b.funcBody.Then(t)
 	return b
 }
 

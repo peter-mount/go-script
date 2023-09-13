@@ -38,7 +38,6 @@ type visitorCommon struct {
 	forRange         task.Task
 	forStatement     task.Task
 	funcDec          task.Task
-	funcBody         task.Task
 	ifStatement      task.Task
 	repeatStatement  task.Task
 	returnStatement  task.Task
