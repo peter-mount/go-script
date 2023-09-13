@@ -22,10 +22,10 @@ func ExpressionFromContext(ctx context.Context) *Expression {
 type Assignment struct {
 	Pos lexer.Position
 
-	Left    *Ternary `parser:"@@"`        // Expression or ident/reference to value to set
-	Declare bool     `parser:"( @(':')?"` // := to declare in local scope, unset to use outer if already defined
-	Op      string   `parser:"  @'='"`    // assign value
-	Right   *Ternary `parser:"  @@ )?"`   // Expression to define value
+	Left    *Ternary    `parser:"@@"`        // Expression or ident/reference to value to set
+	Declare bool        `parser:"( @(':')?"` // := to declare in local scope, unset to use outer if already defined
+	Op      string      `parser:"  @'='"`    // assign value
+	Right   *Assignment `parser:"  @@ )?"`   // Expression to define value
 }
 
 func (op *Assignment) WithContext(ctx context.Context) context.Context {

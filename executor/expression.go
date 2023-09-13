@@ -56,7 +56,7 @@ func (e *executor) assignment(ctx context.Context) error {
 			// POVS = plain old variable setter
 
 			// Process RHS to get value
-			err := e.visitor.VisitTernary(op.Right)
+			err := e.visitor.VisitAssignment(op.Right)
 			if err != nil {
 				return Error(op.Pos, err)
 			}
@@ -96,7 +96,7 @@ func (e *executor) assignment(ctx context.Context) error {
 			vT := vV.Type()
 
 			// Process RHS to get value
-			err = e.visitor.VisitTernary(op.Right)
+			err = e.visitor.VisitAssignment(op.Right)
 			if err != nil {
 				return Error(op.Pos, err)
 			}
