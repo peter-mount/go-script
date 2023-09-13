@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"github.com/peter-mount/go-script/calculator"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
 )
@@ -13,7 +14,7 @@ func (e *executor) expression(ctx context.Context) error {
 	if op.Right != nil {
 		v, exists, err := e.calculator.Calculate(e.assignment, op.Right.WithContext(ctx))
 		if err != nil {
-			return Error(op.Pos, err)
+			return errors.Error(op.Pos, err)
 		}
 		if exists {
 			e.calculator.Push(v)
@@ -47,7 +48,7 @@ func (e *executor) assignment(ctx context.Context) error {
 		}
 
 		if primary == nil || primary.Ident == nil || primary.Ident.Ident == "" {
-			return Errorf(op.Pos, "Assignment without target")
+			return errors.Errorf(op.Pos, "Assignment without target")
 		}
 
 		name := primary.Ident.Ident
@@ -58,19 +59,19 @@ func (e *executor) assignment(ctx context.Context) error {
 			// Process RHS to get value
 			err := e.assignment(op.Right.WithContext(ctx))
 			if err != nil {
-				return Error(op.Pos, err)
+				return errors.Error(op.Pos, err)
 			}
 
 			v, err := e.calculator.Peek()
 			if err != nil {
-				return Error(op.Pos, err)
+				return errors.Error(op.Pos, err)
 			}
 
 			// Augmented assignment
 			if op.AugmentedOp != nil {
 				v0, ok := e.state.Get(name)
 				if !ok {
-					return Errorf(op.Pos, "%q undefined", name)
+					return errors.Errorf(op.Pos, "%q undefined", name)
 				}
 
 				// calculate existing op v to get the true new value
@@ -82,7 +83,7 @@ func (e *executor) assignment(ctx context.Context) error {
 					v, err1 = calc.Pop()
 				}
 				if err1 != nil {
-					return Error(op.Pos, err1)
+					return errors.Error(op.Pos, err1)
 				}
 			}
 
@@ -99,11 +100,11 @@ func (e *executor) assignment(ctx context.Context) error {
 			}
 		} else {
 			v, err := e.resolveIdent(primary, ctx)
-			if err != nil && !IsNoFieldErr(err) {
-				return Error(op.Pos, err)
+			if err != nil && !errors.IsNoFieldErr(err) {
+				return errors.Error(op.Pos, err)
 			}
 
-			if nfe, ok := GetNoFieldErr(err); ok {
+			if nfe, ok := errors.GetNoFieldErr(err); ok {
 				v = nfe.Value()
 				name = nfe.Name()
 				err = nil
@@ -111,19 +112,19 @@ func (e *executor) assignment(ctx context.Context) error {
 
 			vV := reflect.ValueOf(v)
 			if vV.IsNil() {
-				return Errorf(op.Pos, "Cannot set nil")
+				return errors.Errorf(op.Pos, "Cannot set nil")
 			}
 			vT := vV.Type()
 
 			// Process RHS to get value
 			err = e.assignment(op.Right.WithContext(ctx))
 			if err != nil {
-				return Error(op.Pos, err)
+				return errors.Error(op.Pos, err)
 			}
 
 			setV, err := e.calculator.Peek()
 			if err != nil {
-				return Error(op.Pos, err)
+				return errors.Error(op.Pos, err)
 			}
 
 			switch vT.Kind() {
@@ -135,17 +136,17 @@ func (e *executor) assignment(ctx context.Context) error {
 				if f.IsValid() && f.CanSet() {
 					f.Set(reflect.ValueOf(setV))
 				} else {
-					return Errorf(op.Pos, "Cannot set %q on %T", name, setV)
+					return errors.Errorf(op.Pos, "Cannot set %q on %T", name, setV)
 				}
 
 			default:
-				return Errorf(op.Pos, "Cannot set %T", setV)
+				return errors.Errorf(op.Pos, "Cannot set %T", setV)
 			}
 		}
 
 		return nil
 	} else {
-		return Error(op.Pos, e.ternary(op.Left.WithContext(ctx)))
+		return errors.Error(op.Pos, e.ternary(op.Left.WithContext(ctx)))
 	}
 }
 
@@ -168,7 +169,7 @@ func (e *executor) ternary(ctx context.Context) (err error) {
 			}
 		}
 	}
-	return Error(op.Pos, err)
+	return errors.Error(op.Pos, err)
 }
 
 func (e *executor) logic(ctx context.Context) error {
@@ -186,7 +187,7 @@ func (e *executor) logic(ctx context.Context) error {
 	}
 
 	if err != nil {
-		return Error(op.Pos, err)
+		return errors.Error(op.Pos, err)
 	}
 	return nil
 }
@@ -206,7 +207,7 @@ func (e *executor) equality(ctx context.Context) error {
 	}
 
 	if err != nil {
-		return Error(op.Pos, err)
+		return errors.Error(op.Pos, err)
 	}
 	return nil
 }
@@ -226,7 +227,7 @@ func (e *executor) comparison(ctx context.Context) error {
 	}
 
 	if err != nil {
-		return Error(op.Pos, err)
+		return errors.Error(op.Pos, err)
 	}
 	return nil
 }
@@ -246,7 +247,7 @@ func (e *executor) addition(ctx context.Context) error {
 	}
 
 	if err != nil {
-		return Error(op.Pos, err)
+		return errors.Error(op.Pos, err)
 	}
 	return nil
 }
@@ -266,7 +267,7 @@ func (e *executor) multiplication(ctx context.Context) error {
 	}
 
 	if err != nil {
-		return Error(op.Pos, err)
+		return errors.Error(op.Pos, err)
 	}
 	return nil
 }
@@ -280,12 +281,12 @@ func (e *executor) unary(ctx context.Context) error {
 			err = e.calculator.Op1(op.Op)
 		}
 		if err != nil {
-			return Error(op.Pos, err)
+			return errors.Error(op.Pos, err)
 		}
 	}
 
 	if op.Right != nil {
-		return Error(op.Pos, e.primary(op.Right.WithContext(ctx)))
+		return errors.Error(op.Pos, e.primary(op.Right.WithContext(ctx)))
 	}
 
 	return nil
@@ -305,7 +306,7 @@ func (e *executor) primary(ctx context.Context) error {
 		e.calculator.Push(*op.String)
 
 	case op.CallFunc != nil:
-		return Error(op.Pos, e.visitor.VisitCallFunc(op.CallFunc))
+		return errors.Error(op.Pos, e.visitor.VisitCallFunc(op.CallFunc))
 
 	case op.Null, op.Nil:
 		e.calculator.Push(nil)
@@ -325,22 +326,22 @@ func (e *executor) primary(ctx context.Context) error {
 	case op.Ident != nil && op.Ident.Ident != "":
 		v, err := e.resolveIdent(op, ctx)
 		if err != nil {
-			return Error(op.Pos, err)
+			return errors.Error(op.Pos, err)
 		}
 
 		// Just push variable onto stack
 		e.calculator.Push(v)
 
 	case op.SubExpression != nil:
-		return Error(op.Pos, e.expression(op.SubExpression.WithContext(ctx)))
+		return errors.Error(op.Pos, e.expression(op.SubExpression.WithContext(ctx)))
 
 	case op.KeyValue != nil:
-		if err := Error(op.Pos, e.expression(op.KeyValue.Value.WithContext(ctx))); err != nil {
+		if err := errors.Error(op.Pos, e.expression(op.KeyValue.Value.WithContext(ctx))); err != nil {
 			return err
 		}
 
 		if val, err := e.calculator.Pop(); err != nil {
-			return Error(op.KeyValue.Pos, err)
+			return errors.Error(op.KeyValue.Pos, err)
 		} else {
 			e.calculator.Push(calculator.NewKeyValue(op.KeyValue.Key, val))
 		}
@@ -354,7 +355,7 @@ func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interf
 	ident := op.Ident.Ident
 	v, exists := e.state.Get(ident)
 	if !exists {
-		return nil, Errorf(op.Pos, "%q undefined", ident)
+		return nil, errors.Errorf(op.Pos, "%q undefined", ident)
 	}
 
 	// Handle arrays
@@ -365,12 +366,12 @@ func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interf
 		v, err = e.getReferenceImpl(op.Pointer, v, ctx)
 	}
 
-	if IsNoFieldErr(err) {
+	if errors.IsNoFieldErr(err) {
 		return v, err
 	}
 
 	if err != nil {
-		return nil, Error(op.Pos, err)
+		return nil, errors.Error(op.Pos, err)
 	}
 
 	return v, nil
@@ -384,7 +385,7 @@ func (e *executor) preIncDec(op *script.PreIncDec) (err error) {
 	ident := op.Ident.Ident
 	value, exists := e.state.Get(ident)
 	if !exists {
-		return Errorf(op.Pos, "%q undefined", ident)
+		return errors.Errorf(op.Pos, "%q undefined", ident)
 	}
 
 	switch {
@@ -394,7 +395,7 @@ func (e *executor) preIncDec(op *script.PreIncDec) (err error) {
 		value, err = calculator.Subtract(value, 1)
 	default:
 		// Should never occur
-		err = Errorf(op.Pos, "Invalid postIncDec")
+		err = errors.Errorf(op.Pos, "Invalid postIncDec")
 	}
 
 	if err == nil {
@@ -403,7 +404,7 @@ func (e *executor) preIncDec(op *script.PreIncDec) (err error) {
 		e.calculator.Push(value)
 	}
 
-	return Error(op.Pos, err)
+	return errors.Error(op.Pos, err)
 }
 
 // postIncDec implements ident++ and ident--
@@ -414,7 +415,7 @@ func (e *executor) postIncDec(op *script.PostIncDec) (err error) {
 	ident := op.Ident.Ident
 	value, exists := e.state.Get(ident)
 	if !exists {
-		return Errorf(op.Pos, "%q undefined", ident)
+		return errors.Errorf(op.Pos, "%q undefined", ident)
 	}
 
 	newValue := value
@@ -425,7 +426,7 @@ func (e *executor) postIncDec(op *script.PostIncDec) (err error) {
 		newValue, err = calculator.Subtract(value, 1)
 	default:
 		// Should never occur
-		err = Errorf(op.Pos, "Invalid postIncDec")
+		err = errors.Errorf(op.Pos, "Invalid postIncDec")
 	}
 
 	if err == nil {
@@ -434,5 +435,5 @@ func (e *executor) postIncDec(op *script.PostIncDec) (err error) {
 		e.calculator.Push(value)
 	}
 
-	return Error(op.Pos, err)
+	return errors.Error(op.Pos, err)
 }

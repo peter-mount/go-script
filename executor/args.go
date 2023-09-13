@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"math"
 )
@@ -19,11 +20,11 @@ func Args(e Executor, call *script.CallFunc, ctx context.Context) ([]interface{}
 			}, ctx)
 			switch {
 			case err != nil:
-				return nil, Error(arg.Pos, err)
+				return nil, errors.Error(arg.Pos, err)
 			case valReturned:
 				a = append(a, val)
 			default:
-				return nil, Errorf(arg.Pos, "no value returned")
+				return nil, errors.Errorf(arg.Pos, "no value returned")
 			}
 		}
 	}
@@ -61,12 +62,12 @@ func (f Function) RequireArgsRange(min, max int) Function {
 		}
 		switch {
 		case min == max && l != min:
-			return Errorf(call.Pos, "%s requires %d arguments")
+			return errors.Errorf(call.Pos, "%s requires %d arguments")
 
 		case l < min:
-			return Errorf(call.Pos, "%s requires minimum of %d arguments")
+			return errors.Errorf(call.Pos, "%s requires minimum of %d arguments")
 		case l > max:
-			return Errorf(call.Pos, "%s requires maximum of %d arguments")
+			return errors.Errorf(call.Pos, "%s requires maximum of %d arguments")
 		}
 		return nil
 	})

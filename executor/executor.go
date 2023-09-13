@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/calculator"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/state"
 	"github.com/peter-mount/go-script/visitor"
@@ -68,7 +69,7 @@ func New(s *script.Script) (Executor, error) {
 func (e *executor) Run() error {
 	main, hasMain := e.state.GetFunction(lexer.Position{}, "main")
 	if !hasMain {
-		return Errorf(e.script.Pos, "main() function not defined")
+		return errors.Errorf(e.script.Pos, "main() function not defined")
 	}
 
 	err := e.functionImpl(main, nil)
@@ -76,8 +77,8 @@ func (e *executor) Run() error {
 	// Pass err unless it's return, break or continue.
 	// break should happen lower down but this catches it, so it doesn't
 	// exit the function call
-	if err != nil && !(IsReturn(err) || IsBreak(err)) || IsContinue(err) {
-		return Error(e.script.Pos, err)
+	if err != nil && !(errors.IsReturn(err) || errors.IsBreak(err)) || errors.IsContinue(err) {
+		return errors.Error(e.script.Pos, err)
 	}
 
 	return nil

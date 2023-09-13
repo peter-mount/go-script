@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
+	"strings"
 	"testing"
 )
 
@@ -13,6 +14,7 @@ func Test_break_continue(t *testing.T) {
 		script         string
 		initialResult  int
 		expectedResult int
+		expectedError  string
 	}{
 		{
 			// break after first iteration
@@ -49,12 +51,35 @@ func Test_break_continue(t *testing.T) {
 			initialResult:  -1,
 			expectedResult: 5,
 		},
+		{
+			// Test we do not allow break outside a loop
+			name:          "invalid break",
+			script:        `main() { break for i:=0;i<10;i=i+1 { if i>5 continue result=i } }`,
+			expectedError: "break not allowed here",
+		},
+		{
+			// Test we do not allow continue outside a loop
+			name:          "invalid continue",
+			script:        `main() { continue for i:=0;i<10;i=i+1 { if i>5 continue result=i } }`,
+			expectedError: "continue not allowed here",
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
 			p, err := parser.New().ParseString(test.name, test.script)
-			if err != nil {
+			if test.expectedError != "" {
+				if err == nil {
+					t.Fatalf("expected %q but got no error", test.expectedError)
+				} else {
+					msg := err.Error()
+					if !strings.Contains(msg, test.expectedError) {
+						t.Fatalf("expected %q but got %q", test.expectedError, msg)
+					}
+				}
+				// We stop the test here as we got the expectedError or not
+				return
+			} else if err != nil {
 				t.Fatal(err)
 				return
 			}

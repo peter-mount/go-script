@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peter-mount/go-script/calculator"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
 )
@@ -11,14 +12,14 @@ import (
 func (e *executor) callFunc(ctx context.Context) error {
 	err := e.callFuncImpl(ctx)
 	// Handle return values
-	if ret, ok := err.(*ReturnError); ok {
+	if ret, ok := err.(*errors.ReturnError); ok {
 		e.calculator.Push(ret.Value())
 		return nil
 	}
 
 	// FIXME break and continue (when implemented) cannot be outside a loop
 	// Should not happen but capture breaks, so they don't leak out of the function
-	if IsBreak(err) || IsContinue(err) {
+	if errors.IsBreak(err) || errors.IsContinue(err) {
 		return nil
 	}
 
@@ -45,7 +46,7 @@ func (e *executor) callFuncImpl(ctx context.Context) error {
 		return err
 	}
 
-	return Error(f.Pos, e.functionImpl(f, args))
+	return errors.Error(f.Pos, e.functionImpl(f, args))
 }
 
 func (e *executor) ProcessParameters(cf *script.CallFunc, ctx context.Context) ([]interface{}, error) {
@@ -56,10 +57,10 @@ func (e *executor) ProcessParameters(cf *script.CallFunc, ctx context.Context) (
 		for _, p := range cf.Parameters.Args {
 			v, ok, err := e.calculator.Calculate(e.assignment, p.Right.WithContext(ctx))
 			if err != nil {
-				return nil, Error(p.Pos, err)
+				return nil, errors.Error(p.Pos, err)
 			}
 			if !ok {
-				return nil, Errorf(p.Pos, "No result from argument")
+				return nil, errors.Errorf(p.Pos, "No result from argument")
 			}
 			args = append(args, v)
 		}
@@ -84,7 +85,7 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 		e.state.Set(p, args[i])
 	}
 
-	return Error(f.Pos, e.visitor.VisitStatements(f.FunBody))
+	return errors.Error(f.Pos, e.visitor.VisitStatements(f.FunBody))
 }
 
 // callReflectFunc invokes a function within go from a script
@@ -103,7 +104,7 @@ func (e *executor) CallReflectFuncImpl(cf *script.CallFunc, f reflect.Value, arg
 	// Any panics get resolved to errors
 	defer func() {
 		if err1 := recover(); err1 != nil {
-			err = Errorf(cf.Pos, "%v", err1)
+			err = errors.Errorf(cf.Pos, "%v", err1)
 		}
 	}()
 
@@ -138,7 +139,7 @@ func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 	// Any panics get resolved to errors
 	defer func() {
 		if err1 := recover(); err1 != nil {
-			err = Errorf(cf.Pos, "ArgsToValues %v", err1)
+			err = errors.Errorf(cf.Pos, "ArgsToValues %v", err1)
 		}
 	}()
 
@@ -146,7 +147,7 @@ func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 	// Unlike go this is supported for any function call not just variadic
 	if cf.Parameters != nil && cf.Parameters.Variadic {
 		if len(args) == 0 {
-			return nil, Errorf(cf.Pos, "'...' with no arguments")
+			return nil, errors.Errorf(cf.Pos, "'...' with no arguments")
 		}
 
 		lArg := args[len(args)-1]
@@ -175,7 +176,7 @@ func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 		if argN < argC {
 			ret, err = e.castArg(ret, argV, tf.In(argN))
 			if err != nil {
-				return nil, Error(cf.Parameters.Args[argN].Pos, err)
+				return nil, errors.Error(cf.Parameters.Args[argN].Pos, err)
 			}
 		}
 	}
@@ -190,7 +191,7 @@ func (e *executor) ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []int
 		for i := len(ret); i < len(args); i++ {
 			ret, err = e.castArg(ret, args[i], variadicType)
 			if err != nil {
-				return nil, Error(cf.Parameters.Args[variadicIndex].Pos, err)
+				return nil, errors.Error(cf.Parameters.Args[variadicIndex].Pos, err)
 			}
 		}
 	}
@@ -232,18 +233,18 @@ func (e *executor) returnStatement(ctx context.Context) error {
 	ret := script.ReturnFromContext(ctx)
 
 	if ret.Result == nil {
-		return NewReturn(nil)
+		return errors.NewReturn(nil)
 	}
 
 	v, ok, err := e.calculator.Calculate(e.expression, ret.Result.WithContext(ctx))
 	if err != nil {
-		return Error(ret.Pos, err)
+		return errors.Error(ret.Pos, err)
 	}
 	if !ok {
-		return Errorf(ret.Pos, "No result from argument")
+		return errors.Errorf(ret.Pos, "No result from argument")
 	}
 
-	return NewReturn(v)
+	return errors.NewReturn(v)
 }
 
 var (

@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"github.com/peter-mount/go-script/calculator"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 )
 
@@ -44,7 +45,7 @@ func (e *executor) switchStatement(ctx context.Context) (err error) {
 
 	// Default clause if we get to this point
 	if op.Default != nil {
-		return Error(op.Pos, e.visitor.VisitStatement(op.Default))
+		return errors.Error(op.Pos, e.visitor.VisitStatement(op.Default))
 	}
 	return nil
 }
@@ -59,7 +60,7 @@ func (e *executor) switchCase(op *script.Switch, c *script.SwitchCase, hasLeft b
 	}
 
 	if b {
-		return true, Error(c.Pos, e.visitor.VisitStatement(c.Statement))
+		return true, errors.Error(c.Pos, e.visitor.VisitStatement(c.Statement))
 	}
 
 	return false, nil

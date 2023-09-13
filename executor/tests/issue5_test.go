@@ -121,7 +121,7 @@ func Test_issue_5(t *testing.T) {
 		},
 		// Test first resource is closed when second fails to create
 		{
-			name:   "error2",
+			name:   "errors",
 			script: `main() { try( res1; res2 ) { } }`,
 			resources: []*issue5resource{
 				{Id: 1},

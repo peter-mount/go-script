@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"github.com/peter-mount/go-kernel/v2/util/task"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"io"
 )
@@ -16,7 +17,7 @@ func (e *executor) try(ctx context.Context) (err error) {
 	// Any panics get resolved to errors
 	defer func() {
 		if err1 := recover(); err1 != nil {
-			err = Errorf(op.Pos, "%v", err1)
+			err = errors.Errorf(op.Pos, "%v", err1)
 		}
 	}()
 
@@ -31,11 +32,11 @@ func (e *executor) try(ctx context.Context) (err error) {
 
 	err = e.tryBody(op, ctx)
 	if err != nil {
-		if IsReturn(err) {
+		if errors.IsReturn(err) {
 			return err
 		}
 
-		err = Error(op.Pos, err)
+		err = errors.Error(op.Pos, err)
 
 		// If catch then consume the error and pass it to the catch block
 		if op.Catch != nil {
@@ -44,7 +45,7 @@ func (e *executor) try(ctx context.Context) (err error) {
 				e.state.Declare(op.Catch.CatchIdent)
 				e.state.Set(op.Catch.CatchIdent, err.Error())
 			}
-			err = Error(op.Pos, e.visitor.VisitStatement(op.Catch.Statement))
+			err = errors.Error(op.Pos, e.visitor.VisitStatement(op.Catch.Statement))
 		}
 	}
 
@@ -76,7 +77,7 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 		for _, init := range op.Init.Resources {
 			// Wrap visit to expression, so we don't leak return values on the stack
 			val, ok, err := e.calculator.Calculate(func(_ context.Context) error {
-				return Error(init.Pos, e.visitor.VisitExpression(init))
+				return errors.Error(init.Pos, e.visitor.VisitExpression(init))
 			}, ctx)
 			if err != nil {
 				return err
@@ -89,7 +90,7 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 				// -----------------------------------------------------------------
 				if cl, ok := val.(CreateCloser); ok {
 					if err := cl.Create(); err != nil {
-						return Error(init.Pos, err)
+						return errors.Error(init.Pos, err)
 					}
 				}
 
@@ -107,7 +108,7 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	// Finally add the body to the action task
 	if op.Body != nil {
 		action = action.Then(func(_ context.Context) error {
-			return Error(op.Pos, e.visitor.VisitStatement(op.Body))
+			return errors.Error(op.Pos, e.visitor.VisitStatement(op.Body))
 		})
 	}
 

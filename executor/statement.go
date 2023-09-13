@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 )
 
@@ -21,7 +22,7 @@ func (e *executor) statements(ctx context.Context) error {
 	s := statements.Statements[0]
 	for s != nil {
 		if err := e.visitor.VisitStatement(s); err != nil {
-			return Error(s.Pos, err)
+			return errors.Error(s.Pos, err)
 		}
 		s = s.Next
 	}
@@ -41,45 +42,45 @@ func (e *executor) statement(ctx context.Context) error {
 	case statement.Expression != nil:
 		// Wrap visit to expression, so we don't leak return values on the stack
 		_, _, err := e.calculator.Calculate(func(_ context.Context) error {
-			return Error(statement.Pos, e.visitor.VisitExpression(statement.Expression))
+			return errors.Error(statement.Pos, e.visitor.VisitExpression(statement.Expression))
 		}, ctx)
 		return err
 
 	case statement.For != nil:
-		return Error(statement.Pos, e.visitor.VisitFor(statement.For))
+		return errors.Error(statement.Pos, e.visitor.VisitFor(statement.For))
 
 	case statement.ForRange != nil:
-		return Error(statement.Pos, e.visitor.VisitForRange(statement.ForRange))
+		return errors.Error(statement.Pos, e.visitor.VisitForRange(statement.ForRange))
 
 	case statement.IfStmt != nil:
-		return Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
+		return errors.Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
 
 	case statement.DoWhile != nil:
-		return Error(statement.Pos, e.visitor.VisitDoWhile(statement.DoWhile))
+		return errors.Error(statement.Pos, e.visitor.VisitDoWhile(statement.DoWhile))
 
 	case statement.Repeat != nil:
-		return Error(statement.Pos, e.visitor.VisitRepeat(statement.Repeat))
+		return errors.Error(statement.Pos, e.visitor.VisitRepeat(statement.Repeat))
 
 	case statement.While != nil:
-		return Error(statement.Pos, e.visitor.VisitWhile(statement.While))
+		return errors.Error(statement.Pos, e.visitor.VisitWhile(statement.While))
 
 	case statement.Return != nil:
-		return Error(statement.Pos, e.visitor.VisitReturn(statement.Return))
+		return errors.Error(statement.Pos, e.visitor.VisitReturn(statement.Return))
 
 	case statement.Break:
-		return Break()
+		return errors.Break()
 
 	case statement.Continue:
-		return Continue()
+		return errors.Continue()
 
 	case statement.Switch != nil:
-		return Error(statement.Pos, e.visitor.VisitSwitch(statement.Switch))
+		return errors.Error(statement.Pos, e.visitor.VisitSwitch(statement.Switch))
 
 	case statement.Try != nil:
-		return Error(statement.Pos, e.visitor.VisitTry(statement.Try))
+		return errors.Error(statement.Pos, e.visitor.VisitTry(statement.Try))
 
 	default:
 		// This will fail if we add a new statement, but it's not yet implemented.
-		return Errorf(statement.Pos, "unimplemented statement reached")
+		return errors.Errorf(statement.Pos, "unimplemented statement reached")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/peter-mount/go-script/calculator"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
 	"sync"
@@ -76,7 +77,7 @@ func Lookup(name string) (Function, bool) {
 // This is common for mathematical functions
 func RegisterFloat1(name string, f func(float64) float64) {
 	Register(name, func(e Executor, call *script.CallFunc, ctx context.Context) error {
-		return Error(call.Pos, float1(f, e, call, ctx))
+		return errors.Error(call.Pos, float1(f, e, call, ctx))
 	})
 }
 
@@ -84,7 +85,7 @@ func RegisterFloat1(name string, f func(float64) float64) {
 // This is common for mathematical functions
 func RegisterFloat2(name string, f func(float64, float64) float64) {
 	Register(name, func(e Executor, call *script.CallFunc, ctx context.Context) error {
-		return Error(call.Pos, float2(f, e, call, ctx))
+		return errors.Error(call.Pos, float2(f, e, call, ctx))
 	})
 }
 
@@ -102,7 +103,7 @@ func float1(f func(float64) float64, e Executor, call *script.CallFunc, ctx cont
 		return err
 	}
 
-	return NewReturn(f(af))
+	return errors.NewReturn(f(af))
 }
 
 func float2(f func(float64, float64) float64, e Executor, call *script.CallFunc, ctx context.Context) error {
@@ -129,7 +130,7 @@ func float2(f func(float64, float64) float64, e Executor, call *script.CallFunc,
 		return err
 	}
 
-	return NewReturn(f(af, bf))
+	return errors.NewReturn(f(af, bf))
 }
 
 func FuncDelegate(f any) Function {
@@ -150,22 +151,22 @@ func FuncDelegate(f any) Function {
 		numIn := fT.NumIn()
 
 		if fT.IsVariadic() && argC < (numIn-1) {
-			return Errorf(call.Pos, "%n requires at least %d parameters", call.Name, numIn)
+			return errors.Errorf(call.Pos, "%n requires at least %d parameters", call.Name, numIn)
 		}
 		if !fT.IsVariadic() && argC != fT.NumIn() {
-			return Errorf(call.Pos, "%n requires %d parameters", call.Name, numIn)
+			return errors.Errorf(call.Pos, "%n requires %d parameters", call.Name, numIn)
 		}
 
 		// Process arguments
 		args, err := e.ProcessParameters(call, ctx)
 		if err != nil {
-			return Error(call.Pos, err)
+			return errors.Error(call.Pos, err)
 		}
 
 		// call method
 		ret, err := e.CallReflectFuncImpl(call, fV, args)
 		if err != nil {
-			return Error(call.Pos, err)
+			return errors.Error(call.Pos, err)
 		}
 
 		// Result on stack

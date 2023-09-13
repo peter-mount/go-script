@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/calculator"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"github.com/peter-mount/go-script/state"
 	"reflect"
@@ -22,7 +23,7 @@ func (e *executor) condition(expr *script.Expression, ctx context.Context, defau
 	}
 
 	b, err := calculator.GetBool(v)
-	return b, Error(expr.Pos, err)
+	return b, errors.Error(expr.Pos, err)
 }
 
 // breakOrContinue checks for errors, break and continue statements.
@@ -30,17 +31,17 @@ func (e *executor) condition(expr *script.Expression, ctx context.Context, defau
 // error will be the error to return, or nil if no error.
 func (e *executor) breakOrContinue(pos lexer.Position, err error) (bool, error) {
 	// Consume break and exit the loop
-	if IsBreak(err) {
+	if errors.IsBreak(err) {
 		return true, nil
 	}
 
 	// Consume continue
-	if IsContinue(err) {
+	if errors.IsContinue(err) {
 		return false, nil
 	}
 
 	// a normal error
-	return err != nil, Error(pos, err)
+	return err != nil, errors.Error(pos, err)
 }
 
 func (e *executor) ifStatement(ctx context.Context) error {
@@ -55,7 +56,7 @@ func (e *executor) ifStatement(ctx context.Context) error {
 		}
 	}
 
-	return Error(s.Pos, err)
+	return errors.Error(s.Pos, err)
 }
 
 // repeatUntil from basic etc. repeats body until condition is met.
@@ -107,14 +108,14 @@ func (e *executor) forLoop(p lexer.Position, init, conditionFirst *script.Expres
 	if init != nil {
 		err := e.visitor.VisitExpression(init)
 		if err != nil {
-			return Error(p, err)
+			return errors.Error(p, err)
 		}
 	}
 
 	for {
 		b, err := e.condition(conditionFirst, ctx, conditionResult)
 		if err != nil || b != conditionResult {
-			return Error(p, err)
+			return errors.Error(p, err)
 		}
 
 		if body != nil {
@@ -127,14 +128,14 @@ func (e *executor) forLoop(p lexer.Position, init, conditionFirst *script.Expres
 		if inc != nil {
 			err = e.visitor.VisitExpression(inc)
 			if err != nil {
-				return Error(p, err)
+				return errors.Error(p, err)
 			}
 		}
 
 		// conditionResult false then condition last
 		b, err = e.condition(conditionLast, ctx, conditionResult)
 		if err != nil || b != conditionResult {
-			return Error(p, err)
+			return errors.Error(p, err)
 		}
 	}
 }
@@ -155,7 +156,7 @@ func (e *executor) forRange(ctx context.Context) error {
 	// Evaluate expression
 	r, err := e.calculator.MustCalculate(e.expression, op.Expression.WithContext(ctx))
 	if err != nil {
-		return Error(op.Pos, err)
+		return errors.Error(op.Pos, err)
 	}
 
 	// Check for supported interfaces
@@ -177,7 +178,7 @@ func (e *executor) forRange(ctx context.Context) error {
 		return e.forSlice(op, ctx, ti)
 
 	default:
-		return Errorf(op.Expression.Pos, "cannot range over %T", r)
+		return errors.Errorf(op.Expression.Pos, "cannot range over %T", r)
 	}
 }
 
@@ -236,7 +237,7 @@ func (e *executor) forRangeEntry(key, val interface{}, op *script.ForRange, _ co
 		}
 	}
 
-	return Error(op.Pos, e.visitor.VisitStatement(op.Body))
+	return errors.Error(op.Pos, e.visitor.VisitStatement(op.Body))
 }
 
 type Iterator interface {
