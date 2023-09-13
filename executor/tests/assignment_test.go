@@ -3,7 +3,6 @@ package tests
 import (
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
-	"math"
 	"testing"
 )
 
@@ -53,6 +52,40 @@ func Test_assignment(t *testing.T) {
 			script:         `main() { a := (b := (c := 42)) result = a==b && b==c && c==42 }`,
 			expectedResult: true,
 		},
+
+		// ===============
+		// Augmented assignment
+		// ===============
+		{
+			name:           "augmented +=",
+			script:         `main() { result += 1 }`,
+			initialResult:  10,
+			expectedResult: 11,
+		},
+		{
+			name:           "augmented -=",
+			script:         `main() { result -= 1 }`,
+			initialResult:  11,
+			expectedResult: 10,
+		},
+		{
+			name:           "augmented *=",
+			script:         `main() { result *= 2 }`,
+			initialResult:  10,
+			expectedResult: 20,
+		},
+		{
+			name:           "augmented /=",
+			script:         `main() { result /= 2 }`,
+			initialResult:  10,
+			expectedResult: 5,
+		},
+		{
+			name:           "augmented %=",
+			script:         `main() { result %= 5 }`,
+			initialResult:  11,
+			expectedResult: 1,
+		},
 	}
 
 	for _, test := range tests {
@@ -73,11 +106,8 @@ func Test_assignment(t *testing.T) {
 			// Add each resource to the global scope
 			globals := exec.GlobalScope()
 
-			globals.Declare("initial")
-			globals.Set("initial", test.initialResult)
-
 			globals.Declare("result")
-			globals.Set("result", math.MinInt)
+			globals.Set("result", test.initialResult)
 
 			if test.params != nil {
 				for k, v := range test.params {

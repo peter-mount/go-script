@@ -66,6 +66,26 @@ func (e *executor) assignment(ctx context.Context) error {
 				return Error(op.Pos, err)
 			}
 
+			// Augmented assignment
+			if op.AugmentedOp != nil {
+				v0, ok := e.state.Get(name)
+				if !ok {
+					return Errorf(op.Pos, "%q undefined", name)
+				}
+
+				// calculate existing op v to get the true new value
+				calc := e.calculator
+				calc.Push(v0)
+				calc.Push(v)
+				err1 := calc.Op2(*op.AugmentedOp)
+				if err1 == nil {
+					v, err1 = calc.Pop()
+				}
+				if err1 != nil {
+					return Error(op.Pos, err1)
+				}
+			}
+
 			// Implicit declare, e.g. `:=` used
 			if op.Declare {
 				e.state.Declare(name)
