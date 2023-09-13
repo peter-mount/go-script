@@ -112,7 +112,7 @@ func (e *executor) CallReflectFuncImpl(cf *script.CallFunc, f reflect.Value, arg
 
 	ret0 := f.Call(argVals)
 
-	ret1, err := e.valuesToRet(cf, tf, ret0)
+	ret1, err := e.valuesToRet(tf, ret0)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (e *executor) castArg(ret []reflect.Value, arg interface{}, as reflect.Type
 	return append(ret, val), nil
 }
 
-func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []reflect.Value) (ret []interface{}, err error) {
+func (e *executor) valuesToRet(tf reflect.Type, retVal []reflect.Value) (ret []interface{}, err error) {
 
 	for i := 0; i < tf.NumOut(); i++ {
 		tOut := tf.Out(i)
