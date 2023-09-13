@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"fmt"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/errors"
@@ -15,13 +14,13 @@ var (
 	library = map[string]Function{}
 )
 
-type Function func(e Executor, call *script.CallFunc, ctx context.Context) error
+type Function func(e Executor, call *script.CallFunc) error
 
-func (f Function) Do(e Executor, call *script.CallFunc, ctx context.Context) error {
+func (f Function) Do(e Executor, call *script.CallFunc) error {
 	if f == nil {
 		return nil
 	}
-	return f(e, call, ctx)
+	return f(e, call)
 }
 
 func (f Function) Then(b Function) Function {
@@ -31,11 +30,11 @@ func (f Function) Then(b Function) Function {
 	if b == nil {
 		return f
 	}
-	return func(e Executor, call *script.CallFunc, ctx context.Context) error {
-		if err := f(e, call, ctx); err != nil {
+	return func(e Executor, call *script.CallFunc) error {
+		if err := f(e, call); err != nil {
 			return err
 		}
-		return b(e, call, ctx)
+		return b(e, call)
 	}
 }
 
@@ -76,21 +75,21 @@ func Lookup(name string) (Function, bool) {
 // RegisterFloat1 registers a function that accepts a float64 as its argument and returns a float64.
 // This is common for mathematical functions
 func RegisterFloat1(name string, f func(float64) float64) {
-	Register(name, func(e Executor, call *script.CallFunc, ctx context.Context) error {
-		return errors.Error(call.Pos, float1(f, e, call, ctx))
+	Register(name, func(e Executor, call *script.CallFunc) error {
+		return errors.Error(call.Pos, float1(f, e, call))
 	})
 }
 
 // RegisterFloat2 registers a function that accepts 2 float64's as arguments and returns a float64.
 // This is common for mathematical functions
 func RegisterFloat2(name string, f func(float64, float64) float64) {
-	Register(name, func(e Executor, call *script.CallFunc, ctx context.Context) error {
-		return errors.Error(call.Pos, float2(f, e, call, ctx))
+	Register(name, func(e Executor, call *script.CallFunc) error {
+		return errors.Error(call.Pos, float2(f, e, call))
 	})
 }
 
-func float1(f func(float64) float64, e Executor, call *script.CallFunc, ctx context.Context) error {
-	arg, err := Args(e, call, ctx)
+func float1(f func(float64) float64, e Executor, call *script.CallFunc) error {
+	arg, err := Args(e, call)
 	if err != nil {
 		return err
 	}
@@ -106,8 +105,8 @@ func float1(f func(float64) float64, e Executor, call *script.CallFunc, ctx cont
 	return errors.NewReturn(f(af))
 }
 
-func float2(f func(float64, float64) float64, e Executor, call *script.CallFunc, ctx context.Context) error {
-	arg, err := Args(e, call, ctx)
+func float2(f func(float64, float64) float64, e Executor, call *script.CallFunc) error {
+	arg, err := Args(e, call)
 	if err != nil {
 		return err
 	}
@@ -140,7 +139,7 @@ func FuncDelegate(f any) Function {
 		panic(fmt.Errorf("cannot create function delegate for %T", f))
 	}
 
-	return func(e Executor, call *script.CallFunc, ctx context.Context) error {
+	return func(e Executor, call *script.CallFunc) error {
 
 		// Validate argument count
 		argC := 0
@@ -158,7 +157,7 @@ func FuncDelegate(f any) Function {
 		}
 
 		// Process arguments
-		args, err := e.ProcessParameters(call, ctx)
+		args, err := e.ProcessParameters(call)
 		if err != nil {
 			return errors.Error(call.Pos, err)
 		}

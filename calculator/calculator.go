@@ -1,20 +1,12 @@
 package calculator
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"github.com/peter-mount/go-kernel/v2/util/task"
 	"strings"
 )
 
-const (
-	calculatorKey = "go-script/calculatorKey"
-)
-
 type Calculator interface {
-	// WithContext adds the Calculator to a Context
-	WithContext(ctx context.Context) context.Context
 	Reset() Calculator
 	// Push a value onto the stack
 	Push(v interface{}) Calculator
@@ -62,11 +54,11 @@ type Calculator interface {
 	//
 	// The boolean returned is true if a value was returned, false if not, allowing for nil
 	// value to be returned from the calculation.
-	Calculate(t task.Task, ctx context.Context) (interface{}, bool, error)
+	Calculate(t Task) (interface{}, bool, error)
 	// MustCalculate is the same as Calculate but an error is returned if no result was returned
-	MustCalculate(t task.Task, ctx context.Context) (interface{}, error)
+	MustCalculate(t Task) (interface{}, error)
 	// Exec is similar to Calculate but does not return a result.
-	Exec(t task.Task, ctx context.Context) error
+	Exec(t Task) error
 	// Process processes a series of Instruction's to perform a calculation
 	Process(instructions ...Instruction) error
 	// Dump returns the current stack as a string.
@@ -74,13 +66,13 @@ type Calculator interface {
 	Dump() string
 }
 
-// FromContext returns the Calculator associated with a Context
-func FromContext(ctx context.Context) Calculator {
-	c := ctx.Value(calculatorKey)
-	if c != nil {
-		return c.(*calculator)
+type Task func() error
+
+func (t Task) Do() error {
+	if t == nil {
+		return nil
 	}
-	return nil
+	return t()
 }
 
 // New Calculator
@@ -95,10 +87,6 @@ type state struct {
 
 type calculator struct {
 	state
-}
-
-func (c *calculator) WithContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, calculatorKey, c)
 }
 
 func (c *calculator) Reset() Calculator {
@@ -229,15 +217,15 @@ func (c *calculator) Op2(op string) error {
 
 var noResult = errors.New("no result returned")
 
-func (c *calculator) MustCalculate(t task.Task, ctx context.Context) (interface{}, error) {
-	v, ok, err := c.Calculate(t, ctx)
+func (c *calculator) MustCalculate(t Task) (interface{}, error) {
+	v, ok, err := c.Calculate(t)
 	if err == nil && !ok {
 		err = noResult
 	}
 	return v, err
 }
 
-func (c *calculator) Calculate(t task.Task, ctx context.Context) (interface{}, bool, error) {
+func (c *calculator) Calculate(t Task) (interface{}, bool, error) {
 	if c == nil {
 		return nil, false, nil
 	}
@@ -248,7 +236,7 @@ func (c *calculator) Calculate(t task.Task, ctx context.Context) (interface{}, b
 		c.state = oldState
 	}()
 
-	err := t.Do(ctx)
+	err := t.Do()
 	if err != nil {
 		return nil, false, err
 	}
@@ -258,8 +246,8 @@ func (c *calculator) Calculate(t task.Task, ctx context.Context) (interface{}, b
 	return v, err == nil, nil
 }
 
-func (c *calculator) Exec(t task.Task, ctx context.Context) error {
-	_, _, err := c.Calculate(t, ctx)
+func (c *calculator) Exec(t Task) error {
+	_, _, err := c.Calculate(t)
 	return err
 }
 

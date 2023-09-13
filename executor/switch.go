@@ -1,20 +1,17 @@
 package executor
 
 import (
-	"context"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 )
 
-func (e *executor) switchStatement(ctx context.Context) (err error) {
-	op := script.SwitchFromContext(ctx)
-
-	// if present calculate the first expression which we will compare against the case's
+func (e *executor) switchStatement(op *script.Switch) (err error) {
+	// if present calculate the first Expression which we will compare against the case's
 	var left interface{}
 	hasLeft := op.Expression != nil
 	if hasLeft {
-		left, err = e.calculator.MustCalculate(e.expression, op.Expression.WithContext(ctx))
+		left, err = e.calculator.MustCalculate(func() error { return e.Expression(op.Expression) })
 		if err != nil {
 			return
 		}
@@ -30,13 +27,13 @@ func (e *executor) switchStatement(ctx context.Context) (err error) {
 				right = *expr.String
 
 			case expr.Expression != nil:
-				right, err = e.calculator.MustCalculate(e.expression, expr.Expression.WithContext(ctx))
+				right, err = e.calculator.MustCalculate(func() error { return e.Expression(expr.Expression) })
 				if err != nil {
 					return
 				}
 			}
 
-			b, err = e.switchCase(op, c, hasLeft, left, right)
+			b, err = e.switchCase(c, hasLeft, left, right)
 			if b || err != nil {
 				return err
 			}
@@ -45,12 +42,12 @@ func (e *executor) switchStatement(ctx context.Context) (err error) {
 
 	// Default clause if we get to this point
 	if op.Default != nil {
-		return errors.Error(op.Pos, e.visitor.VisitStatement(op.Default))
+		return errors.Error(op.Pos, e.statement(op.Default))
 	}
 	return nil
 }
 
-func (e *executor) switchCase(op *script.Switch, c *script.SwitchCase, hasLeft bool, left, right interface{}) (bool, error) {
+func (e *executor) switchCase(c *script.SwitchCase, hasLeft bool, left, right interface{}) (bool, error) {
 	// Ignore errors here, they will be treated as false
 	b := false
 	if hasLeft {
@@ -60,7 +57,7 @@ func (e *executor) switchCase(op *script.Switch, c *script.SwitchCase, hasLeft b
 	}
 
 	if b {
-		return true, errors.Error(c.Pos, e.visitor.VisitStatement(c.Statement))
+		return true, errors.Error(c.Pos, e.statement(c.Statement))
 	}
 
 	return false, nil

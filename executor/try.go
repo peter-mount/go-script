@@ -8,9 +8,7 @@ import (
 	"io"
 )
 
-func (e *executor) try(ctx context.Context) (err error) {
-	op := script.TryFromContext(ctx)
-
+func (e *executor) try(op *script.Try) (err error) {
 	e.state.NewScope()
 	defer e.state.EndScope()
 
@@ -23,14 +21,14 @@ func (e *executor) try(ctx context.Context) (err error) {
 
 	if op.Finally != nil {
 		defer func() {
-			err1 := e.visitor.VisitStatement(op.Finally.Statement)
+			err1 := e.statement(op.Finally.Statement)
 			if err1 != nil {
 				err = err1
 			}
 		}()
 	}
 
-	err = e.tryBody(op, ctx)
+	err = e.tryBody(op)
 	if err != nil {
 		if errors.IsReturn(err) {
 			return err
@@ -45,7 +43,7 @@ func (e *executor) try(ctx context.Context) (err error) {
 				e.state.Declare(op.Catch.CatchIdent)
 				e.state.Set(op.Catch.CatchIdent, err.Error())
 			}
-			err = errors.Error(op.Pos, e.visitor.VisitStatement(op.Catch.Statement))
+			err = errors.Error(op.Pos, e.statement(op.Catch.Statement))
 		}
 	}
 
@@ -54,7 +52,7 @@ func (e *executor) try(ctx context.Context) (err error) {
 
 // tryBody runs any resources then the body.
 // Note resources will be closed before any catch/finally blocks
-func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
+func (e *executor) tryBody(op *script.Try) error {
 	// Scope for resources & body
 	e.state.NewScope()
 	defer e.state.EndScope()
@@ -66,7 +64,7 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	// means we still close any preceding resource in the resourceList
 	var deferables task.Task
 	defer func() {
-		_ = deferables.Do(ctx)
+		_ = deferables.Do(nil)
 	}()
 
 	// The action to perform
@@ -75,10 +73,10 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	// Configure any try-with-resources
 	if op.Init != nil {
 		for _, init := range op.Init.Resources {
-			// Wrap visit to expression, so we don't leak return values on the stack
-			val, ok, err := e.calculator.Calculate(func(_ context.Context) error {
-				return errors.Error(init.Pos, e.visitor.VisitExpression(init))
-			}, ctx)
+			// Wrap visit to Expression, so we don't leak return values on the stack
+			val, ok, err := e.calculator.Calculate(func() error {
+				return errors.Error(init.Pos, e.Expression(init))
+			})
 			if err != nil {
 				return err
 			}
@@ -108,12 +106,12 @@ func (e *executor) tryBody(op *script.Try, ctx context.Context) error {
 	// Finally add the body to the action task
 	if op.Body != nil {
 		action = action.Then(func(_ context.Context) error {
-			return errors.Error(op.Pos, e.visitor.VisitStatement(op.Body))
+			return errors.Error(op.Pos, e.statement(op.Body))
 		})
 	}
 
 	// Now execute the action. No need to add deferables as we have deferred its execution earlier
-	return action.Do(ctx)
+	return action.Do(nil)
 }
 
 // CreateCloser interface implemented by types that can be used as resources

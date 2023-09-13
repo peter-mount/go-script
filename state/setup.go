@@ -1,23 +1,21 @@
 package state
 
 import (
-	"context"
 	"fmt"
 	"github.com/peter-mount/go-script/script"
-	"github.com/peter-mount/go-script/visitor"
 	"strings"
 )
 
 func (s *state) setup() error {
-	return visitor.New().
-		FuncDec(s.declareFunction).
-		WithContext(context.Background()).
-		VisitScript(s.script)
+	for _, f := range s.script.FunDec {
+		if err := s.declareFunction(f); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (s *state) declareFunction(ctx context.Context) error {
-	f := script.FuncDecFromContext(ctx)
-
+func (s *state) declareFunction(f *script.FuncDec) error {
 	// If function name starts with _ then it's local so prefix with the filename
 	// so that it's not accessible from outside its own file.
 	//

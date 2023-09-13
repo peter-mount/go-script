@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"fmt"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/errors"
@@ -9,30 +8,24 @@ import (
 	"reflect"
 )
 
-func (e *executor) callFunc(ctx context.Context) error {
-	err := e.callFuncImpl(ctx)
+func (e *executor) callFunc(cf *script.CallFunc) error {
+	err := e.callFuncImpl(cf)
+
 	// Handle return values
 	if ret, ok := err.(*errors.ReturnError); ok {
 		e.calculator.Push(ret.Value())
 		return nil
 	}
 
-	// FIXME break and continue (when implemented) cannot be outside a loop
-	// Should not happen but capture breaks, so they don't leak out of the function
-	if errors.IsBreak(err) || errors.IsContinue(err) {
-		return nil
-	}
-
 	return err
 }
 
-func (e *executor) callFuncImpl(ctx context.Context) error {
-	cf := script.CallFuncFromContext(ctx)
+func (e *executor) callFuncImpl(cf *script.CallFunc) error {
 
 	// Lookup builtin functions
 	libFunc, exists := Lookup(cf.Name)
 	if exists {
-		return libFunc(e, cf, ctx)
+		return libFunc(e, cf)
 	}
 
 	// Lookup local function
@@ -41,7 +34,7 @@ func (e *executor) callFuncImpl(ctx context.Context) error {
 		return fmt.Errorf("%s function %q not defined", cf.Pos, cf.Name)
 	}
 
-	args, err := e.ProcessParameters(cf, ctx)
+	args, err := e.ProcessParameters(cf)
 	if err != nil {
 		return err
 	}
@@ -49,13 +42,15 @@ func (e *executor) callFuncImpl(ctx context.Context) error {
 	return errors.Error(f.Pos, e.functionImpl(f, args))
 }
 
-func (e *executor) ProcessParameters(cf *script.CallFunc, ctx context.Context) ([]interface{}, error) {
+func (e *executor) ProcessParameters(cf *script.CallFunc) ([]interface{}, error) {
 
 	// Process parameters
 	var args []interface{}
 	if cf.Parameters != nil {
 		for _, p := range cf.Parameters.Args {
-			v, ok, err := e.calculator.Calculate(e.assignment, p.Right.WithContext(ctx))
+			v, ok, err := e.calculator.Calculate(func() error {
+				return e.assignment(p.Right)
+			})
 			if err != nil {
 				return nil, errors.Error(p.Pos, err)
 			}
@@ -85,12 +80,12 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 		e.state.Set(p, args[i])
 	}
 
-	return errors.Error(f.Pos, e.visitor.VisitStatements(f.FunBody))
+	return errors.Error(f.Pos, e.statements(f.FunBody))
 }
 
 // callReflectFunc invokes a function within go from a script
-func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value, ctx context.Context) (ret interface{}, err error) {
-	args, err := e.ProcessParameters(cf, ctx)
+func (e *executor) callReflectFunc(cf *script.CallFunc, f reflect.Value) (ret interface{}, err error) {
+	args, err := e.ProcessParameters(cf)
 	if err != nil {
 		return nil, err
 	}
@@ -229,14 +224,14 @@ func (e *executor) valuesToRet(cf *script.CallFunc, tf reflect.Type, retVal []re
 	return
 }
 
-func (e *executor) returnStatement(ctx context.Context) error {
-	ret := script.ReturnFromContext(ctx)
-
+func (e *executor) returnStatement(ret *script.Return) error {
 	if ret.Result == nil {
 		return errors.NewReturn(nil)
 	}
 
-	v, ok, err := e.calculator.Calculate(e.expression, ret.Result.WithContext(ctx))
+	v, ok, err := e.calculator.Calculate(func() error {
+		return e.Expression(ret.Result)
+	})
 	if err != nil {
 		return errors.Error(ret.Pos, err)
 	}

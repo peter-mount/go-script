@@ -1,16 +1,15 @@
 package stdlib
 
 import (
-	"context"
 	"fmt"
 	"github.com/peter-mount/go-script/calculator"
-	error2 "github.com/peter-mount/go-script/error"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/script"
 )
 
-func _throw(e executor.Executor, call *script.CallFunc, ctx context.Context) error {
-	a, err := executor.Args(e, call, ctx)
+func _throw(e executor.Executor, call *script.CallFunc) error {
+	a, err := executor.Args(e, call)
 	if err == nil {
 
 		switch len(a) {
@@ -24,17 +23,17 @@ func _throw(e executor.Executor, call *script.CallFunc, ctx context.Context) err
 			} else if message, err1 := calculator.GetString(a[0]); err1 != nil {
 				err = err1
 			} else {
-				err = error2.Errorf(call.Pos, message)
+				err = errors.Errorf(call.Pos, message)
 			}
 
 		default:
 			if format, err1 := calculator.GetString(a[0]); err1 != nil {
 				err = err1
 			} else {
-				err = error2.Errorf(call.Pos, format, a[1:]...)
+				err = errors.Errorf(call.Pos, format, a[1:]...)
 			}
 		}
 	}
 
-	return error2.Error(call.Pos, err)
+	return errors.Error(call.Pos, err)
 }

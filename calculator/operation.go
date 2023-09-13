@@ -1,7 +1,6 @@
 package calculator
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -13,35 +12,6 @@ type MonoCalculation interface {
 // BiCalculation performs an operation against two values
 type BiCalculation interface {
 	BiCalculate(a, b interface{}) (interface{}, error)
-}
-
-func CalculateOp2(ctx context.Context, op string, left, right Calculation) error {
-	if err := DoCalculation(left, ctx); err == nil {
-		return err
-	}
-
-	if err := DoCalculation(right, ctx); err == nil {
-		return err
-	}
-
-	// If we have both then invoke the op
-	if op != "" && left != nil && right != nil {
-		return FromContext(ctx).Op2(op)
-	}
-
-	return nil
-}
-
-// Calculation defines an instance that can perform some calculation
-type Calculation interface {
-	Calculate(ctx context.Context) error
-}
-
-func DoCalculation(calc Calculation, ctx context.Context) error {
-	if calc != nil {
-		return calc.Calculate(ctx)
-	}
-	return nil
 }
 
 type biOpCommon struct {

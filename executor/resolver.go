@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
@@ -19,8 +18,8 @@ import (
 // op the Primary defining the reference
 //
 // v the value this Primary is referencing.
-func (e *executor) getReference(op *script.Primary, v interface{}, ctx context.Context) (err error) {
-	ref, err := e.getReferenceImpl(op, v, ctx)
+func (e *executor) getReference(op *script.Primary, v interface{}) (err error) {
+	ref, err := e.getReferenceImpl(op, v)
 
 	if err != nil {
 		return errors.Error(op.Pos, err)
@@ -31,7 +30,7 @@ func (e *executor) getReference(op *script.Primary, v interface{}, ctx context.C
 }
 
 // getReferenceImpl is like getReference but is used to locate a field/variable to set
-func (e *executor) getReferenceImpl(op *script.Primary, v interface{}, ctx context.Context) (ref interface{}, err error) {
+func (e *executor) getReferenceImpl(op *script.Primary, v interface{}) (ref interface{}, err error) {
 	// These are not valid at this point.
 	switch {
 
@@ -44,7 +43,7 @@ func (e *executor) getReferenceImpl(op *script.Primary, v interface{}, ctx conte
 
 	// method reference against v not declared functions
 	case op.CallFunc != nil:
-		ref, err = e.resolveFunction(op.CallFunc, v, ctx)
+		ref, err = e.resolveFunction(op.CallFunc, v)
 
 	// Nonsensical to be part of a reference
 	case op.SubExpression != nil:
@@ -61,7 +60,7 @@ func (e *executor) getReferenceImpl(op *script.Primary, v interface{}, ctx conte
 
 	// recurse as we have a pointer to the next field
 	if op.Pointer != nil {
-		return e.getReferenceImpl(op.Pointer, ref, ctx)
+		return e.getReferenceImpl(op.Pointer, ref)
 	}
 
 	return ref, nil
@@ -119,7 +118,7 @@ func (e *executor) resolveArray(op *script.Primary, v interface{}) (interface{},
 
 	// Run through each dimension and set v to the result of each lookup
 	for _, dimension := range op.Ident.Index {
-		err := e.expression(dimension.WithContext(e.context))
+		err := e.Expression(dimension)
 		if err != nil {
 			return nil, errors.Error(dimension.Pos, err)
 		}
@@ -193,13 +192,13 @@ func (e *executor) resolveArrayIndex(index, v interface{}, dimension *script.Exp
 	return
 }
 
-func (e *executor) resolveFunction(op *script.CallFunc, v interface{}, ctx context.Context) (ret interface{}, err error) {
+func (e *executor) resolveFunction(op *script.CallFunc, v interface{}) (ret interface{}, err error) {
 
 	ti := reflect.ValueOf(v)
 
 	tf := ti.MethodByName(op.Name)
 	if tf.IsValid() {
-		ret, err = e.callReflectFunc(op, tf, ctx)
+		ret, err = e.callReflectFunc(op, tf)
 		return
 	}
 

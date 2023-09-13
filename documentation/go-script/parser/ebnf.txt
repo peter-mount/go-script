@@ -5,18 +5,21 @@ Statements = "{" Statement* "}" .
 Statement = "break" | "continue" | DoWhile | If | For | ForRange | Repeat | Return | Switch | While | Try | Statements | Expression | ";" .
 DoWhile = "do" Statement "while" Expression .
 Expression = Assignment .
-Assignment = Logic (":"? "=" Equality)? .
+Assignment = Ternary (("+" | "-" | "*" | "/" | "%")? ":"? "=" Assignment)? .
+Ternary = Logic ("?" Logic ":" Logic)? .
 Logic = Equality ((("&" "&") | ("|" "|")) Logic)? .
 Equality = Comparison ((("!" "=") | ("=" "=")) Equality)? .
 Comparison = Addition (((">" "=") | ">" | ("<" "=") | "<") Comparison)? .
 Addition = Multiplication (("+" | "-") Addition)? .
 Multiplication = Unary (("*" | "/" | "%") Multiplication)? .
-Unary = (("!" | "-") Unary) | Primary .
-Primary = (<number> | <int> | KeyValue | <string> | "null" | "nil" | "true" | "false" | ("(" Expression ")") | ((CallFunc | Ident) (<period> Primary)?)) .
+Unary = (("!" | "-") Primary) | Primary .
+Primary = (<number> | <int> | KeyValue | <string> | "null" | "nil" | "true" | "false" | ("(" Expression ")") | PreIncDec | PostIncDec | ((CallFunc | Ident) (<period> Primary)?)) .
 KeyValue = <string> ":" Expression .
+PreIncDec = (("-" "-") | ("+" "+")) Ident .
+Ident = <ident> ("[" Expression "]")+? .
+PostIncDec = Ident (("-" "-") | ("+" "+")) .
 CallFunc = <ident> "(" ParameterList? ")" .
 ParameterList = (Expression ("," Expression)*) "..."? .
-Ident = <ident> ("[" Expression "]")+? .
 If = "if" Expression Statement ("else" Statement)? .
 For = "for" Expression? ";" Expression? ";" Expression? Statement .
 ForRange = "for" <ident> "," <ident> ":"? "=" "range" Expression Statement .

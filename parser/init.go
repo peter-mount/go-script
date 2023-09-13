@@ -52,14 +52,6 @@ func (p *initialiser) funcDec(op *script.FuncDec) error {
 	return errors.Error(op.Pos, p.initStatements(op.FunBody))
 }
 
-// initStatement sets Statements.Parent to point to the Statements
-// instance containing this one.
-//
-// # It works by presuming that the immediate caller is usually Statement.Block
-//
-// The only time this should not be the case is when processing a
-// function definition. As that's a top level object, there is no Statement
-// in the context, hence Statements.Parent will be nil.
 func (p *initialiser) initStatements(op *script.Statements) error {
 	if op == nil {
 		return nil
@@ -78,10 +70,6 @@ func (p *initialiser) initStatements(op *script.Statements) error {
 	return nil
 }
 
-// initStatement sets Statement.Parent to the containing Statements instance.
-//
-// This works as Statement is only ever contained within a Statements instance
-// so the parent is its parent.
 func (p *initialiser) initStatement(op *script.Statement) error {
 	if op == nil {
 		return nil

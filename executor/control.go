@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"github.com/alecthomas/participle/v2/lexer"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/errors"
@@ -10,14 +9,16 @@ import (
 	"reflect"
 )
 
-// condition evaluates expression, and converts the result to a boolean.
+// condition evaluates Expression, and converts the result to a boolean.
 // defaultResult is the result returned if expr is nil.
-func (e *executor) condition(expr *script.Expression, ctx context.Context, defaultResult bool) (bool, error) {
+func (e *executor) condition(expr *script.Expression, defaultResult bool) (bool, error) {
 	if expr == nil {
 		return defaultResult, nil
 	}
 
-	v, err := e.calculator.MustCalculate(e.expression, expr.WithContext(ctx))
+	v, err := e.calculator.MustCalculate(func() error {
+		return e.Expression(expr)
+	})
 	if err != nil {
 		return false, err
 	}
@@ -44,15 +45,14 @@ func (e *executor) breakOrContinue(pos lexer.Position, err error) (bool, error) 
 	return err != nil, errors.Error(pos, err)
 }
 
-func (e *executor) ifStatement(ctx context.Context) error {
-	s := script.IfFromContext(ctx)
+func (e *executor) ifStatement(s *script.If) error {
 
-	b, err := e.condition(s.Condition, ctx, true)
+	b, err := e.condition(s.Condition, true)
 	if err == nil {
 		if b {
-			err = e.visitor.VisitStatement(s.Body)
+			err = e.statement(s.Body)
 		} else {
-			err = e.visitor.VisitStatement(s.Else)
+			err = e.statement(s.Else)
 		}
 	}
 
@@ -61,88 +61,78 @@ func (e *executor) ifStatement(ctx context.Context) error {
 
 // repeatUntil from basic etc. repeats body until condition is met.
 // body is always evaluated once.
-func (e *executor) repeatUntil(ctx context.Context) error {
-	s := script.RepeatFromContext(ctx)
-
-	return e.forLoop(s.Pos, nil, nil, s.Body, nil, s.Condition, ctx, false)
+func (e *executor) repeatUntil(s *script.Repeat) error {
+	return e.forLoop(s.Pos, nil, nil, s.Body, nil, s.Condition, false)
 }
 
 // doWhile from C, repeats body while condition is met.
 // body is always executed once.
-func (e *executor) doWhile(ctx context.Context) error {
-	s := script.DoWhileFromContext(ctx)
-
-	return e.forLoop(s.Pos, nil, nil, s.Body, nil, s.Condition, ctx, true)
+func (e *executor) doWhile(s *script.DoWhile) error {
+	return e.forLoop(s.Pos, nil, nil, s.Body, nil, s.Condition, true)
 }
 
 // while from C, execute body while condition is met.
 // body will never run if condition never passes
-func (e *executor) while(ctx context.Context) error {
-	s := script.WhileFromContext(ctx)
-
-	return e.forLoop(s.Pos, nil, s.Condition, s.Body, nil, nil, ctx, true)
+func (e *executor) while(s *script.While) error {
+	return e.forLoop(s.Pos, nil, s.Condition, s.Body, nil, nil, true)
 }
 
 // forStatement from C, optional init & increment but executes body while condition is met.
 // body will never run if condition never passes.
-func (e *executor) forStatement(ctx context.Context) error {
-	s := script.ForFromContext(ctx)
-
-	return e.forLoop(s.Pos, s.Init, s.Condition, s.Body, s.Increment, nil, ctx, true)
+func (e *executor) forStatement(s *script.For) error {
+	return e.forLoop(s.Pos, s.Init, s.Condition, s.Body, s.Increment, nil, true)
 }
 
 // forLoop is the internals of loops.
 // p is the Position of the statement being implemented.
-// init is the optional init expression
+// init is the optional init Expression
 // conditionFirst is the condition test performed at the start of the loop
 // body the Statement to execute inside the loop
-// inc is the optional increment expression
+// inc is the optional increment Expression
 // conditionLast is the condition test performed at the end of the loop
 // conditionResult the result of conditionFirst or conditionLast to repeat the loop.
-func (e *executor) forLoop(p lexer.Position, init, conditionFirst *script.Expression, body *script.Statement, inc, conditionLast *script.Expression, ctx context.Context, conditionResult bool) error {
+func (e *executor) forLoop(p lexer.Position, init, conditionFirst *script.Expression, body *script.Statement, inc, conditionLast *script.Expression, conditionResult bool) error {
 
 	// Run for in a new scope so variables declared there are not accessible outside
 	e.state.NewScope()
 	defer e.state.EndScope()
 
 	if init != nil {
-		err := e.visitor.VisitExpression(init)
+		err := e.Expression(init)
 		if err != nil {
 			return errors.Error(p, err)
 		}
 	}
 
 	for {
-		b, err := e.condition(conditionFirst, ctx, conditionResult)
+		b, err := e.condition(conditionFirst, conditionResult)
 		if err != nil || b != conditionResult {
 			return errors.Error(p, err)
 		}
 
 		if body != nil {
-			exit, err1 := e.breakOrContinue(p, e.visitor.VisitStatement(body))
+			exit, err1 := e.breakOrContinue(p, e.statement(body))
 			if exit {
 				return err1
 			}
 		}
 
 		if inc != nil {
-			err = e.visitor.VisitExpression(inc)
+			err = e.Expression(inc)
 			if err != nil {
 				return errors.Error(p, err)
 			}
 		}
 
 		// conditionResult false then condition last
-		b, err = e.condition(conditionLast, ctx, conditionResult)
+		b, err = e.condition(conditionLast, conditionResult)
 		if err != nil || b != conditionResult {
 			return errors.Error(p, err)
 		}
 	}
 }
 
-func (e *executor) forRange(ctx context.Context) error {
-	op := script.ForRangeFromContext(ctx)
-
+func (e *executor) forRange(op *script.ForRange) error {
 	// Run for in a new scope so variables declared there are not accessible outside
 	e.state.NewScope()
 	defer e.state.EndScope()
@@ -153,8 +143,8 @@ func (e *executor) forRange(ctx context.Context) error {
 		e.state.Declare(op.Value)
 	}
 
-	// Evaluate expression
-	r, err := e.calculator.MustCalculate(e.expression, op.Expression.WithContext(ctx))
+	// Evaluate Expression
+	r, err := e.calculator.MustCalculate(func() error { return e.Expression(op.Expression) })
 	if err != nil {
 		return errors.Error(op.Pos, err)
 	}
@@ -163,7 +153,7 @@ func (e *executor) forRange(ctx context.Context) error {
 	if r != nil {
 		// If an Iterator then run through until HasNext() returns false
 		if it, ok := r.(Iterator); ok {
-			return e.forIterator(op, ctx, it)
+			return e.forIterator(op, it)
 		}
 	}
 
@@ -172,10 +162,10 @@ func (e *executor) forRange(ctx context.Context) error {
 	ti := reflect.Indirect(tv)
 	switch ti.Kind() {
 	case reflect.Map:
-		return e.forMapIter(op, ctx, ti.MapRange())
+		return e.forMapIter(op, ti.MapRange())
 
 	case reflect.Array, reflect.Slice, reflect.String:
-		return e.forSlice(op, ctx, ti)
+		return e.forSlice(op, ti)
 
 	default:
 		return errors.Errorf(op.Expression.Pos, "cannot range over %T", r)
@@ -183,9 +173,9 @@ func (e *executor) forRange(ctx context.Context) error {
 }
 
 // forIterator will iterate for all values in an Iterator
-func (e *executor) forIterator(op *script.ForRange, ctx context.Context, it Iterator) error {
+func (e *executor) forIterator(op *script.ForRange, it Iterator) error {
 	for i := 0; it.HasNext(); i++ {
-		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, it.Next(), op, ctx))
+		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, it.Next(), op))
 		if exit {
 			return err
 		}
@@ -194,9 +184,9 @@ func (e *executor) forIterator(op *script.ForRange, ctx context.Context, it Iter
 }
 
 // forMapIter will iterate over a MapIter
-func (e *executor) forMapIter(op *script.ForRange, ctx context.Context, mi *reflect.MapIter) error {
+func (e *executor) forMapIter(op *script.ForRange, mi *reflect.MapIter) error {
 	for mi.Next() {
-		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(mi.Key().Interface(), mi.Value().Interface(), op, ctx))
+		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(mi.Key().Interface(), mi.Value().Interface(), op))
 		if exit {
 			return err
 		}
@@ -206,10 +196,10 @@ func (e *executor) forMapIter(op *script.ForRange, ctx context.Context, mi *refl
 
 // forSlice will iterate over a reflect.Array, reflect.Slice or reflect.String.
 // This will panic if Value is not one of those types.
-func (e *executor) forSlice(op *script.ForRange, ctx context.Context, ti reflect.Value) error {
+func (e *executor) forSlice(op *script.ForRange, ti reflect.Value) error {
 	l := ti.Len()
 	for i := 0; i < l; i++ {
-		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, ti.Index(i).Interface(), op, ctx))
+		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, ti.Index(i).Interface(), op))
 		if exit {
 			return err
 		}
@@ -218,7 +208,7 @@ func (e *executor) forSlice(op *script.ForRange, ctx context.Context, ti reflect
 }
 
 // forRangeEntryImpl is used in for range either from forRangeEntryValue or an iterator
-func (e *executor) forRangeEntry(key, val interface{}, op *script.ForRange, _ context.Context) error {
+func (e *executor) forRangeEntry(key, val interface{}, op *script.ForRange) error {
 	if op.Body == nil {
 		return nil
 	}
@@ -237,7 +227,7 @@ func (e *executor) forRangeEntry(key, val interface{}, op *script.ForRange, _ co
 		}
 	}
 
-	return errors.Error(op.Pos, e.visitor.VisitStatement(op.Body))
+	return errors.Error(op.Pos, e.statement(op.Body))
 }
 
 type Iterator interface {

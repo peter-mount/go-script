@@ -1,18 +1,18 @@
 package executor
 
 import (
-	"context"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 	"reflect"
 )
 
-func (e *executor) expression(ctx context.Context) error {
-	op := script.ExpressionFromContext(ctx)
+func (e *executor) Expression(op *script.Expression) error {
 
 	if op.Right != nil {
-		v, exists, err := e.calculator.Calculate(e.assignment, op.Right.WithContext(ctx))
+		v, exists, err := e.calculator.Calculate(func() error {
+			return e.assignment(op.Right)
+		})
 		if err != nil {
 			return errors.Error(op.Pos, err)
 		}
@@ -24,9 +24,7 @@ func (e *executor) expression(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) assignment(ctx context.Context) error {
-	op := script.AssignmentFromContext(ctx)
-
+func (e *executor) assignment(op *script.Assignment) error {
 	if op.Op == "=" {
 
 		var primary *script.Primary
@@ -57,7 +55,7 @@ func (e *executor) assignment(ctx context.Context) error {
 			// POVS = plain old variable setter
 
 			// Process RHS to get value
-			err := e.assignment(op.Right.WithContext(ctx))
+			err := e.assignment(op.Right)
 			if err != nil {
 				return errors.Error(op.Pos, err)
 			}
@@ -99,7 +97,7 @@ func (e *executor) assignment(ctx context.Context) error {
 				_ = e.state.Set(name, v)
 			}
 		} else {
-			v, err := e.resolveIdent(primary, ctx)
+			v, err := e.resolveIdent(primary)
 			if err != nil && !errors.IsNoFieldErr(err) {
 				return errors.Error(op.Pos, err)
 			}
@@ -117,7 +115,7 @@ func (e *executor) assignment(ctx context.Context) error {
 			vT := vV.Type()
 
 			// Process RHS to get value
-			err = e.assignment(op.Right.WithContext(ctx))
+			err = e.assignment(op.Right)
 			if err != nil {
 				return errors.Error(op.Pos, err)
 			}
@@ -146,14 +144,13 @@ func (e *executor) assignment(ctx context.Context) error {
 
 		return nil
 	} else {
-		return errors.Error(op.Pos, e.ternary(op.Left.WithContext(ctx)))
+		return errors.Error(op.Pos, e.ternary(op.Left))
 	}
 }
 
-func (e *executor) ternary(ctx context.Context) (err error) {
-	op := script.TernaryFromContext(ctx)
+func (e *executor) ternary(op *script.Ternary) (err error) {
 
-	err = e.logic(op.Left.WithContext(ctx))
+	err = e.logic(op.Left)
 	if err == nil && op.True != nil && op.False != nil {
 		var v interface{}
 		v, err = e.calculator.Pop()
@@ -162,9 +159,9 @@ func (e *executor) ternary(ctx context.Context) (err error) {
 			b, err = calculator.GetBool(v)
 			if err == nil {
 				if b {
-					err = e.logic(op.True.WithContext(ctx))
+					err = e.logic(op.True)
 				} else {
-					err = e.logic(op.False.WithContext(ctx))
+					err = e.logic(op.False)
 				}
 			}
 		}
@@ -172,12 +169,11 @@ func (e *executor) ternary(ctx context.Context) (err error) {
 	return errors.Error(op.Pos, err)
 }
 
-func (e *executor) logic(ctx context.Context) error {
-	op := script.LogicFromContext(ctx)
+func (e *executor) logic(op *script.Logic) error {
 
-	err := e.equality(op.Left.WithContext(ctx))
+	err := e.equality(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.equality(op.Right.Left.WithContext(ctx))
+		err = e.equality(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -192,12 +188,11 @@ func (e *executor) logic(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) equality(ctx context.Context) error {
-	op := script.EqualityFromContext(ctx)
+func (e *executor) equality(op *script.Equality) error {
 
-	err := e.comparison(op.Left.WithContext(ctx))
+	err := e.comparison(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.comparison(op.Right.Left.WithContext(ctx))
+		err = e.comparison(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -212,12 +207,11 @@ func (e *executor) equality(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) comparison(ctx context.Context) error {
-	op := script.ComparisonFromContext(ctx)
+func (e *executor) comparison(op *script.Comparison) error {
 
-	err := e.addition(op.Left.WithContext(ctx))
+	err := e.addition(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.addition(op.Right.Left.WithContext(ctx))
+		err = e.addition(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -232,12 +226,11 @@ func (e *executor) comparison(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) addition(ctx context.Context) error {
-	op := script.AdditionFromContext(ctx)
+func (e *executor) addition(op *script.Addition) error {
 
-	err := e.multiplication(op.Left.WithContext(ctx))
+	err := e.multiplication(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.multiplication(op.Right.Left.WithContext(ctx))
+		err = e.multiplication(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -252,12 +245,11 @@ func (e *executor) addition(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) multiplication(ctx context.Context) error {
-	op := script.MultiplicationFromContext(ctx)
+func (e *executor) multiplication(op *script.Multiplication) error {
 
-	err := e.unary(op.Left.WithContext(ctx))
+	err := e.unary(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.unary(op.Right.Left.WithContext(ctx))
+		err = e.unary(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -272,11 +264,9 @@ func (e *executor) multiplication(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) unary(ctx context.Context) error {
-	op := script.UnaryFromContext(ctx)
-
+func (e *executor) unary(op *script.Unary) error {
 	if op.Left != nil {
-		err := e.primary(op.Left.WithContext(ctx))
+		err := e.primary(op.Left)
 		if err == nil {
 			err = e.calculator.Op1(op.Op)
 		}
@@ -286,15 +276,13 @@ func (e *executor) unary(ctx context.Context) error {
 	}
 
 	if op.Right != nil {
-		return errors.Error(op.Pos, e.primary(op.Right.WithContext(ctx)))
+		return errors.Error(op.Pos, e.primary(op.Right))
 	}
 
 	return nil
 }
 
-func (e *executor) primary(ctx context.Context) error {
-	op := script.PrimaryFromContext(ctx)
-
+func (e *executor) primary(op *script.Primary) error {
 	switch {
 	case op.Float != nil:
 		e.calculator.Push(*op.Float)
@@ -306,7 +294,7 @@ func (e *executor) primary(ctx context.Context) error {
 		e.calculator.Push(*op.String)
 
 	case op.CallFunc != nil:
-		return errors.Error(op.Pos, e.visitor.VisitCallFunc(op.CallFunc))
+		return errors.Error(op.Pos, e.callFunc(op.CallFunc))
 
 	case op.Null, op.Nil:
 		e.calculator.Push(nil)
@@ -324,7 +312,7 @@ func (e *executor) primary(ctx context.Context) error {
 		return e.postIncDec(op.PostIncDec)
 
 	case op.Ident != nil && op.Ident.Ident != "":
-		v, err := e.resolveIdent(op, ctx)
+		v, err := e.resolveIdent(op)
 		if err != nil {
 			return errors.Error(op.Pos, err)
 		}
@@ -333,10 +321,10 @@ func (e *executor) primary(ctx context.Context) error {
 		e.calculator.Push(v)
 
 	case op.SubExpression != nil:
-		return errors.Error(op.Pos, e.expression(op.SubExpression.WithContext(ctx)))
+		return errors.Error(op.Pos, e.Expression(op.SubExpression))
 
 	case op.KeyValue != nil:
-		if err := errors.Error(op.Pos, e.expression(op.KeyValue.Value.WithContext(ctx))); err != nil {
+		if err := errors.Error(op.Pos, e.Expression(op.KeyValue.Value)); err != nil {
 			return err
 		}
 
@@ -351,7 +339,7 @@ func (e *executor) primary(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interface{}, error) {
+func (e *executor) resolveIdent(op *script.Primary) (interface{}, error) {
 	ident := op.Ident.Ident
 	v, exists := e.state.Get(ident)
 	if !exists {
@@ -363,7 +351,7 @@ func (e *executor) resolveIdent(op *script.Primary, ctx context.Context) (interf
 
 	if err == nil && op.Pointer != nil {
 		// Resolve references
-		v, err = e.getReferenceImpl(op.Pointer, v, ctx)
+		v, err = e.getReferenceImpl(op.Pointer, v)
 	}
 
 	if errors.IsNoFieldErr(err) {

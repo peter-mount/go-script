@@ -1,15 +1,13 @@
 package executor
 
 import (
-	"context"
 	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
 )
 
 // statements executes a Statements block.
 // Within this it runs with its own variable scope which is automatically closed when it completes
-func (e *executor) statements(ctx context.Context) error {
-	statements := script.StatementsFromContext(ctx)
+func (e *executor) statements(statements *script.Statements) error {
 
 	// Do nothing if it's an empty block
 	if statements == nil || len(statements.Statements) == 0 {
@@ -21,7 +19,7 @@ func (e *executor) statements(ctx context.Context) error {
 
 	s := statements.Statements[0]
 	for s != nil {
-		if err := e.visitor.VisitStatement(s); err != nil {
+		if err := e.statement(s); err != nil {
 			return errors.Error(s.Pos, err)
 		}
 		s = s.Next
@@ -29,43 +27,42 @@ func (e *executor) statements(ctx context.Context) error {
 	return nil
 }
 
-func (e *executor) statement(ctx context.Context) error {
-	statement := script.StatementFromContext(ctx)
+func (e *executor) statement(statement *script.Statement) error {
+	if statement == nil || statement.Empty {
+		return nil
+	}
 
 	switch {
-	// Do nothing for these.
-	// Empty is the no-op statement.
-	// Block has its own visitor
-	case statement.Empty, statement.Block != nil:
-		return nil
+	case statement.Block != nil:
+		return errors.Error(statement.Pos, e.statements(statement.Block))
 
 	case statement.Expression != nil:
-		// Wrap visit to expression, so we don't leak return values on the stack
-		_, _, err := e.calculator.Calculate(func(_ context.Context) error {
-			return errors.Error(statement.Pos, e.visitor.VisitExpression(statement.Expression))
-		}, ctx)
+		// Wrap visit to Expression, so we don't leak return values on the stack
+		_, _, err := e.calculator.Calculate(func() error {
+			return errors.Error(statement.Pos, e.Expression(statement.Expression))
+		})
 		return err
 
 	case statement.For != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitFor(statement.For))
+		return errors.Error(statement.Pos, e.forStatement(statement.For))
 
 	case statement.ForRange != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitForRange(statement.ForRange))
+		return errors.Error(statement.Pos, e.forRange(statement.ForRange))
 
 	case statement.IfStmt != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitIf(statement.IfStmt))
+		return errors.Error(statement.Pos, e.ifStatement(statement.IfStmt))
 
 	case statement.DoWhile != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitDoWhile(statement.DoWhile))
+		return errors.Error(statement.Pos, e.doWhile(statement.DoWhile))
 
 	case statement.Repeat != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitRepeat(statement.Repeat))
+		return errors.Error(statement.Pos, e.repeatUntil(statement.Repeat))
 
 	case statement.While != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitWhile(statement.While))
+		return errors.Error(statement.Pos, e.while(statement.While))
 
 	case statement.Return != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitReturn(statement.Return))
+		return errors.Error(statement.Pos, e.returnStatement(statement.Return))
 
 	case statement.Break:
 		return errors.Break()
@@ -74,10 +71,10 @@ func (e *executor) statement(ctx context.Context) error {
 		return errors.Continue()
 
 	case statement.Switch != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitSwitch(statement.Switch))
+		return errors.Error(statement.Pos, e.switchStatement(statement.Switch))
 
 	case statement.Try != nil:
-		return errors.Error(statement.Pos, e.visitor.VisitTry(statement.Try))
+		return errors.Error(statement.Pos, e.try(statement.Try))
 
 	default:
 		// This will fail if we add a new statement, but it's not yet implemented.
