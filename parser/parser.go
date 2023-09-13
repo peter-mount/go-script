@@ -1,13 +1,11 @@
 package parser
 
 import (
-	"context"
 	"fmt"
 	"github.com/alecthomas/participle/v2"
 	"github.com/alecthomas/participle/v2/lexer"
-	"github.com/peter-mount/go-script/executor"
+	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
-	"github.com/peter-mount/go-script/visitor"
 	"io"
 	"os"
 	"path/filepath"
@@ -118,7 +116,7 @@ func (p *defaultParser) include(s *script.Script, pos lexer.Position, paths []st
 	// Locate the file within paths
 	src, err := p.findFile(paths, file)
 	if err != nil {
-		return executor.Error(pos, err)
+		return errors.Error(pos, err)
 	}
 
 	// To prevent an infinite loop, if we have already included a file, then dont include it
@@ -164,205 +162,4 @@ func (p *defaultParser) findFile(paths []string, file string) (string, error) {
 	}
 
 	return "", os.ErrNotExist
-}
-
-func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
-	err := p.includeTopDec(s, s)
-	if err != nil {
-		return nil, err
-	}
-
-	err = visitor.New().
-		Statements(p.initStatements).
-		Statement(p.initStatement).
-		If(p.initIf).
-		DoWhile(p.initDoWhile).
-		Repeat(p.initRepeat).
-		Switch(p.initSwitch).
-		While(p.initWhile).
-		WithContext(context.Background()).
-		VisitScript(s)
-	if err != nil {
-		return nil, err
-	}
-	return s, nil
-}
-
-// initStatement sets Statements.Parent to point to the Statements
-// instance containing this one.
-//
-// # It works by presuming that the immediate caller is usually Statement.Block
-//
-// The only time this should not be the case is when processing a
-// function definition. As that's a top level object, there is no Statement
-// in the context, hence Statements.Parent will be nil.
-func (p *defaultParser) initStatements(ctx context.Context) error {
-	// The Statements being visited
-	statements := script.StatementsFromContext(ctx)
-	if statements != nil {
-		// The parent Statement, e.g. Statement.Block
-		parent := script.StatementFromContext(ctx)
-		if parent != nil {
-			statements.Parent = parent.Parent
-		}
-
-		// Ensure Statement.Next is setup
-		for i, s := range statements.Statements {
-			if i > 0 {
-				statements.Statements[i-1].Next = s
-			}
-		}
-	}
-	return nil
-}
-
-// initStatement sets Statement.Parent to the containing Statements instance.
-//
-// This works as Statement is only ever contained within a Statements instance
-// so the parent is its parent.
-func (p *defaultParser) initStatement(ctx context.Context) (err error) {
-	// The Statement being visited
-	statement := script.StatementFromContext(ctx)
-	if statement != nil {
-		// This works because Statement is always inside a Statements instance
-		parent := script.StatementsFromContext(ctx)
-		if parent != nil {
-			statement.Parent = parent
-		}
-
-		switch {
-		case statement.IfStmt != nil:
-			err = p.initIf(statement.IfStmt.WithContext(ctx))
-
-		case statement.For != nil:
-			err = p.initFor(statement.For.WithContext(ctx))
-
-		case statement.ForRange != nil:
-			err = p.initForRange(statement.ForRange.WithContext(ctx))
-
-		case statement.Repeat != nil:
-			err = p.initRepeat(statement.Repeat.WithContext(ctx))
-
-		case statement.Switch != nil:
-			err = p.initSwitch(statement.Switch.WithContext(ctx))
-
-		case statement.Try != nil:
-			err = p.initTry(statement.Try.WithContext(ctx))
-
-		case statement.While != nil:
-			err = p.initWhile(statement.While.WithContext(ctx))
-		}
-	}
-	return
-}
-
-func (p *defaultParser) initIf(ctx context.Context) error {
-	s := script.IfFromContext(ctx)
-	v := visitor.FromContext(ctx)
-	if err := v.VisitStatement(s.Body); err != nil {
-		return err
-	}
-	if err := v.VisitStatement(s.Else); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *defaultParser) initDoWhile(ctx context.Context) error {
-	s := script.DoWhileFromContext(ctx)
-	v := visitor.FromContext(ctx)
-	if err := v.VisitStatement(s.Body); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *defaultParser) initRepeat(ctx context.Context) error {
-	s := script.RepeatFromContext(ctx)
-	v := visitor.FromContext(ctx)
-	if err := v.VisitStatement(s.Body); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *defaultParser) initSwitch(ctx context.Context) error {
-	s := script.SwitchFromContext(ctx)
-	v := visitor.FromContext(ctx)
-
-	for _, c := range s.Case {
-		if err := v.VisitStatement(c.Statement); err != nil {
-			return err
-		}
-	}
-
-	if s.Default != nil {
-		if err := v.VisitStatement(s.Default); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (p *defaultParser) initWhile(ctx context.Context) error {
-	s := script.WhileFromContext(ctx)
-	v := visitor.FromContext(ctx)
-	if err := v.VisitStatement(s.Body); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *defaultParser) initFor(ctx context.Context) error {
-	s := script.ForFromContext(ctx)
-	v := visitor.FromContext(ctx)
-	if err := v.VisitStatement(s.Body); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *defaultParser) initForRange(ctx context.Context) error {
-	s := script.ForRangeFromContext(ctx)
-	v := visitor.FromContext(ctx)
-	if err := v.VisitStatement(s.Body); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *defaultParser) initTry(ctx context.Context) error {
-	s := script.TryFromContext(ctx)
-	v := visitor.FromContext(ctx)
-
-	// try-resources ensure only assignments and enforce declare mode
-	// as those variables can only be accessed from within the body
-	if s.Init != nil {
-		for _, init := range s.Init.Resources {
-			if init.Right != nil && init.Right.Right != nil {
-				init.Right.Declare = true
-			}
-		}
-	}
-
-	if s.Body != nil {
-		if err := v.VisitStatement(s.Body); err != nil {
-			return err
-		}
-	}
-
-	if s.Catch != nil {
-		if err := v.VisitStatement(s.Catch.Statement); err != nil {
-			return err
-		}
-	}
-
-	if s.Finally != nil {
-		if err := v.VisitStatement(s.Finally.Statement); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
