@@ -97,27 +97,32 @@ type Primary struct {
 type Ident struct {
 	Pos lexer.Position
 
-	PreDecrement  bool          `parser:"( @('-' '-')"`
-	PreIncrement  bool          `parser:"  | @('+' '+') )?"`
-	Ident         string        `parser:"@Ident"`
-	PostDecrement bool          `parser:"( @('-' '-')"`
-	PostIncrement bool          `parser:"  | @('+' '+') )?"`
-	Index         []*Expression `parser:"[ ('[' @@ ']')+ ]"`
+	PreIncDec  *IncDec       `parser:"(@@?)"`
+	Ident      string        `parser:"@Ident"`
+	PostIncDec *IncDec       `parser:"(@@?)"`
+	Index      []*Expression `parser:"[ ('[' @@ ']')+ ]"`
 }
 
-// IsPreIncrement returns true if --ident or ++ident but no array indices
-func (i *Ident) IsPreIncrement() bool {
-	return i != nil && (i.PreIncrement || i.PreDecrement) && len(i.Index) == 0
+type IncDec struct {
+	Pos lexer.Position
+
+	Decrement bool `parser:"( @('-' '-')"`
+	Increment bool `parser:"  | @('+' '+') )"`
 }
 
-// IsPostIncrement returns true if ident-- or ident++ but no array indices
-func (i *Ident) IsPostIncrement() bool {
-	return i != nil && (i.PostIncrement || i.PostDecrement) && len(i.Index) == 0
+// IsPreIncDec returns true if --ident or ++ident but no array indices
+func (i *Ident) IsPreIncDec() bool {
+	return i != nil && i.PreIncDec != nil && len(i.Index) == 0
+}
+
+// IsPostIncDec returns true if ident-- or ident++ but no array indices
+func (i *Ident) IsPostIncDec() bool {
+	return i != nil && i.PostIncDec != nil && len(i.Index) == 0
 }
 
 // IsIndexed returns true if ident[...] but no pre or post incDec
 func (i *Ident) IsIndexed() bool {
-	return i != nil && len(i.Index) > 0 && !(i.IsPreIncrement() || i.IsPostIncrement())
+	return i != nil && len(i.Index) > 0 && !(i.IsPreIncDec() || i.IsPostIncDec())
 }
 
 // KeyValue is "string": expression

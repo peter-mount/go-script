@@ -13,13 +13,12 @@ Comparison = Addition (((">" "=") | ">" | ("<" "=") | "<") Comparison)? .
 Addition = Multiplication (("+" | "-") Addition)? .
 Multiplication = Unary (("*" | "/" | "%") Multiplication)? .
 Unary = (("!" | "-") Primary) | Primary .
-Primary = (<number> | <int> | KeyValue | <string> | "null" | "nil" | "true" | "false" | ("(" Expression ")") | PreIncDec | PostIncDec | ((CallFunc | Ident) (<period> Primary)?)) .
+Primary = (<number> | <int> | KeyValue | <string> | "null" | "nil" | "true" | "false" | ("(" Expression ")") | ((CallFunc | Ident) (<period> Primary)?)) .
 KeyValue = <string> ":" Expression .
-PreIncDec = (("-" "-") | ("+" "+")) Ident .
-Ident = <ident> ("[" Expression "]")+? .
-PostIncDec = Ident (("-" "-") | ("+" "+")) .
 CallFunc = <ident> "(" ParameterList? ")" .
 ParameterList = (Expression ("," Expression)*) "..."? .
+Ident = IncDec? <ident> IncDec? ("[" Expression "]")+? .
+IncDec = (("-" "-") | ("+" "+")) .
 If = "if" Expression Statement ("else" Statement)? .
 For = "for" Expression? ";" Expression? ";" Expression? Statement .
 ForRange = "for" <ident> "," <ident> ":"? "=" "range" Expression Statement .

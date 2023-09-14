@@ -23,13 +23,12 @@ Comparison = Addition (((&#34;&gt;&#34; &#34;=&#34;) | &#34;&gt;&#34; | (&#34;&l
 Addition = Multiplication ((&#34;+&#34; | &#34;-&#34;) Addition)? .
 Multiplication = Unary ((&#34;*&#34; | &#34;/&#34; | &#34;%&#34;) Multiplication)? .
 Unary = ((&#34;!&#34; | &#34;-&#34;) Primary) | Primary .
-Primary = (&lt;number&gt; | &lt;int&gt; | KeyValue | &lt;string&gt; | &#34;null&#34; | &#34;nil&#34; | &#34;true&#34; | &#34;false&#34; | (&#34;(&#34; Expression &#34;)&#34;) | PreIncDec | PostIncDec | ((CallFunc | Ident) (&lt;period&gt; Primary)?)) .
+Primary = (&lt;number&gt; | &lt;int&gt; | KeyValue | &lt;string&gt; | &#34;null&#34; | &#34;nil&#34; | &#34;true&#34; | &#34;false&#34; | (&#34;(&#34; Expression &#34;)&#34;) | ((CallFunc | Ident) (&lt;period&gt; Primary)?)) .
 KeyValue = &lt;string&gt; &#34;:&#34; Expression .
-PreIncDec = ((&#34;-&#34; &#34;-&#34;) | (&#34;+&#34; &#34;+&#34;)) Ident .
-Ident = &lt;ident&gt; (&#34;[&#34; Expression &#34;]&#34;)+? .
-PostIncDec = Ident ((&#34;-&#34; &#34;-&#34;) | (&#34;+&#34; &#34;+&#34;)) .
 CallFunc = &lt;ident&gt; &#34;(&#34; ParameterList? &#34;)&#34; .
 ParameterList = (Expression (&#34;,&#34; Expression)*) &#34;...&#34;? .
+Ident = IncDec? &lt;ident&gt; IncDec? (&#34;[&#34; Expression &#34;]&#34;)+? .
+IncDec = ((&#34;-&#34; &#34;-&#34;) | (&#34;+&#34; &#34;+&#34;)) .
 If = &#34;if&#34; Expression Statement (&#34;else&#34; Statement)? .
 For = &#34;for&#34; Expression? &#34;;&#34; Expression? &#34;;&#34; Expression? Statement .
 ForRange = &#34;for&#34; &lt;ident&gt; &#34;,&#34; &lt;ident&gt; &#34;:&#34;? &#34;=&#34; &#34;range&#34; Expression Statement .

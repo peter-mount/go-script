@@ -321,7 +321,7 @@ func (e *executor) primary(op *script.Primary) error {
 func (e *executor) ident(op *script.Ident, primary *script.Primary) error {
 
 	// Not pre/post inc, and we have primary present then resolve the ident including arrays etc
-	if !(op.IsPreIncrement() || op.IsPostIncrement()) && primary != nil {
+	if !(op.IsPreIncDec() || op.IsPostIncDec()) && primary != nil {
 		v, err := e.resolveIdent(primary)
 		if err != nil {
 			return errors.Error(op.Pos, err)
@@ -343,10 +343,12 @@ func (e *executor) ident(op *script.Ident, primary *script.Primary) error {
 	newValue := value
 	var err error
 	switch {
-	case op.PreIncrement, op.PostIncrement:
+	case op.IsPreIncDec() && op.PreIncDec.Increment,
+		op.IsPostIncDec() && op.PostIncDec.Increment:
 		newValue, err = calculator.Add(value, 1)
 
-	case op.PreDecrement, op.PostDecrement:
+	case op.IsPreIncDec() && op.PreIncDec.Decrement,
+		op.IsPostIncDec() && op.PostIncDec.Decrement:
 		newValue, err = calculator.Subtract(value, 1)
 
 	default:
@@ -355,9 +357,9 @@ func (e *executor) ident(op *script.Ident, primary *script.Primary) error {
 	}
 
 	if err == nil {
-		if op.IsPreIncrement() {
-			// pre increment means we will use the new value as the result.
-			// post increment would use the original value, just the variable is updated
+		if op.IsPreIncDec() {
+			// For PreIncDec we will use the new value as the result.
+			// For PostIncDec we use the original value, just the variable is updated
 			value = newValue
 		}
 
