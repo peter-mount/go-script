@@ -112,7 +112,7 @@ func (e *executor) resolveReference(op *script.Primary, name string, v interface
 
 func (e *executor) resolveArray(op *script.Primary, v interface{}) (interface{}, error) {
 	// Nothing to do
-	if op.Ident == nil || len(op.Ident.Index) == 0 {
+	if !op.Ident.IsIndexed() {
 		return v, nil
 	}
 

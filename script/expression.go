@@ -88,10 +88,8 @@ type Primary struct {
 	True          bool        `parser:"  | @'true'"`
 	False         bool        `parser:"  | @'false'"`
 	SubExpression *Expression `parser:"  | '(' @@ ')' "`
-	PreIncDec     *PreIncDec  `parser:"  | @@"`
-	PostIncDec    *PostIncDec `parser:"  | @@"`
 	CallFunc      *CallFunc   `parser:"  | ( @@"`
-	Ident         *Ident      `parser:"  |   @@ "`
+	Ident         *Ident      `parser:"    | @@ "`
 	PointOp       string      `parser:"    ) [ @Period"`
 	Pointer       *Primary    `parser:"      @@] )"`
 }
@@ -99,8 +97,27 @@ type Primary struct {
 type Ident struct {
 	Pos lexer.Position
 
-	Ident string        `parser:"@Ident"`
-	Index []*Expression `parser:"[ ('[' @@ ']')+ ]"`
+	PreDecrement  bool          `parser:"( @('-' '-')"`
+	PreIncrement  bool          `parser:"  | @('+' '+') )?"`
+	Ident         string        `parser:"@Ident"`
+	PostDecrement bool          `parser:"( @('-' '-')"`
+	PostIncrement bool          `parser:"  | @('+' '+') )?"`
+	Index         []*Expression `parser:"[ ('[' @@ ']')+ ]"`
+}
+
+// IsPreIncrement returns true if --ident or ++ident but no array indices
+func (i *Ident) IsPreIncrement() bool {
+	return i != nil && (i.PreIncrement || i.PreDecrement) && len(i.Index) == 0
+}
+
+// IsPostIncrement returns true if ident-- or ident++ but no array indices
+func (i *Ident) IsPostIncrement() bool {
+	return i != nil && (i.PostIncrement || i.PostDecrement) && len(i.Index) == 0
+}
+
+// IsIndexed returns true if ident[...] but no pre or post incDec
+func (i *Ident) IsIndexed() bool {
+	return i != nil && len(i.Index) > 0 && !(i.IsPreIncrement() || i.IsPostIncrement())
 }
 
 // KeyValue is "string": expression
@@ -109,22 +126,4 @@ type KeyValue struct {
 
 	Key   string      `parser:"@String"`
 	Value *Expression `parser:"':' @@"`
-}
-
-// PreIncDec implements ++ident, --ident
-type PreIncDec struct {
-	Pos lexer.Position
-
-	Decrement bool   `parser:"( @('-' '-')"`
-	Increment bool   `parser:"| @('+' '+') )"`
-	Ident     *Ident `parser:"@@"`
-}
-
-// PostIncDec implements ident++, ident--
-type PostIncDec struct {
-	Pos lexer.Position
-
-	Ident     *Ident `parser:"@@"`
-	Decrement bool   `parser:"( @('-' '-')"`
-	Increment bool   `parser:"| @('+' '+') )"`
 }

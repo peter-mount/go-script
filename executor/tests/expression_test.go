@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func Test_executor_Addition(t *testing.T) {
+func Test_expression_precedence(t *testing.T) {
 	tests := []struct {
 		expr    string
 		args    []any

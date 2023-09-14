@@ -305,38 +305,67 @@ func (e *executor) primary(op *script.Primary) error {
 	case op.False:
 		e.calculator.Push(false)
 
-	case op.PreIncDec != nil:
-		return e.preIncDec(op.PreIncDec)
+	case op.Ident != nil:
+		return e.ident(op.Ident, op)
 
-	case op.PostIncDec != nil:
-		return e.postIncDec(op.PostIncDec)
+	case op.SubExpression != nil:
+		return errors.Error(op.Pos, e.Expression(op.SubExpression))
 
-	case op.Ident != nil && op.Ident.Ident != "":
-		v, err := e.resolveIdent(op)
+	case op.KeyValue != nil:
+		return errors.Error(op.KeyValue.Pos, e.keyValue(op.KeyValue))
+	}
+
+	return nil
+}
+
+func (e *executor) ident(op *script.Ident, primary *script.Primary) error {
+
+	// Not pre/post inc, and we have primary present then resolve the ident including arrays etc
+	if !(op.IsPreIncrement() || op.IsPostIncrement()) && primary != nil {
+		v, err := e.resolveIdent(primary)
 		if err != nil {
 			return errors.Error(op.Pos, err)
 		}
 
 		// Just push variable onto stack
 		e.calculator.Push(v)
-
-	case op.SubExpression != nil:
-		return errors.Error(op.Pos, e.Expression(op.SubExpression))
-
-	case op.KeyValue != nil:
-		if err := errors.Error(op.Pos, e.Expression(op.KeyValue.Value)); err != nil {
-			return err
-		}
-
-		if val, err := e.calculator.Pop(); err != nil {
-			return errors.Error(op.KeyValue.Pos, err)
-		} else {
-			e.calculator.Push(calculator.NewKeyValue(op.KeyValue.Key, val))
-		}
-
+		return nil
 	}
 
-	return nil
+	// either pre/post inc, or we have no primary then just get the variable and apply the increment
+	ident := op.Ident
+	value, exists := e.state.Get(ident)
+	if !exists {
+		return errors.Errorf(op.Pos, "%q undefined", ident)
+	}
+
+	// Handle the increment
+	newValue := value
+	var err error
+	switch {
+	case op.PreIncrement, op.PostIncrement:
+		newValue, err = calculator.Add(value, 1)
+
+	case op.PreDecrement, op.PostDecrement:
+		newValue, err = calculator.Subtract(value, 1)
+
+	default:
+		// Should never occur in normal use unless we reuse this function outside a Primary
+		// In either case do nothing.
+	}
+
+	if err == nil {
+		if op.IsPreIncrement() {
+			// pre increment means we will use the new value as the result.
+			// post increment would use the original value, just the variable is updated
+			value = newValue
+		}
+
+		e.state.Set(ident, newValue)
+		e.calculator.Push(value)
+	}
+
+	return errors.Error(op.Pos, err)
 }
 
 func (e *executor) resolveIdent(op *script.Primary) (interface{}, error) {
@@ -365,62 +394,17 @@ func (e *executor) resolveIdent(op *script.Primary) (interface{}, error) {
 	return v, nil
 }
 
-// preIncDec implements --i and ++i
-//
-// As per the C spec: --i is (i-=1) and ++i is (i+=1)
-func (e *executor) preIncDec(op *script.PreIncDec) (err error) {
-	// Get current value of variable
-	ident := op.Ident.Ident
-	value, exists := e.state.Get(ident)
-	if !exists {
-		return errors.Errorf(op.Pos, "%q undefined", ident)
-	}
+func (e *executor) keyValue(op *script.KeyValue) error {
+	err := errors.Error(op.Pos, e.Expression(op.Value))
 
-	switch {
-	case op.Increment:
-		value, err = calculator.Add(value, 1)
-	case op.Decrement:
-		value, err = calculator.Subtract(value, 1)
-	default:
-		// Should never occur
-		err = errors.Errorf(op.Pos, "Invalid postIncDec")
+	var val interface{}
+
+	if err == nil {
+		val, err = e.calculator.Pop()
 	}
 
 	if err == nil {
-		// Save new value and use it
-		e.state.Set(ident, value)
-		e.calculator.Push(value)
-	}
-
-	return errors.Error(op.Pos, err)
-}
-
-// postIncDec implements ident++ and ident--
-// where the current value of ident is returned but the variable
-// is then incremented or decremented afterwards.
-func (e *executor) postIncDec(op *script.PostIncDec) (err error) {
-	// Get current value of variable
-	ident := op.Ident.Ident
-	value, exists := e.state.Get(ident)
-	if !exists {
-		return errors.Errorf(op.Pos, "%q undefined", ident)
-	}
-
-	newValue := value
-	switch {
-	case op.Increment:
-		newValue, err = calculator.Add(value, 1)
-	case op.Decrement:
-		newValue, err = calculator.Subtract(value, 1)
-	default:
-		// Should never occur
-		err = errors.Errorf(op.Pos, "Invalid postIncDec")
-	}
-
-	if err == nil {
-		// Save new value but use the original value
-		e.state.Set(ident, newValue)
-		e.calculator.Push(value)
+		e.calculator.Push(calculator.NewKeyValue(op.Key, val))
 	}
 
 	return errors.Error(op.Pos, err)
