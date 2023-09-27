@@ -62,12 +62,13 @@ tags:
 
 <div class="marginNote">When iterating over a map the <em>index</em> variable will hold the key rather than the index within the loop.</div>
 <p>
-    As with <code>Go</code>, you can loop over an Array, Map, Iterator or Iterable value.
+    As with <code>Go</code>, you can loop over an Array or Map.
+    Unlike <code>Go</code> the language also supports an Iterator value as the value source.
     In this form you provide two variable names to hold the <em>index</em> and <em>value</em> of each entry as the loop iterates over the source value.
 </p>
 
 <p>
-    Like in <code>Go</code>, you can use <code>_</code> to indicate you don't care for the value.
+    If you do not want to use either of <em>index</em> and <em>value</em> can use <code>_</code> to indicate you don't care for that value.
     This is preferable as it doesn't use any additional memory creating a variable you are not going to use.
     However, unlike <code>Go</code>, you have to declare both fields. You cannot leave out the <em>index</em> parameter.
 </p>
