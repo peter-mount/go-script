@@ -23,49 +23,49 @@ type Assignment struct {
 type Ternary struct {
 	Pos lexer.Position
 
-	Left  *Logic `parser:"@@"`
-	True  *Logic `parser:"( '?' @@"`
-	False *Logic `parser:"  ':' @@ )?"`
+	Left  *Level1 `parser:"@@"`
+	True  *Level1 `parser:"( '?' @@"`
+	False *Level1 `parser:"  ':' @@ )?"`
 }
 
-type Logic struct {
+type Level1 struct {
 	Pos lexer.Position
 
-	Left  *Equality `parser:"@@"`
-	Op    string    `parser:"[ @( '&' '&' | '|' '|' )"`
-	Right *Logic    `parser:"  @@ ]"`
+	Left  *Level2 `parser:"@@"`
+	Op    string  `parser:"[ @( '|' '|' )"`
+	Right *Level1 `parser:"  @@ ]"`
 }
 
-type Equality struct {
+type Level2 struct {
 	Pos lexer.Position
 
-	Left  *Comparison `parser:"@@"`
-	Op    string      `parser:"[ @( '!' '=' | '=' '=' )"`
-	Right *Equality   `parser:"  @@ ]"`
+	Left  *Level3 `parser:"@@"`
+	Op    string  `parser:"[ @( '&' '&' )"`
+	Right *Level2 `parser:"  @@ ]"`
 }
 
-type Comparison struct {
+type Level3 struct {
 	Pos lexer.Position
 
-	Left  *Addition   `parser:"@@"`
-	Op    string      `parser:"[ @( '>' '=' | '>' | '<' '=' | '<' )"`
-	Right *Comparison `parser:"  @@ ]"`
+	Left  *Level4 `parser:"@@"`
+	Op    string  `parser:"[ @( '=' '=' | '!' '=' | '<' '=' | '<' | '>' '=' | '>' )"`
+	Right *Level3 `parser:"  @@ ]"`
 }
 
-type Addition struct {
+type Level4 struct {
 	Pos lexer.Position
 
-	Left  *Multiplication `parser:"@@"`
-	Op    string          `parser:"[ @( '+' | '-' )"`
-	Right *Addition       `parser:"  @@ ]"`
+	Left  *Level5 `parser:"@@"`
+	Op    string  `parser:"[ @( '+' | '-' )"`
+	Right *Level4 `parser:"  @@ ]"`
 }
 
-type Multiplication struct {
+type Level5 struct {
 	Pos lexer.Position
 
-	Left  *Unary          `parser:"@@"`
-	Op    string          `parser:"[ @( '*' | '/' | '%' )"`
-	Right *Multiplication `parser:"  @@ ]"`
+	Left  *Unary  `parser:"@@"`
+	Op    string  `parser:"[ @( '*' | '/' | '%' )"`
+	Right *Level5 `parser:"  @@ ]"`
 }
 
 type Unary struct {

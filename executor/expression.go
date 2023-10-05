@@ -150,7 +150,7 @@ func (e *executor) assignment(op *script.Assignment) error {
 
 func (e *executor) ternary(op *script.Ternary) (err error) {
 
-	err = e.logic(op.Left)
+	err = e.level1(op.Left)
 	if err == nil && op.True != nil && op.False != nil {
 		var v interface{}
 		v, err = e.calculator.Pop()
@@ -159,9 +159,9 @@ func (e *executor) ternary(op *script.Ternary) (err error) {
 			b, err = calculator.GetBool(v)
 			if err == nil {
 				if b {
-					err = e.logic(op.True)
+					err = e.level1(op.True)
 				} else {
-					err = e.logic(op.False)
+					err = e.level1(op.False)
 				}
 			}
 		}
@@ -169,11 +169,11 @@ func (e *executor) ternary(op *script.Ternary) (err error) {
 	return errors.Error(op.Pos, err)
 }
 
-func (e *executor) logic(op *script.Logic) error {
+func (e *executor) level1(op *script.Level1) error {
 
-	err := e.equality(op.Left)
+	err := e.level2(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.equality(op.Right.Left)
+		err = e.level2(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -188,11 +188,11 @@ func (e *executor) logic(op *script.Logic) error {
 	return nil
 }
 
-func (e *executor) equality(op *script.Equality) error {
+func (e *executor) level2(op *script.Level2) error {
 
-	err := e.comparison(op.Left)
+	err := e.level3(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.comparison(op.Right.Left)
+		err = e.level3(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -207,11 +207,11 @@ func (e *executor) equality(op *script.Equality) error {
 	return nil
 }
 
-func (e *executor) comparison(op *script.Comparison) error {
+func (e *executor) level3(op *script.Level3) error {
 
-	err := e.addition(op.Left)
+	err := e.level4(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.addition(op.Right.Left)
+		err = e.level4(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -226,11 +226,11 @@ func (e *executor) comparison(op *script.Comparison) error {
 	return nil
 }
 
-func (e *executor) addition(op *script.Addition) error {
+func (e *executor) level4(op *script.Level4) error {
 
-	err := e.multiplication(op.Left)
+	err := e.level5(op.Left)
 	for err == nil && op.Right != nil {
-		err = e.multiplication(op.Right.Left)
+		err = e.level5(op.Right.Left)
 		if err == nil {
 			err = e.calculator.Op2(op.Op)
 		}
@@ -245,7 +245,7 @@ func (e *executor) addition(op *script.Addition) error {
 	return nil
 }
 
-func (e *executor) multiplication(op *script.Multiplication) error {
+func (e *executor) level5(op *script.Level5) error {
 
 	err := e.unary(op.Left)
 	for err == nil && op.Right != nil {
