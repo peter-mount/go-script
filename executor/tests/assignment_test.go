@@ -29,6 +29,21 @@ func Test_assignment(t *testing.T) {
 			script:         `main() { result= 3.1415 }`,
 			expectedResult: 3.1415,
 		},
+		// ===============
+		// assignment in inner scope
+		// ===============
+		{
+			// declare in inner scope cannot alter outer declare
+			name:           "inner declare",
+			script:         `main() { a := 42 { a := 96 } result=a }`,
+			expectedResult: 42,
+		},
+		{
+			// assignment in inner scope sets outer declare
+			name:           "inner set",
+			script:         `main() { a := 42 { a = 96 } result=a }`,
+			expectedResult: 96,
+		},
 
 		// ===============
 		// Chained assignment

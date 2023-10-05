@@ -21,7 +21,7 @@ Logic = Equality (((&#34;&amp;&#34; &#34;&amp;&#34;) | (&#34;|&#34; &#34;|&#34;)
 Equality = Comparison (((&#34;!&#34; &#34;=&#34;) | (&#34;=&#34; &#34;=&#34;)) Equality)? .
 Comparison = Addition (((&#34;&gt;&#34; &#34;=&#34;) | &#34;&gt;&#34; | (&#34;&lt;&#34; &#34;=&#34;) | &#34;&lt;&#34;) Comparison)? .
 Addition = Multiplication ((&#34;+&#34; | &#34;-&#34;) Addition)? .
-Multiplication = Unary ((&#34;*&#34; | &#34;/&#34; | &#34;%&#34;) Multiplication)? .
+Multiplication = Unary ((&#34;*&#34; | &#34;/&#34; | &#34;//&#34; | &#34;%&#34;) Multiplication)? .
 Unary = ((&#34;!&#34; | &#34;-&#34;) Primary) | Primary .
 Primary = (&lt;number&gt; | &lt;int&gt; | KeyValue | &lt;string&gt; | &#34;null&#34; | &#34;nil&#34; | &#34;true&#34; | &#34;false&#34; | (&#34;(&#34; Expression &#34;)&#34;) | ((CallFunc | Ident) (&lt;period&gt; Primary)?)) .
 KeyValue = &lt;string&gt; &#34;:&#34; Expression .
