@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -163,6 +164,14 @@ func Test_operations(t *testing.T) {
 		{expr: "%d / %f", args: []any{1, 3.0}, want: 1 / 3.0},
 		{expr: "%d / %d", args: []any{-2, 2}, want: -1},
 		{expr: "%d / %d", args: []any{-2, 3}, want: -2 / 3},
+		// --------------------------------------------------
+
+		// Test ** multiplication
+		{expr: "%d ** %d", args: []any{1, 1}, want: math.Pow(1.0, 1.0)},
+		{expr: "%f ** %d", args: []any{1.0, 2}, want: math.Pow(1.0, 2.0)},
+		{expr: "%d ** %f", args: []any{1, 3.0}, want: math.Pow(1.0, 3.0)},
+		{expr: "%d ** %d", args: []any{-2, 2}, want: math.Pow(-2.0, 2.0)},
+		{expr: "%d ** %d", args: []any{-2, 3}, want: math.Pow(-2.0, 3.0)},
 		// --------------------------------------------------
 
 		// Test && logical and
