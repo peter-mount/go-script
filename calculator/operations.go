@@ -82,6 +82,12 @@ var (
 			Int(func(a, b int) (interface{}, error) { return a % b, nil }).
 			Float(func(a, b float64) (interface{}, error) { return math.Mod(a, b), nil }).
 			Build(),
+		"<<": NewBiOpDef().
+			Int(func(a, b int) (interface{}, error) { return a << b, nil }).
+			Build(),
+		">>": NewBiOpDef().
+			Int(func(a, b int) (interface{}, error) { return a >> b, nil }).
+			Build(),
 	}
 )
 

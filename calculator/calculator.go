@@ -208,6 +208,9 @@ func (c *calculator) Op2(op string) error {
 
 	v, err := operation.BiCalculate(a, b)
 	if err != nil {
+		if errors.Is(err, invalidOperation) {
+			return fmt.Errorf("operation \"%T %s %T\" unsupported", a, op, b)
+		}
 		return err
 	}
 

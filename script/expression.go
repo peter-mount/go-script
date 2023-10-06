@@ -64,7 +64,7 @@ type Level5 struct {
 	Pos lexer.Position
 
 	Left  *Unary  `parser:"@@"`
-	Op    string  `parser:"[ @( '*' | '/' | '%' )"`
+	Op    string  `parser:"[ @( '*' | '/' | '%' | '<' '<' | '>' '>' )"`
 	Right *Level5 `parser:"  @@ ]"`
 }
 

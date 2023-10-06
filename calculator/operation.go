@@ -1,6 +1,7 @@
 package calculator
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -59,10 +60,10 @@ func (op *BiOpDef) doBool(a bool, b interface{}) (interface{}, error) {
 	return op.boolOp(a, c)
 }
 
-func (op *BiOpDef) BiCalculate(a, b interface{}) (interface{}, error) {
+func (op *BiOpDef) BiCalculate(a0, b0 interface{}) (interface{}, error) {
 
 	// Convert so a and b are the same type
-	a, b, err := Convert(a, b)
+	a, b, err := Convert(a0, b0)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +92,10 @@ func (op *BiOpDef) BiCalculate(a, b interface{}) (interface{}, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unable to convert %T to %T", b, a)
+	return nil, invalidOperation
 }
+
+var invalidOperation = errors.New("invalid operation")
 
 // NewBiOpDef creates a new NewBiOp based on the provided
 func NewBiOpDef() BiOpDefBuilder {
