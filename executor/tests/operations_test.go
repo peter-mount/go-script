@@ -219,6 +219,67 @@ func Test_operations(t *testing.T) {
 		{expr: "%f >> %d", args: []any{1.5, 1}, wantErr: "operation \"float64 >> int\" unsupported"},
 		{expr: "%d >> %f", args: []any{1, 1.0}, wantErr: "operation \"int >> float64\" unsupported"},
 		{expr: "%d >> %f", args: []any{1, 1.5}, wantErr: "operation \"int >> float64\" unsupported"},
+		// --------------------------------------------------
+
+		// Test & bit and
+		{expr: "%d & %d", args: []any{2, 1}, want: 2 & 1},
+		{expr: "%d & %d", args: []any{4, 2}, want: 4 & 2},
+		{expr: "%d & %d", args: []any{8, 3}, want: 8 & 3},
+		{expr: "%d & %d", args: []any{4, 1}, want: 4 & 1},
+		{expr: "%d & %d", args: []any{8, 2}, want: 8 & 2},
+		{expr: "%d & %d", args: []any{16, 3}, want: 16 & 3},
+
+		// Test & with floats, this should be unsupported
+		{expr: "%f & %d", args: []any{1.0, 1}, wantErr: "operation \"float64 & int\" unsupported"},
+		{expr: "%f & %d", args: []any{1.5, 1}, wantErr: "operation \"float64 & int\" unsupported"},
+		{expr: "%d & %f", args: []any{1, 1.0}, wantErr: "operation \"int & float64\" unsupported"},
+		{expr: "%d & %f", args: []any{1, 1.5}, wantErr: "operation \"int & float64\" unsupported"},
+		// --------------------------------------------------
+
+		// Test | bit or
+		{expr: "%d | %d", args: []any{2, 1}, want: 2 | 1},
+		{expr: "%d | %d", args: []any{4, 2}, want: 4 | 2},
+		{expr: "%d | %d", args: []any{8, 3}, want: 8 | 3},
+		{expr: "%d | %d", args: []any{4, 1}, want: 4 | 1},
+		{expr: "%d | %d", args: []any{8, 2}, want: 8 | 2},
+		{expr: "%d | %d", args: []any{16, 3}, want: 16 | 3},
+
+		// Test | with floats, this should be unsupported
+		{expr: "%f | %d", args: []any{1.0, 1}, wantErr: "operation \"float64 | int\" unsupported"},
+		{expr: "%f | %d", args: []any{1.5, 1}, wantErr: "operation \"float64 | int\" unsupported"},
+		{expr: "%d | %f", args: []any{1, 1.0}, wantErr: "operation \"int | float64\" unsupported"},
+		{expr: "%d | %f", args: []any{1, 1.5}, wantErr: "operation \"int | float64\" unsupported"},
+		// --------------------------------------------------
+
+		// Test ^ bit xor
+		{expr: "%d ^ %d", args: []any{2, 1}, want: 2 ^ 1},
+		{expr: "%d ^ %d", args: []any{4, 2}, want: 4 ^ 2},
+		{expr: "%d ^ %d", args: []any{8, 3}, want: 8 ^ 3},
+		{expr: "%d ^ %d", args: []any{4, 1}, want: 4 ^ 1},
+		{expr: "%d ^ %d", args: []any{8, 2}, want: 8 ^ 2},
+		{expr: "%d ^ %d", args: []any{16, 3}, want: 16 ^ 3},
+
+		// Test ^ with floats, this should be unsupported
+		{expr: "%f ^ %d", args: []any{1.0, 1}, wantErr: "operation \"float64 ^ int\" unsupported"},
+		{expr: "%f ^ %d", args: []any{1.5, 1}, wantErr: "operation \"float64 ^ int\" unsupported"},
+		{expr: "%d ^ %f", args: []any{1, 1.0}, wantErr: "operation \"int ^ float64\" unsupported"},
+		{expr: "%d ^ %f", args: []any{1, 1.5}, wantErr: "operation \"int ^ float64\" unsupported"},
+		// --------------------------------------------------
+
+		// Test &^ bit clear (AND NOT)
+		{expr: "%d &^ %d", args: []any{2, 1}, want: 2 &^ 1},
+		{expr: "%d &^ %d", args: []any{4, 2}, want: 4 &^ 2},
+		{expr: "%d &^ %d", args: []any{8, 3}, want: 8 &^ 3},
+		{expr: "%d &^ %d", args: []any{4, 1}, want: 4 &^ 1},
+		{expr: "%d &^ %d", args: []any{8, 2}, want: 8 &^ 2},
+		{expr: "%d &^ %d", args: []any{16, 3}, want: 16 &^ 3},
+
+		// Test &^ with floats, this should be unsupported
+		{expr: "%f &^ %d", args: []any{1.0, 1}, wantErr: "operation \"float64 &^ int\" unsupported"},
+		{expr: "%f &^ %d", args: []any{1.5, 1}, wantErr: "operation \"float64 &^ int\" unsupported"},
+		{expr: "%d &^ %f", args: []any{1, 1.0}, wantErr: "operation \"int &^ float64\" unsupported"},
+		{expr: "%d &^ %f", args: []any{1, 1.5}, wantErr: "operation \"int &^ float64\" unsupported"},
+		// --------------------------------------------------
 	}
 
 	for _, tt := range tests {

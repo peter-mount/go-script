@@ -44,3 +44,35 @@ func TestCast(t *testing.T) {
 		})
 	}
 }
+
+func TestGetFloatRaw(t *testing.T) {
+	tests := []struct {
+		name string
+		src  interface{}
+		want float64
+		fail bool
+	}{
+		{name: "float64", src: 1.0, want: 1.0},
+		{name: "float32", src: float32(1.0), want: 1.0},
+		{name: "int", src: 1, fail: true},
+		{name: "string float", src: "1.0", fail: true},
+		{name: "string int", src: "1", fail: true},
+		{name: "bool", src: true, fail: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := GetFloatRaw(tt.src)
+			switch {
+			case tt.fail && ok:
+				t.Error("expected failure got pass")
+			case !tt.fail && !ok:
+				t.Errorf("expected ok but got failure")
+			case !tt.fail && ok && got != tt.want:
+				t.Errorf("GetFloatRaw() got = %v, want %v", got, tt.want)
+			default:
+				// pass
+			}
+		})
+	}
+}

@@ -88,6 +88,18 @@ var (
 		">>": NewBiOpDef().
 			Int(func(a, b int) (interface{}, error) { return a >> b, nil }).
 			Build(),
+		"&": NewBiOpDef().
+			Int(func(a, b int) (interface{}, error) { return a & b, nil }).
+			Build(),
+		"|": NewBiOpDef().
+			Int(func(a, b int) (interface{}, error) { return a | b, nil }).
+			Build(),
+		"^": NewBiOpDef().
+			Int(func(a, b int) (interface{}, error) { return a ^ b, nil }).
+			Build(),
+		"&^": NewBiOpDef().
+			Int(func(a, b int) (interface{}, error) { return a &^ b, nil }).
+			Build(),
 	}
 )
 
