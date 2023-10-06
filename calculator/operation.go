@@ -2,7 +2,6 @@ package calculator
 
 import (
 	"errors"
-	"fmt"
 )
 
 // MonoCalculation performs an operation against two values
@@ -190,7 +189,7 @@ func (op *MonoOpDef) MonoCalculate(a interface{}) (interface{}, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("unable to convert %T", a)
+	return nil, invalidOperation
 }
 
 type monoOpBuilder struct {

@@ -188,6 +188,9 @@ func (c *calculator) Op1(op string) error {
 
 	v, err := operation.MonoCalculate(a)
 	if err != nil {
+		if errors.Is(err, invalidOperation) {
+			return fmt.Errorf("operation \"%s %T\" unsupported", op, a)
+		}
 		return err
 	}
 
