@@ -17,29 +17,29 @@ func Test_bit_ops(t *testing.T) {
 		wantErr string
 	}{
 		// Test <<
-		{expr: "%d << %d", args: []any{1, 1}, want: 2},
-		{expr: "%d << %d", args: []any{1, 2}, want: 4},
-		{expr: "%d << %d", args: []any{1, 3}, want: 8},
-		{expr: "%d << %d", args: []any{2, 1}, want: 4},
-		{expr: "%d << %d", args: []any{2, 2}, want: 8},
-		{expr: "%d << %d", args: []any{2, 3}, want: 16},
+		{expr: "%d << %d", args: []any{1, 1}, want: 1 << 1},
+		{expr: "%d << %d", args: []any{1, 2}, want: 1 << 2},
+		{expr: "%d << %d", args: []any{1, 3}, want: 1 << 3},
+		{expr: "%d << %d", args: []any{2, 1}, want: 2 << 1},
+		{expr: "%d << %d", args: []any{2, 2}, want: 2 << 2},
+		{expr: "%d << %d", args: []any{2, 3}, want: 2 << 3},
 		// Test << with floats, this should be unsupported
-		{expr: "%f << %d", args: []any{1.0, 1}, want: 2, wantErr: "operation \"float64 << int\" unsupported"},
-		{expr: "%f << %d", args: []any{1.5, 1}, want: 2, wantErr: "operation \"float64 << int\" unsupported"},
-		{expr: "%d << %f", args: []any{1, 1.0}, want: 2, wantErr: "operation \"int << float64\" unsupported"},
-		{expr: "%d << %f", args: []any{1, 1.5}, want: 2, wantErr: "operation \"int << float64\" unsupported"},
+		{expr: "%f << %d", args: []any{1.0, 1}, wantErr: "operation \"float64 << int\" unsupported"},
+		{expr: "%f << %d", args: []any{1.5, 1}, wantErr: "operation \"float64 << int\" unsupported"},
+		{expr: "%d << %f", args: []any{1, 1.0}, wantErr: "operation \"int << float64\" unsupported"},
+		{expr: "%d << %f", args: []any{1, 1.5}, wantErr: "operation \"int << float64\" unsupported"},
 		// Test >>
-		{expr: "%d >> %d", args: []any{2, 1}, want: 1},
-		{expr: "%d >> %d", args: []any{4, 2}, want: 1},
-		{expr: "%d >> %d", args: []any{8, 3}, want: 1},
-		{expr: "%d >> %d", args: []any{4, 1}, want: 2},
-		{expr: "%d >> %d", args: []any{8, 2}, want: 2},
-		{expr: "%d >> %d", args: []any{16, 3}, want: 2},
+		{expr: "%d >> %d", args: []any{2, 1}, want: 2 >> 1},
+		{expr: "%d >> %d", args: []any{4, 2}, want: 4 >> 2},
+		{expr: "%d >> %d", args: []any{8, 3}, want: 8 >> 3},
+		{expr: "%d >> %d", args: []any{4, 1}, want: 4 >> 1},
+		{expr: "%d >> %d", args: []any{8, 2}, want: 8 >> 2},
+		{expr: "%d >> %d", args: []any{16, 3}, want: 16 >> 3},
 		// Test >> with floats, this should be unsupported
-		{expr: "%f >> %d", args: []any{1.0, 1}, want: 2, wantErr: "operation \"float64 >> int\" unsupported"},
-		{expr: "%f >> %d", args: []any{1.5, 1}, want: 2, wantErr: "operation \"float64 >> int\" unsupported"},
-		{expr: "%d >> %f", args: []any{1, 1.0}, want: 2, wantErr: "operation \"int >> float64\" unsupported"},
-		{expr: "%d >> %f", args: []any{1, 1.5}, want: 2, wantErr: "operation \"int >> float64\" unsupported"},
+		{expr: "%f >> %d", args: []any{1.0, 1}, wantErr: "operation \"float64 >> int\" unsupported"},
+		{expr: "%f >> %d", args: []any{1.5, 1}, wantErr: "operation \"float64 >> int\" unsupported"},
+		{expr: "%d >> %f", args: []any{1, 1.0}, wantErr: "operation \"int >> float64\" unsupported"},
+		{expr: "%d >> %f", args: []any{1, 1.5}, wantErr: "operation \"int >> float64\" unsupported"},
 	}
 
 	for tid, tt := range tests {
