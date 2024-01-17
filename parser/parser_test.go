@@ -34,6 +34,29 @@ func Test_parser(t *testing.T) {
 		},
 
 		// ====================================================================
+		// Test go style raw strings
+		// ====================================================================
+		{
+			name:   "normal string",
+			script: `main() { a := "simple raw string" }`,
+		},
+		{
+			name:   "normal string with backtick",
+			script: "main() { a := \"simple `raw` string\" }",
+		},
+		{
+			name:   "raw string simple",
+			script: "main() { a := `simple raw string` }",
+		},
+		{
+			name: "raw string multiline",
+			script: strings.Join([]string{
+				"main() { a := `multiple line",
+				"raw string` }",
+			}, "\n"),
+		},
+
+		// ====================================================================
 	}
 
 	for _, test := range tests {
