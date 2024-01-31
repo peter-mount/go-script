@@ -155,8 +155,7 @@ node("go") {
   stage("windows_arm64") {
     sh 'make -f Makefile.gen windows_arm64'
   }
-
-  stage("archive") {
+  stage("archiveArtifacts") {
     archiveArtifacts artifacts: 'dist/*'
   }
 }
