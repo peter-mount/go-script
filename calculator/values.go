@@ -2,6 +2,7 @@ package calculator
 
 import (
 	"fmt"
+	"github.com/x448/float16"
 	"math"
 	"reflect"
 	"strconv"
@@ -56,6 +57,9 @@ func GetFloatRaw(v interface{}) (float64, bool) {
 		}
 		if f, ok := v.(float32); ok {
 			return float64(f), true
+		}
+		if f, ok := v.(float16.Float16); ok {
+			return float64(f.Float32()), true
 		}
 
 		// Issue #4 Check for types which can convert to float
