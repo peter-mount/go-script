@@ -43,6 +43,14 @@ func New(s *script.Script) (Executor, error) {
 	return e, nil
 }
 
+// NewExpressionExecutor returns an Executor that can evaluate Expressions.
+// All packages are available, but no functions can be defined.
+func NewExpressionExecutor() Executor {
+	//  We can ignore error here as we do not use functions
+	exec, _ := New(&script.Script{})
+	return exec
+}
+
 func (e *executor) Run() error {
 	main, hasMain := e.state.GetFunction(lexer.Position{}, "main")
 	if !hasMain {
