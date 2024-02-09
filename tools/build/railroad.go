@@ -5,6 +5,7 @@ import (
 	"github.com/alecthomas/participle/v2/ebnf"
 	"github.com/alecthomas/repr"
 	"github.com/peter-mount/go-build/core"
+	"github.com/peter-mount/go-build/util/makefile"
 	"github.com/peter-mount/go-build/util/makefile/target"
 	"github.com/peter-mount/go-build/util/meta"
 	"os"
@@ -24,7 +25,7 @@ type Railroad struct {
 }
 
 func (r *Railroad) Start() error {
-	r.Build.Documentation(r.documentation)
+	r.Build.Documentation(0, r.documentation)
 
 	if *r.Railroad != "" {
 		return r.run()
@@ -32,7 +33,7 @@ func (r *Railroad) Start() error {
 	return nil
 }
 
-func (r *Railroad) documentation(target target.Builder, _ *meta.Meta) {
+func (r *Railroad) documentation(_ makefile.Builder, target target.Builder, _ *meta.Meta) {
 
 	// Write these to our documentation
 	srcDir := "documentation/go-script/parser"

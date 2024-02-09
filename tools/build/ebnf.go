@@ -2,6 +2,7 @@ package build
 
 import (
 	"github.com/peter-mount/go-build/core"
+	"github.com/peter-mount/go-build/util/makefile"
 	"github.com/peter-mount/go-build/util/makefile/target"
 	"github.com/peter-mount/go-build/util/meta"
 	"github.com/peter-mount/go-script/parser"
@@ -19,7 +20,7 @@ type EBNF struct {
 }
 
 func (s *EBNF) Start() error {
-	s.Build.Documentation(s.documentation)
+	s.Build.Documentation(0, s.documentation)
 
 	if *s.Ebnf != "" {
 		return s.ebnf()
@@ -27,7 +28,7 @@ func (s *EBNF) Start() error {
 	return nil
 }
 
-func (s *EBNF) documentation(target target.Builder, _ *meta.Meta) {
+func (s *EBNF) documentation(_ makefile.Builder, target target.Builder, _ *meta.Meta) {
 
 	srcDir := "documentation/go-script/parser"
 	ebnf := filepath.Join(srcDir, "ebnf.txt")
