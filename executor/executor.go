@@ -10,18 +10,22 @@ import (
 )
 
 type Executor interface {
+	ExpressionExecutor
 	Run() error
-	Calculator() calculator.Calculator
-	GlobalScope() state.Variables
-	Expression(op *script.Expression) error
-	Statement(statements *script.Statement) error
-	Statements(statements *script.Statements) error
 	// ProcessParameters will call each parameter in a CallFunc returning the true values
 	ProcessParameters(*script.CallFunc) ([]interface{}, error)
 	// ArgsToValues will take a slice of arguments and convert to reflect.Value.
 	// This will handle if CallFunc.Variadic is set
 	ArgsToValues(cf *script.CallFunc, tf reflect.Type, args []interface{}) ([]reflect.Value, error)
 	CallReflectFuncImpl(*script.CallFunc, reflect.Value, []interface{}) (interface{}, error)
+}
+
+type ExpressionExecutor interface {
+	Calculator() calculator.Calculator
+	GlobalScope() state.Variables
+	Expression(op *script.Expression) error
+	Statement(statements *script.Statement) error
+	Statements(statements *script.Statements) error
 }
 
 type executor struct {
@@ -47,7 +51,7 @@ func New(s *script.Script) (Executor, error) {
 
 // NewExpressionExecutor returns an Executor that can evaluate Expressions.
 // All packages are available, but no functions can be defined.
-func NewExpressionExecutor() Executor {
+func NewExpressionExecutor() ExpressionExecutor {
 	//  We can ignore error here as we do not use functions
 	exec, _ := New(&script.Script{})
 	return exec
