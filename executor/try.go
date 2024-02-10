@@ -21,7 +21,7 @@ func (e *executor) try(op *script.Try) (err error) {
 
 	if op.Finally != nil {
 		defer func() {
-			err1 := e.statement(op.Finally.Statement)
+			err1 := e.Statement(op.Finally.Statement)
 			if err1 != nil {
 				err = err1
 			}
@@ -43,7 +43,7 @@ func (e *executor) try(op *script.Try) (err error) {
 				e.state.Declare(op.Catch.CatchIdent)
 				e.state.Set(op.Catch.CatchIdent, err.Error())
 			}
-			err = errors.Error(op.Pos, e.statement(op.Catch.Statement))
+			err = errors.Error(op.Pos, e.Statement(op.Catch.Statement))
 		}
 	}
 
@@ -106,7 +106,7 @@ func (e *executor) tryBody(op *script.Try) error {
 	// Finally add the body to the action task
 	if op.Body != nil {
 		action = action.Then(func(_ context.Context) error {
-			return errors.Error(op.Pos, e.statement(op.Body))
+			return errors.Error(op.Pos, e.Statement(op.Body))
 		})
 	}
 

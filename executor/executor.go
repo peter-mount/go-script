@@ -14,6 +14,8 @@ type Executor interface {
 	Calculator() calculator.Calculator
 	GlobalScope() state.Variables
 	Expression(op *script.Expression) error
+	Statement(statements *script.Statement) error
+	Statements(statements *script.Statements) error
 	// ProcessParameters will call each parameter in a CallFunc returning the true values
 	ProcessParameters(*script.CallFunc) ([]interface{}, error)
 	// ArgsToValues will take a slice of arguments and convert to reflect.Value.

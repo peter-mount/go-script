@@ -80,7 +80,7 @@ func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 		e.state.Set(p, args[i])
 	}
 
-	return errors.Error(f.Pos, e.statements(f.FunBody))
+	return errors.Error(f.Pos, e.Statements(f.FunBody))
 }
 
 // callReflectFunc invokes a function within go from a script

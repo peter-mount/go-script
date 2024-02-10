@@ -5,9 +5,9 @@ import (
 	"github.com/peter-mount/go-script/script"
 )
 
-// statements executes a Statements block.
+// Statements executes a Statements block.
 // Within this it runs with its own variable scope which is automatically closed when it completes
-func (e *executor) statements(statements *script.Statements) error {
+func (e *executor) Statements(statements *script.Statements) error {
 
 	// Do nothing if it's an empty block
 	if statements == nil || len(statements.Statements) == 0 {
@@ -19,7 +19,7 @@ func (e *executor) statements(statements *script.Statements) error {
 
 	s := statements.Statements[0]
 	for s != nil {
-		if err := e.statement(s); err != nil {
+		if err := e.Statement(s); err != nil {
 			return errors.Error(s.Pos, err)
 		}
 		s = s.Next
@@ -27,14 +27,14 @@ func (e *executor) statements(statements *script.Statements) error {
 	return nil
 }
 
-func (e *executor) statement(statement *script.Statement) error {
+func (e *executor) Statement(statement *script.Statement) error {
 	if statement == nil || statement.Empty {
 		return nil
 	}
 
 	switch {
 	case statement.Block != nil:
-		return errors.Error(statement.Pos, e.statements(statement.Block))
+		return errors.Error(statement.Pos, e.Statements(statement.Block))
 
 	case statement.Expression != nil:
 		// Wrap visit to Expression, so we don't leak return values on the stack

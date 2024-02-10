@@ -50,9 +50,9 @@ func (e *executor) ifStatement(s *script.If) error {
 	b, err := e.condition(s.Condition, true)
 	if err == nil {
 		if b {
-			err = e.statement(s.Body)
+			err = e.Statement(s.Body)
 		} else {
-			err = e.statement(s.Else)
+			err = e.Statement(s.Else)
 		}
 	}
 
@@ -111,7 +111,7 @@ func (e *executor) forLoop(p lexer.Position, init, conditionFirst *script.Expres
 		}
 
 		if body != nil {
-			exit, err1 := e.breakOrContinue(p, e.statement(body))
+			exit, err1 := e.breakOrContinue(p, e.Statement(body))
 			if exit {
 				return err1
 			}
@@ -227,7 +227,7 @@ func (e *executor) forRangeEntry(key, val interface{}, op *script.ForRange) erro
 		}
 	}
 
-	return errors.Error(op.Pos, e.statement(op.Body))
+	return errors.Error(op.Pos, e.Statement(op.Body))
 }
 
 type Iterator interface {

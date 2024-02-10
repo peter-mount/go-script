@@ -42,7 +42,7 @@ func (e *executor) switchStatement(op *script.Switch) (err error) {
 
 	// Default clause if we get to this point
 	if op.Default != nil {
-		return errors.Error(op.Pos, e.statement(op.Default))
+		return errors.Error(op.Pos, e.Statement(op.Default))
 	}
 	return nil
 }
@@ -57,7 +57,7 @@ func (e *executor) switchCase(c *script.SwitchCase, hasLeft bool, left, right in
 	}
 
 	if b {
-		return true, errors.Error(c.Pos, e.statement(c.Statement))
+		return true, errors.Error(c.Pos, e.Statement(c.Statement))
 	}
 
 	return false, nil
