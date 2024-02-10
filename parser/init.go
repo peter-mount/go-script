@@ -6,11 +6,22 @@ import (
 	"github.com/peter-mount/go-script/script"
 )
 
+type Initialiser interface {
+	Scan(s *script.Script) error
+	Expression(op *script.Expression) error
+	Statements(op *script.Statements) error
+	Statement(op *script.Statement) error
+}
+
+func NewInitialiser() Initialiser {
+	return &initialiser{}
+}
+
 type initialiser struct {
 	state initState
 }
 
-// initState holds various state during the init scan
+// initState holds various state during the init Scan
 type initState struct {
 	inLoop bool // true when parsing within a loop statement
 }
@@ -21,9 +32,9 @@ func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
 		return nil, err
 	}
 
-	init := &initialiser{}
+	init := NewInitialiser()
 
-	err = init.scan(s)
+	err = init.Scan(s)
 	if err != nil {
 		return nil, errors.Error(s.Pos, err)
 	}
@@ -31,7 +42,7 @@ func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
 	return s, nil
 }
 
-func (p *initialiser) scan(s *script.Script) error {
+func (p *initialiser) Scan(s *script.Script) error {
 	for _, f := range s.FunDec {
 		if err := p.funcDec(f); err != nil {
 			return errors.Error(s.Pos, err)
@@ -49,10 +60,16 @@ func (p *initialiser) funcDec(op *script.FuncDec) error {
 	defer func() { p.state = old }()
 	p.state = initState{}
 
-	return errors.Error(op.Pos, p.initStatements(op.FunBody))
+	return errors.Error(op.Pos, p.Statements(op.FunBody))
 }
 
-func (p *initialiser) initStatements(op *script.Statements) error {
+// Expression initialises an expression.
+func (p *initialiser) Expression(op *script.Expression) error {
+	// Currently do nothing, just here to make the API usable if we ever need to include it
+	return nil
+}
+
+func (p *initialiser) Statements(op *script.Statements) error {
 	if op == nil {
 		return nil
 	}
@@ -62,7 +79,7 @@ func (p *initialiser) initStatements(op *script.Statements) error {
 			op.Statements[i-1].Next = s
 		}
 
-		if err := p.initStatement(s); err != nil {
+		if err := p.Statement(s); err != nil {
 			return errors.Error(s.Pos, err)
 		}
 	}
@@ -70,7 +87,7 @@ func (p *initialiser) initStatements(op *script.Statements) error {
 	return nil
 }
 
-func (p *initialiser) initStatement(op *script.Statement) error {
+func (p *initialiser) Statement(op *script.Statement) error {
 	if op == nil {
 		return nil
 	}
@@ -79,7 +96,7 @@ func (p *initialiser) initStatement(op *script.Statement) error {
 
 	switch {
 	case op.Block != nil:
-		err = p.initStatements(op.Block)
+		err = p.Statements(op.Block)
 
 	case op.IfStmt != nil:
 		err = p.initIf(op.IfStmt)
@@ -121,10 +138,10 @@ func (p *initialiser) initStatement(op *script.Statement) error {
 }
 
 func (p *initialiser) initIf(op *script.If) error {
-	err := p.initStatement(op.Body)
+	err := p.Statement(op.Body)
 
 	if err == nil {
-		err = p.initStatement(op.Else)
+		err = p.Statement(op.Else)
 	}
 
 	return errors.Error(op.Pos, err)
@@ -134,14 +151,14 @@ func (p *initialiser) initSwitch(op *script.Switch) error {
 	var err error
 
 	for _, c := range op.Case {
-		err = p.initStatement(c.Statement)
+		err = p.Statement(c.Statement)
 		if err != nil {
 			break
 		}
 	}
 
 	if err == nil {
-		err = p.initStatement(op.Default)
+		err = p.Statement(op.Default)
 	}
 
 	return errors.Error(op.Pos, err)
@@ -178,7 +195,7 @@ func (p *initialiser) initLoop(pos lexer.Position, body *script.Statement) error
 	defer func() { p.state = old }()
 	p.state.inLoop = true
 
-	err := p.initStatement(body)
+	err := p.Statement(body)
 
 	return errors.Error(pos, err)
 }
@@ -195,14 +212,14 @@ func (p *initialiser) initTry(op *script.Try) error {
 		}
 	}
 
-	err := p.initStatement(op.Body)
+	err := p.Statement(op.Body)
 
 	if err == nil && op.Catch != nil {
-		err = p.initStatement(op.Catch.Statement)
+		err = p.Statement(op.Catch.Statement)
 	}
 
 	if err == nil && op.Finally != nil {
-		err = p.initStatement(op.Finally.Statement)
+		err = p.Statement(op.Finally.Statement)
 	}
 
 	return errors.Error(op.Pos, err)
