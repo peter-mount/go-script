@@ -390,13 +390,7 @@ func Test_forrange(t *testing.T) {
 			name:   "iterator generic list int",
 			script: `main() { for i,_ := range it { result = i } }`,
 			params: map[string]interface{}{
-				"it": func() util.Iterator[int] {
-					l := util.NewList[int]()
-					for i := 0; i < 10; i++ {
-						l.Add(i)
-					}
-					return l.Iterator()
-				}(),
+				"it": util.NewList[int](0, 1, 2, 3, 4, 5, 6, 7, 8, 9).Iterator(),
 			},
 			initialResult:  -1,
 			expectedResult: 9,
@@ -405,13 +399,7 @@ func Test_forrange(t *testing.T) {
 			name:   "iterator generic list string",
 			script: `main() { for _, s := range it { result = s } }`,
 			params: map[string]interface{}{
-				"it": func() util.Iterator[string] {
-					l := util.NewList[string]()
-					for _, s := range []string{"jan", "feb", "mar", "apr"} {
-						l.Add(s)
-					}
-					return l.Iterator()
-				}(),
+				"it": util.NewList[string]("jan", "feb", "mar", "apr").Iterator(),
 			},
 			initialResult:  "",
 			expectedResult: "apr",
