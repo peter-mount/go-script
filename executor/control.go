@@ -2,6 +2,7 @@ package executor
 
 import (
 	"github.com/alecthomas/participle/v2/lexer"
+	"github.com/peter-mount/go-kernel/v2/util"
 	"github.com/peter-mount/go-script/calculator"
 	"github.com/peter-mount/go-script/errors"
 	"github.com/peter-mount/go-script/script"
@@ -149,17 +150,15 @@ func (e *executor) forRange(op *script.ForRange) error {
 		return errors.Error(op.Pos, err)
 	}
 
-	// Check for supported interfaces
+	// Check for supported extensions
 	if r != nil {
-		// If an Iterator then run through until HasNext() returns false
-		if it, ok := r.(Iterator); ok {
+		if it, ok := isIterable(r); ok {
 			return e.forIterator(op, it)
 		}
-	}
 
-	// Check for integer, e.g. for i,_:=range 10 will generate integers 0..9
-	if n, ok := calculator.GetIntRaw(r); ok {
-		return e.forInteger(op, n)
+		if n, ok := calculator.GetIntRaw(r); ok {
+			return e.forInteger(op, n)
+		}
 	}
 
 	// Handle default go constructs
@@ -177,7 +176,7 @@ func (e *executor) forRange(op *script.ForRange) error {
 	}
 }
 
-// forInteger handles go's for i:=range n where it will loop i from 0 to n-1.
+// forInteger handles go 1.22's for i:=range n where it will loop i from 0 to n-1.
 // If n<=0 then the loop does not run any iterations.
 //
 // Unlike go, as we require both variables in our for range statement, both variables
@@ -195,7 +194,7 @@ func (e *executor) forInteger(op *script.ForRange, limit int) error {
 }
 
 // forIterator will iterate for all values in an Iterator
-func (e *executor) forIterator(op *script.ForRange, it Iterator) error {
+func (e *executor) forIterator(op *script.ForRange, it util.Iterator[interface{}]) error {
 	for i := 0; it.HasNext(); i++ {
 		exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, it.Next(), op))
 		if exit {
@@ -252,7 +251,66 @@ func (e *executor) forRangeEntry(key, val interface{}, op *script.ForRange) erro
 	return errors.Error(op.Pos, e.Statement(op.Body))
 }
 
-type Iterator interface {
-	HasNext() bool
-	Next() interface{}
+// isIterable tests to see if the result is an iterator and returns a usable Iterator if that is the case.
+// Note this works with any iterator type, so either util.Iterator with a defined type, or one which
+// does not use generics but does return interface{} from the Next() function.
+func isIterable(r interface{}) (util.Iterator[interface{}], bool) {
+	// If r is the same type we return then just return it
+	if it, ok := r.(util.Iterator[interface{}]); ok {
+		return it, true
+	}
+
+	// If it's an iterator - specifically it has the HasNext() bool function, then check for the
+	// existence of a Next() function with a single return value.
+	//
+	// If that exists, then return an iteratorWrapper to handle the conversion between the underlying
+	// iterator to one that returns interface{}.
+	//
+	// This allows us to iterator over an iterator of a different type as reflection returns the call result
+	// with an interface{}
+	if it, ok := r.(iterator); ok {
+		tv := reflect.ValueOf(r)
+		tm := tv.MethodByName("Next")
+		if tm.IsValid() {
+			tmt := tm.Type()
+			if tmt.NumIn() == 0 && tmt.NumOut() == 1 {
+				return &iteratorWrapper{
+					it:   it,
+					next: tm,
+				}, true
+			}
+		}
+	}
+
+	// The value is not a compatible Iterator
+	return nil, false
 }
+
+type iterator interface {
+	HasNext() bool
+}
+
+// iteratorWrapper handles the delegation of HasNext() and Next() to the underlying Iterator.
+// The remaining functions of util.Iterator are just defined to complete the interface, they are
+// not used by forIterator()
+type iteratorWrapper struct {
+	it   iterator
+	next reflect.Value
+}
+
+func (it *iteratorWrapper) HasNext() bool {
+	return it.it.HasNext()
+}
+
+func (it *iteratorWrapper) Next() interface{} {
+	var args []reflect.Value
+	ret := it.next.Call(args)
+	// ret should always return a value as isIterable has checked that Next() does just that
+	return ret[0].Interface()
+}
+
+func (it *iteratorWrapper) ForEach(func(interface{}))                     {}
+func (it *iteratorWrapper) ForEachAsync(func(interface{}))                {}
+func (it *iteratorWrapper) ForEachFailFast(func(interface{}) error) error { return nil }
+func (it *iteratorWrapper) Iterator() util.Iterator[interface{}]          { return it }
+func (it *iteratorWrapper) ReverseIterator() util.Iterator[interface{}]   { return it }

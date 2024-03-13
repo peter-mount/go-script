@@ -1,9 +1,11 @@
 package tests
 
 import (
+	"github.com/peter-mount/go-kernel/v2/util"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
 	_ "github.com/peter-mount/go-script/stdlib/fmt"
+	"strings"
 	"testing"
 )
 
@@ -26,6 +28,10 @@ func (i *forRangeIterator) Next() interface{} {
 	return r
 }
 
+type nonIterator struct{}
+
+func (ni *nonIterator) HasNext() bool { return true }
+
 func Test_forrange(t *testing.T) {
 
 	tests := []struct {
@@ -34,6 +40,7 @@ func Test_forrange(t *testing.T) {
 		params         map[string]interface{}
 		initialResult  interface{}
 		expectedResult interface{}
+		expectedError  string
 	}{
 		// ===============
 		// maps
@@ -376,6 +383,54 @@ func Test_forrange(t *testing.T) {
 			expectedResult: 15,
 		},
 
+		// =====================
+		// iterator generic list
+		// =====================
+		{
+			name:   "iterator generic list int",
+			script: `main() { for i,_ := range it { result = i } }`,
+			params: map[string]interface{}{
+				"it": func() util.Iterator[int] {
+					l := util.NewList[int]()
+					for i := 0; i < 10; i++ {
+						l.Add(i)
+					}
+					return l.Iterator()
+				}(),
+			},
+			initialResult:  -1,
+			expectedResult: 9,
+		},
+		{
+			name:   "iterator generic list string",
+			script: `main() { for _, s := range it { result = s } }`,
+			params: map[string]interface{}{
+				"it": func() util.Iterator[string] {
+					l := util.NewList[string]()
+					for _, s := range []string{"jan", "feb", "mar", "apr"} {
+						l.Add(s)
+					}
+					return l.Iterator()
+				}(),
+			},
+			initialResult:  "",
+			expectedResult: "apr",
+		},
+
+		// =====================
+		// Test iterator detection works
+		//
+		// This tests for something having a HasNext() bool function but no Next() function.
+		// =====================
+		{
+			name:   "iterator generic no Next",
+			script: `main() { for _, s := range it { result = s } }`,
+			params: map[string]interface{}{
+				"it": &nonIterator{},
+			},
+			expectedError: "cannot range over *tests.nonIterator",
+		},
+
 		// ===============
 		// integer ranges
 		// ===============
@@ -448,7 +503,18 @@ func Test_forrange(t *testing.T) {
 			// Ignore errors as we test for them
 			err = exec.Run()
 			if err != nil {
+				// We are expecting an error so pass
+				if test.expectedError != "" && strings.Contains(err.Error(), test.expectedError) {
+					return
+				}
+
 				t.Fatal(err)
+				return
+			}
+
+			// We were expecting an error but didn't get one
+			if test.expectedError != "" {
+				t.Fatal("expected error but none returned")
 				return
 			}
 
