@@ -157,6 +157,11 @@ func (e *executor) forRange(op *script.ForRange) error {
 		}
 	}
 
+	// Check for integer, e.g. for i,_:=range 10 will generate integers 0..9
+	if n, ok := calculator.GetIntRaw(r); ok {
+		return e.forInteger(op, n)
+	}
+
 	// Handle default go constructs
 	tv := reflect.ValueOf(r)
 	ti := reflect.Indirect(tv)
@@ -170,6 +175,23 @@ func (e *executor) forRange(op *script.ForRange) error {
 	default:
 		return errors.Errorf(op.Expression.Pos, "cannot range over %T", r)
 	}
+}
+
+// forInteger handles go's for i:=range n where it will loop i from 0 to n-1.
+// If n<=0 then the loop does not run any iterations.
+//
+// Unlike go, as we require both variables in our for range statement, both variables
+// are set to the same index value.
+func (e *executor) forInteger(op *script.ForRange, limit int) error {
+	if limit > 0 {
+		for i := 0; i < limit; i++ {
+			exit, err := e.breakOrContinue(op.Pos, e.forRangeEntry(i, i, op))
+			if exit {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // forIterator will iterate for all values in an Iterator

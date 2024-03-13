@@ -375,6 +375,46 @@ func Test_forrange(t *testing.T) {
 			initialResult:  -1,
 			expectedResult: 15,
 		},
+
+		// ===============
+		// integer ranges
+		// ===============
+		{
+			name:   "integer int",
+			script: `main() { for i,_ := range it { result = i } }`,
+			params: map[string]interface{}{
+				"it": 10,
+			},
+			initialResult:  -1,
+			expectedResult: 9,
+		},
+		{
+			name:   "integer break int",
+			script: `main() { for i,_ := range it { result = i if i>5 break } }`,
+			params: map[string]interface{}{
+				"it": 10,
+			},
+			initialResult:  -1,
+			expectedResult: 6,
+		},
+		{
+			name:   "integer int64",
+			script: `main() { for i,v := range it { result = i } }`,
+			params: map[string]interface{}{
+				"it": int64(10),
+			},
+			initialResult:  -1,
+			expectedResult: 9,
+		},
+		{
+			name:   "integer break int64",
+			script: `main() { for i,v := range it { result = i if i>5 break } }`,
+			params: map[string]interface{}{
+				"it": int64(10),
+			},
+			initialResult:  -1,
+			expectedResult: 6,
+		},
 	}
 
 	for _, test := range tests {
