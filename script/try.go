@@ -4,13 +4,13 @@ import (
 	"github.com/alecthomas/participle/v2/lexer"
 )
 
-// Try is Java's try {} catch {} finally{} construct.
+// Try is based on Java's try {} catch {} finally{} construct.
 //
 // The Try.Init section contains variables pointing to resources.
 // If they implement TryClosable then they will be closed when the
 // body is exited.
 //
-// Try.Catch is called if an error occurs in the body. This is optiona.
+// Try.Catch is called if an error occurs in the body. This is optional.
 //
 // Try.Finally is called once the body & catch blocks have executed.
 //
