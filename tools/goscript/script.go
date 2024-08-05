@@ -3,13 +3,12 @@ package goscript
 import (
 	"errors"
 	"flag"
+	"github.com/peter-mount/go-build/application"
 	"github.com/peter-mount/go-build/version"
 	"github.com/peter-mount/go-kernel/v2/log"
 	"github.com/peter-mount/go-script/executor"
 	"github.com/peter-mount/go-script/parser"
 	"os"
-	"path"
-	"path/filepath"
 )
 
 type Script struct {
@@ -23,7 +22,7 @@ func (b *Script) Run() error {
 	p := parser.New()
 
 	// if ../include exists then add it to the path
-	if err := p.IncludePath(path.Join(filepath.Dir(os.Args[0]), "../include")); err != nil {
+	if err := p.IncludePath(application.FileName(application.STATIC, "include")); err != nil {
 		if !os.IsNotExist(err) {
 			return err
 		}
