@@ -56,35 +56,19 @@ func (p *defaultParser) IncludePath(s string) error {
 }
 
 func (p *defaultParser) Parse(fileName string, r io.Reader, opts ...participle.ParseOption) (*script.Script, error) {
-	s, err := p.parser.Parse(fileName, r, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return p.init(s)
+	return p.init(p.parser.Parse(fileName, r, opts...))
 }
 
 func (p *defaultParser) ParseBytes(fileName string, b []byte, opts ...participle.ParseOption) (*script.Script, error) {
-	s, err := p.parser.ParseBytes(fileName, b, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return p.init(s)
+	return p.init(p.parser.ParseBytes(fileName, b, opts...))
 }
 
 func (p *defaultParser) ParseString(fileName, src string, opts ...participle.ParseOption) (*script.Script, error) {
-	s, err := p.parser.ParseString(fileName, src, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return p.init(s)
+	return p.init(p.parser.ParseString(fileName, src, opts...))
 }
 
 func (p *defaultParser) ParseFile(fileName string, opts ...participle.ParseOption) (*script.Script, error) {
-	s, err := p.parseFile(fileName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return p.init(s)
+	return p.init(p.parseFile(fileName, opts...))
 }
 
 func (p *defaultParser) parseFile(fileName string, opts ...participle.ParseOption) (*script.Script, error) {
@@ -93,6 +77,8 @@ func (p *defaultParser) parseFile(fileName string, opts ...participle.ParseOptio
 		return nil, err
 	}
 	defer f.Close()
+
+	// Note: Do not wrap with init() here as this function is also used for importing scripts!
 	return p.parser.Parse(fileName, f, opts...)
 }
 
@@ -119,7 +105,7 @@ func (p *defaultParser) include(s *script.Script, pos lexer.Position, paths []st
 		return errors.Error(pos, err)
 	}
 
-	// To prevent an infinite loop, if we have already included a file, then dont include it
+	// To prevent an infinite loop, if we have already included a file, then don't include it
 	if _, exists := s.Includes[src]; exists {
 		return nil
 	}

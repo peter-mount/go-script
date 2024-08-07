@@ -26,8 +26,12 @@ type initState struct {
 	inLoop bool // true when parsing within a loop statement
 }
 
-func (p *defaultParser) init(s *script.Script) (*script.Script, error) {
-	err := p.includeTopDec(s, s)
+func (p *defaultParser) init(s *script.Script, err error) (*script.Script, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.includeTopDec(s, s)
 	if err != nil {
 		return nil, err
 	}
