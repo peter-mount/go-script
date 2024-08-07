@@ -22,16 +22,12 @@ func (b *Script) Run() error {
 	p := parser.New()
 
 	// if ../include exists then add it to the path
-	if err := p.IncludePath(application.FileName(application.STATIC, "include")); err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
+	if err := p.IncludePath(application.FileName(application.STATIC, "include")); err != nil && !os.IsNotExist(err) {
+		return err
 	}
 
-	if err := p.IncludePath("."); err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
+	if err := p.IncludePath("."); err != nil && !os.IsNotExist(err) {
+		return err
 	}
 
 	args := flag.Args()
