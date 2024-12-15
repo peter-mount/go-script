@@ -102,6 +102,12 @@ func (p *initialiser) Statement(op *script.Statement) error {
 	case op.Block != nil:
 		err = p.Statements(op.Block)
 
+	case op.Expression != nil:
+		err = p.Expression(op.Expression)
+
+	case op.DoWhile != nil:
+		err = p.initDoWhile(op.DoWhile)
+
 	case op.IfStmt != nil:
 		err = p.initIf(op.IfStmt)
 
@@ -113,6 +119,9 @@ func (p *initialiser) Statement(op *script.Statement) error {
 
 	case op.Repeat != nil:
 		err = p.initRepeat(op.Repeat)
+
+	case op.Return != nil:
+		err = p.Expression(op.Return.Result)
 
 	case op.Switch != nil:
 		err = p.initSwitch(op.Switch)
@@ -142,7 +151,11 @@ func (p *initialiser) Statement(op *script.Statement) error {
 }
 
 func (p *initialiser) initIf(op *script.If) error {
-	err := p.Statement(op.Body)
+	err := p.Expression(op.Condition)
+
+	if err == nil {
+		err = p.Statement(op.Body)
+	}
 
 	if err == nil {
 		err = p.Statement(op.Else)
@@ -155,7 +168,15 @@ func (p *initialiser) initSwitch(op *script.Switch) error {
 	var err error
 
 	for _, c := range op.Case {
-		err = p.Statement(c.Statement)
+		for _, ex := range c.Expression {
+			err = p.Expression(ex.Expression)
+			if err != nil {
+				break
+			}
+		}
+		if err == nil {
+			err = p.Statement(c.Statement)
+		}
 		if err != nil {
 			break
 		}
@@ -169,23 +190,49 @@ func (p *initialiser) initSwitch(op *script.Switch) error {
 }
 
 func (p *initialiser) initDoWhile(op *script.DoWhile) error {
-	return p.initLoop(op.Pos, op.Body)
+	err := p.Expression(op.Condition)
+	if err == nil {
+		err = p.initLoop(op.Pos, op.Body)
+	}
+	return err
 }
 
 func (p *initialiser) initRepeat(op *script.Repeat) error {
-	return p.initLoop(op.Pos, op.Body)
+	err := p.Expression(op.Condition)
+	if err == nil {
+		err = p.initLoop(op.Pos, op.Body)
+	}
+	return err
 }
 
 func (p *initialiser) initWhile(op *script.While) error {
-	return p.initLoop(op.Pos, op.Body)
+	err := p.Expression(op.Condition)
+	if err == nil {
+		err = p.initLoop(op.Pos, op.Body)
+	}
+	return err
 }
 
 func (p *initialiser) initFor(op *script.For) error {
-	return p.initLoop(op.Pos, op.Body)
+	err := p.Expression(op.Init)
+	if err == nil {
+		err = p.Expression(op.Condition)
+	}
+	if err == nil {
+		err = p.Expression(op.Increment)
+	}
+	if err == nil {
+		err = p.initLoop(op.Pos, op.Body)
+	}
+	return err
 }
 
 func (p *initialiser) initForRange(op *script.ForRange) error {
-	return p.initLoop(op.Pos, op.Body)
+	err := p.Expression(op.Expression)
+	if err == nil {
+		err = p.initLoop(op.Pos, op.Body)
+	}
+	return err
 }
 
 // initLoop handles all loop statements.
