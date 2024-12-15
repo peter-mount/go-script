@@ -72,6 +72,16 @@ func (p rot) Invoke(c Calculator) error {
 	return c.Rot()
 }
 
+func Op1(op string) Instruction { return op1{op: op} }
+
+type op1 struct {
+	op string
+}
+
+func (p op1) Invoke(c Calculator) error {
+	return c.Op1(p.op)
+}
+
 func Op2(op string) Instruction { return op2{op: op} }
 
 type op2 struct {
