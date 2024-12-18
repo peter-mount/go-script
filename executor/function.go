@@ -69,7 +69,15 @@ func (e *executor) ProcessParameters(cf *script.CallFunc) ([]interface{}, error)
 func (e *executor) functionImpl(f *script.FuncDec, args []interface{}) error {
 	// Use NewRootScope so we cannot access variables outside the function
 	e.state.NewRootScope()
-	defer e.state.EndScope()
+
+	// Set the current function to this one preserving the caller
+	oldFunc := e.state.SetFunction(f)
+
+	// Restore state once we complete
+	defer func() {
+		e.state.EndScope()
+		e.state.SetFunction(oldFunc)
+	}()
 
 	if len(args) != len(f.Parameters) {
 		return fmt.Errorf("%s parameter mismatch, expected %d got %d", f.Pos, len(f.Parameters), len(args))

@@ -49,7 +49,6 @@ func init() {
 		StampMicro:  time.StampMicro,
 		StampNano:   time.StampNano,
 	})
-	time.Now()
 }
 
 type Time struct {

@@ -12,17 +12,24 @@ import (
 // State holds the current processing state of the Script
 type State interface {
 	Variables
+
 	// GetFunction by name
 	GetFunction(pos lexer.Position, n string) (*script.FuncDec, bool)
+
 	// GetFunctions returns a list of declared functions
 	GetFunctions() []string
+
+	// SetFunction sets the current FuncDec in use, returning the previous one
+	SetFunction(currentFunction *script.FuncDec) *script.FuncDec
 }
 
 type state struct {
-	mutex     sync.Mutex
-	script    *script.Script
-	functions map[string]*script.FuncDec
-	variables Variables
+	mutex           sync.Mutex
+	script          *script.Script             // The script being executed, with included scripts
+	functions       map[string]*script.FuncDec // The declared functions in all scripts
+	variables       Variables                  // The current variable scope
+	packages        map[string]any             // Imported packages
+	currentFunction *script.FuncDec            // The function currently being executed
 }
 
 func New(s *script.Script) (State, error) {
@@ -30,6 +37,7 @@ func New(s *script.Script) (State, error) {
 		script:    s,
 		functions: make(map[string]*script.FuncDec),
 		variables: NewVariables(),
+		packages:  make(map[string]any),
 	}
 	return state, state.setup()
 }
@@ -93,11 +101,21 @@ func (s *state) GlobalScope() Variables {
 }
 
 func (s *state) Get(n string) (interface{}, bool) {
-	v, exists := s.variables.Get(n)
-	if exists {
+	if v, exists := s.variables.Get(n); exists {
 		return v, true
 	}
 
+	// Lookup locally imported packages
+	localName := s.currentFunction.Pos.Filename + "!" + n
+	if pkg, exists := s.packages[localName]; exists {
+		return pkg, true
+	}
+
+	// Lookup global packages - e.g. this works as n here will not contain either
+	// '.' or '/' as those will not form an Ident.
+	//
+	// This allows for legacy package registrations to work whilst allowing the core
+	// packages to always be short formed.
 	return packages.Lookup(n)
 }
 
@@ -107,4 +125,10 @@ func (s *state) Declare(n string) {
 
 func (s *state) Set(n string, v interface{}) bool {
 	return s.variables.Set(n, v)
+}
+
+func (s *state) SetFunction(currentFunction *script.FuncDec) *script.FuncDec {
+	old := s.currentFunction
+	s.currentFunction = currentFunction
+	return old
 }
