@@ -123,6 +123,9 @@ func (p *defaultParser) include(s *script.Script, pos lexer.Position, paths []st
 		}
 	}
 
+	// Add any imports for this script
+	s.Import = append(s.Import, s1.Import...)
+
 	// Handle any includes in this file
 	err = p.includeTopDec(s, s1)
 	if err != nil {
