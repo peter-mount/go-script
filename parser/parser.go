@@ -142,7 +142,7 @@ func (p *defaultParser) findFile(paths []string, file string) (string, error) {
 		fi, err := os.Stat(fp)
 		if err != nil && !os.IsNotExist(err) {
 			return "", err
-		} else if !fi.IsDir() {
+		} else if err == nil && !fi.IsDir() {
 			return filepath.Abs(fp)
 		}
 	}
