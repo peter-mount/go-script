@@ -29,5 +29,5 @@ type ImportPackage struct {
 type Include struct {
 	Pos lexer.Position
 
-	Path []string `parser:"'include' ( @String (',' @String)* )"`
+	Path []string `parser:"'include' ( '(' @String+ ')' | ( @String (',' @String)* ) )"`
 }
