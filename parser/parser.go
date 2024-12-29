@@ -123,6 +123,9 @@ func (p *defaultParser) include(s *script.Script, pos lexer.Position, paths []st
 		}
 	}
 
+	// Add any imports for this script
+	s.Import = append(s.Import, s1.Import...)
+
 	// Handle any includes in this file
 	err = p.includeTopDec(s, s1)
 	if err != nil {
@@ -142,7 +145,7 @@ func (p *defaultParser) findFile(paths []string, file string) (string, error) {
 		fi, err := os.Stat(fp)
 		if err != nil && !os.IsNotExist(err) {
 			return "", err
-		} else if !fi.IsDir() {
+		} else if err == nil && !fi.IsDir() {
 			return filepath.Abs(fp)
 		}
 	}
